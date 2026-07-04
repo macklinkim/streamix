@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { PaperPlaneRight } from "@phosphor-icons/react";
 import { wsUrl } from "@/lib/connect";
 import { useAuth } from "@/lib/auth-store";
@@ -56,6 +57,7 @@ export function Chat({ channelId }: { channelId: string }) {
   };
 
   const hasToken = Boolean(token);
+  const reduce = useReducedMotion();
 
   return (
     <div className="flex h-full flex-col rounded-lg border border-zinc-800 bg-zinc-900/50">
@@ -66,10 +68,16 @@ export function Chat({ channelId }: { channelId: string }) {
 
       <div ref={listRef} className="flex-1 space-y-2 overflow-y-auto px-4 py-3">
         {messages.map((m) => (
-          <p key={m.id} className="text-sm leading-snug">
+          <motion.p
+            key={m.id}
+            initial={reduce ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="text-sm leading-snug"
+          >
             <span className="font-semibold text-accent">{m.displayName}</span>{" "}
             <span className="text-zinc-200">{m.text}</span>
-          </p>
+          </motion.p>
         ))}
         {messages.length === 0 && (
           <p className="text-sm text-zinc-500">

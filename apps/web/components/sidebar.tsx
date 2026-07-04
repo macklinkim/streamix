@@ -37,7 +37,7 @@ export function Sidebar() {
             </Link>
           ))}
           {channels?.length === 0 && (
-            <p className="px-2 text-sm text-zinc-600">라이브 방송이 없습니다.</p>
+            <p className="px-2 text-sm text-zinc-400">라이브 방송이 없습니다.</p>
           )}
         </nav>
       </div>

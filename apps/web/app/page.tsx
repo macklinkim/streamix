@@ -1,6 +1,7 @@
 "use client";
 
 import { ChannelCard } from "@/components/channel-card";
+import { Reveal } from "@/components/reveal";
 import { useLiveChannels } from "@/lib/hooks";
 
 function CardSkeleton() {
@@ -32,8 +33,10 @@ export default function HomePage() {
 
       <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {isLoading && Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)}
-        {channels?.map((channel) => (
-          <ChannelCard key={channel.id} channel={channel} />
+        {channels?.map((channel, i) => (
+          <Reveal key={channel.id} index={i}>
+            <ChannelCard channel={channel} />
+          </Reveal>
         ))}
       </div>
 
