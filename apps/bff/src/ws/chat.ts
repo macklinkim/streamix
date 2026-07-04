@@ -1,12 +1,15 @@
 import type { WebSocket } from "ws";
-import { Redis } from "ioredis";
+import type { Redis } from "ioredis";
 import { ConnectError } from "@connectrpc/connect";
 import { WsCloseCode } from "@streamix/schemas";
-import { env } from "../env.js";
+import { redis, createSubscriber } from "../redis.js";
 import { chat, coreAuth } from "../clients.js";
 import { verifyAccessToken } from "../auth.js";
 
-const redis = new Redis(env.REDIS_URL);
+// Per-connection flood guard (§8 Phase 2). Independent of channel slowmode.
+const SEND_BURST = 5;
+const SEND_WINDOW_MS = 3000;
+
 const chatChannel = (id: string) => `chat:${id}`;
 const viewersKey = (id: string) => `viewers:${id}`;
 
@@ -18,7 +21,7 @@ const rooms = new Map<string, Room>();
 async function joinRoom(channelId: string, socket: WebSocket): Promise<void> {
   let room = rooms.get(channelId);
   if (!room) {
-    const created: Room = { sub: new Redis(env.REDIS_URL), sockets: new Set() };
+    const created: Room = { sub: createSubscriber(), sockets: new Set() };
     rooms.set(channelId, created);
     created.sub.on("message", (_ch, payload) => {
       for (const s of created.sockets) if (s.readyState === 1) s.send(payload);
@@ -60,6 +63,7 @@ export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
   await joinRoom(channelId, socket);
   socket.on("close", () => void leaveRoom(channelId, socket));
 
+  let sendTimes: number[] = [];
   socket.on("message", async (data: Buffer) => {
     let text: string;
     try {
@@ -69,6 +73,16 @@ export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
     } catch {
       return;
     }
+
+    const now = Date.now();
+    sendTimes = sendTimes.filter((t) => now - t < SEND_WINDOW_MS);
+    if (sendTimes.length >= SEND_BURST) {
+      if (socket.readyState === 1)
+        socket.send(JSON.stringify({ type: "error", code: "rate_limited" }));
+      return;
+    }
+    sendTimes.push(now);
+
     try {
       await chat.send(
         { channelId, text },
