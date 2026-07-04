@@ -83,13 +83,13 @@ export function Chat({ channelId }: { channelId: string }) {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()}
-          disabled={!hasToken}
-          placeholder={hasToken ? "메시지 보내기" : "로그인 필요"}
+          disabled={!hasToken || !connected}
+          placeholder={!hasToken ? "로그인 필요" : connected ? "메시지 보내기" : "연결 중…"}
           className="h-9 flex-1 rounded-md border border-zinc-800 bg-zinc-950 px-3 text-sm placeholder:text-zinc-500 focus:border-accent focus:outline-none disabled:opacity-50"
         />
         <button
           onClick={send}
-          disabled={!hasToken}
+          disabled={!hasToken || !connected}
           aria-label="전송"
           className="grid size-9 place-items-center rounded-md bg-accent text-white transition-colors hover:bg-accent-hover active:scale-95 disabled:opacity-50"
         >

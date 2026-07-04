@@ -32,3 +32,8 @@ hls-tmp/
 # playwright mcp artifacts (screenshots land at repo root)
 .playwright-mcp/
 /*.png
+
+# playwright test output
+test-results/
+playwright-report/
+.last-run.json
