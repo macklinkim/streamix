@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package channel.v1;
+
+import "common/v1/common.proto";
+
+// ChannelService is owned by svc-core (§5.1). Core is the single writer of
+// live state (streams.status + live:{channelId}); Media only notifies via RPC.
+
+message Channel {
+  string id = 1;
+  string owner_user_id = 2;
+  string slug = 3;
+  string title = 4;
+  string category = 5;
+  bool is_live = 6;
+  int32 viewer_count = 7;
+}
+
+message CreateChannelRequest {
+  string title = 1;
+  string slug = 2;
+  string category = 3;
+}
+
+message CreateChannelResponse {
+  Channel channel = 1;
+  // Plaintext stream key, shown once at creation; only its hash is stored.
+  string stream_key = 2;
+}
+
+message GetChannelRequest {
+  string slug = 1;
+}
+
+message GetChannelResponse {
+  Channel channel = 1;
+}
+
+message ListLiveRequest {
+  common.v1.Pagination page = 1;
+  string category = 2;
+}
+
+message ListLiveResponse {
+  repeated Channel channels = 1;
+  common.v1.PageInfo page_info = 2;
+}
+
+message StartStreamRequest {
+  string stream_key = 1;
+}
+
+message StartStreamResponse {
+  string channel_id = 1;
+}
+
+message StopStreamRequest {
+  string channel_id = 1;
+}
+
+message StopStreamResponse {}
+
+message ValidateStreamKeyRequest {
+  string stream_key = 1;
+}
+
+message ValidateStreamKeyResponse {
+  bool valid = 1;
+  string channel_id = 2;
+}
+
+message GetPlaybackUrlRequest {
+  string slug = 1;
+}
+
+message GetPlaybackUrlResponse {
+  // Signed short-lived HLS URL (§5.2 data-plane playback authz).
+  string url = 1;
+  int64 expires_at = 2;
+}
+
+message HeartbeatRequest {
+  string channel_id = 1;
+}
+
+message HeartbeatResponse {}
+
+service ChannelService {
+  rpc CreateChannel(CreateChannelRequest) returns (CreateChannelResponse);
+  rpc GetChannel(GetChannelRequest) returns (GetChannelResponse);
+  rpc ListLive(ListLiveRequest) returns (ListLiveResponse);
+  rpc StartStream(StartStreamRequest) returns (StartStreamResponse);
+  rpc StopStream(StopStreamRequest) returns (StopStreamResponse);
+  rpc ValidateStreamKey(ValidateStreamKeyRequest) returns (ValidateStreamKeyResponse);
+  rpc GetPlaybackUrl(GetPlaybackUrlRequest) returns (GetPlaybackUrlResponse);
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+}

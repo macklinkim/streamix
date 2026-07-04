@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export * from "./errors.js";
+
 /**
  * Shared boundary-validation schemas (browser forms / external input, §6.2).
  * Internal gRPC trusts proto types; these guard the untrusted edges only.

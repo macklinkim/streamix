@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package chat.v1;
+
+import "common/v1/common.proto";
+
+// ChatService is owned by svc-chat (§5.1). Browser<->BFF chat rides WebSocket
+// (ADR-4); this gRPC contract is svc-chat<->BFF/Core (policy, fanout publish).
+
+message ChatMessage {
+  string id = 1;
+  string channel_id = 2;
+  string user_id = 3;
+  string display_name = 4;
+  string text = 5;
+  common.v1.Timestamp sent_at = 6;
+}
+
+message JoinRequest {
+  string channel_id = 1;
+}
+
+message JoinResponse {
+  ChatMessage message = 1;
+}
+
+message SendRequest {
+  string channel_id = 1;
+  string text = 2;
+}
+
+message SendResponse {
+  ChatMessage message = 1;
+}
+
+enum ModerationAction {
+  MODERATION_ACTION_UNSPECIFIED = 0;
+  MODERATION_ACTION_BAN = 1;
+  MODERATION_ACTION_UNBAN = 2;
+  MODERATION_ACTION_SLOWMODE = 3;
+}
+
+message ModerateRequest {
+  string channel_id = 1;
+  string target_user_id = 2;
+  ModerationAction action = 3;
+  int32 duration_seconds = 4;
+}
+
+message ModerateResponse {}
+
+service ChatService {
+  // Server-streaming example (§6.2): subscribe to a room's message feed.
+  rpc Join(JoinRequest) returns (stream JoinResponse);
+  rpc Send(SendRequest) returns (SendResponse);
+  rpc Moderate(ModerateRequest) returns (ModerateResponse);
+}

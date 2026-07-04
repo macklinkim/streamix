@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package user.v1;
+
+import "common/v1/common.proto";
+
+// AuthService is owned by svc-core (§5.1). BFF exposes these over Connect-Web.
+
+message User {
+  string id = 1;
+  string email = 2;
+  string display_name = 3;
+  common.v1.Timestamp created_at = 4;
+}
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string display_name = 3;
+}
+
+message RegisterResponse {
+  User user = 1;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  User user = 3;
+}
+
+message RefreshRequest {
+  string refresh_token = 1;
+}
+
+message RefreshResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+
+message MeRequest {}
+
+message MeResponse {
+  User user = 1;
+}
+
+service AuthService {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Refresh(RefreshRequest) returns (RefreshResponse);
+  rpc Me(MeRequest) returns (MeResponse);
+}
