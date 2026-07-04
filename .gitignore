@@ -1,0 +1,30 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# build
+dist/
+.next/
+.turbo/
+*.tsbuildinfo
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+
+# os
+.DS_Store
+Thumbs.db
+
+# docker/media local data
+infra/data/
+*.m3u8
+*.m4s
+hls-tmp/
+
+# NOTE: generated proto (packages/proto/src/gen) is intentionally committed (Phase 0 DoD)

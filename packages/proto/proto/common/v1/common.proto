@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package common.v1;
+
+// Shared wrapper types reused across service contracts (ADR-2, §6.2).
+
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+message Pagination {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message PageInfo {
+  int32 total = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+// Structured error detail attached to Connect/gRPC error responses.
+message ErrorDetail {
+  string code = 1;
+  string message = 2;
+}
