@@ -1,0 +1,18 @@
+# Deploy from repo root: fly deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile
+# (Interim: web on Fly. ADR-8 target is Vercel; connect the GitHub repo in the
+# Vercel dashboard later to switch — the app code is unchanged.)
+app = "streamix-web"
+primary_region = "nrt"
+
+[build]
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

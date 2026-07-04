@@ -37,3 +37,8 @@ hls-tmp/
 test-results/
 playwright-report/
 .last-run.json
+
+# vercel
+.vercel
+
+.vercel
