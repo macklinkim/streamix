@@ -28,3 +28,7 @@ infra/data/
 hls-tmp/
 
 # NOTE: generated proto (packages/proto/src/gen) is intentionally committed (Phase 0 DoD)
+
+# playwright mcp artifacts (screenshots land at repo root)
+.playwright-mcp/
+/*.png

@@ -1,0 +1,58 @@
+# DRAFT — local-dev reverse proxy (Phase 1). NOT wired into docker-compose yet.
+#
+# Prod ingress is split (ADR-8): Vercel fronts `web`, Fly fronts bff/svc-media,
+# R2/CDN serves HLS. This NGINX draft models the SAME routes for a single-host
+# local/dev setup so the routing contract is exercised before prod.
+#
+# Routes:
+#   /api, /connect  -> BFF (Connect-Web / REST)      :8080
+#   /ws             -> BFF (WebSocket chat, ADR-4)   :8080 (Upgrade)
+#   /hls            -> MinIO bucket (HLS segments)    :9000  [prod: R2/CDN + signed URL]
+#   /               -> web (Next.js)                  :3000
+
+upstream bff {
+  server host.docker.internal:8080;
+}
+upstream web {
+  server host.docker.internal:3000;
+}
+upstream minio {
+  server minio:9000;
+}
+
+server {
+  listen 80;
+  server_name _;
+
+  location /healthz {
+    add_header Content-Type text/plain;
+    return 200 "ok\n";
+  }
+
+  location /ws {
+    proxy_pass http://bff;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_read_timeout 3600s;
+  }
+
+  location ~ ^/(api|connect) {
+    proxy_pass http://bff;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  }
+
+  # HLS: data plane bypasses BFF (§5.2). Playback authz via signed URL upstream.
+  location /hls/ {
+    proxy_pass http://minio/streamix-hls/;
+    proxy_set_header Host $host;
+    add_header Cache-Control "public, max-age=2";
+  }
+
+  location / {
+    proxy_pass http://web;
+    proxy_set_header Host $host;
+  }
+}

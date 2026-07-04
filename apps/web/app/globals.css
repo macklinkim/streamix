@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/* Dark-tech media platform tokens. Theme is locked dark (§4.11). */
+@theme {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --color-accent: #7c5cff;
+  --color-accent-hover: #6b4bf0;
+  --color-live: #ff3b5c;
+}
+
+html,
+body {
+  background-color: var(--color-zinc-950);
+  color: var(--color-zinc-100);
+}
+
+/* Semantic live pulse (motion is motivated: signals a real-time state). */
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.live-dot {
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-dot {
+    animation: none;
+  }
+}
