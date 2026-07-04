@@ -11,7 +11,7 @@ primary_region = "nrt"
   PORT = "50051"
   MEDIA_PUBLIC_URL = "https://streamix-svc-media.fly.dev"
 
-# Keep at least one machine warm so the BFF can always reach it (no cold start).
+# Internal service kept small + warm (BFF reaches it via .internal).
 [[vm]]
   size = "shared-cpu-1x"
-  memory = "512mb"
+  memory = "256mb"

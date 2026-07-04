@@ -7,14 +7,16 @@ primary_region = "nrt"
 [env]
   PORT = "8080"
   NODE_ENV = "production"
+  CORE_URL = "http://streamix-svc-core.internal:50051"
+  CHAT_URL = "http://streamix-svc-chat.internal:50052"
 
 [http_service]
   internal_port = 8080
   force_https = true
-  # BFF is the control-plane entry + WS terminator → keep warm (ADR-8, no cold starts).
-  auto_stop_machines = "off"
+  # Cost-minimal: suspend when idle, auto-resume on request (fast).
+  auto_stop_machines = "suspend"
   auto_start_machines = true
-  min_machines_running = 1
+  min_machines_running = 0
 
   [[http_service.checks]]
     path = "/health"

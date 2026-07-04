@@ -1,0 +1,15 @@
+# Minimal Redis on Fly (private networking only). Reachable at
+# streamix-redis-app.internal:6379. No persistence/HA — the app degrades
+# gracefully on Redis loss (§10). Deploy: fly deploy --config infra/fly/redis.toml
+app = "streamix-redis-app"
+primary_region = "nrt"
+
+[build]
+  image = "redis:7-alpine"
+
+[processes]
+  app = "redis-server --protected-mode no --maxmemory 200mb --maxmemory-policy allkeys-lru"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
