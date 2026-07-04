@@ -100,8 +100,14 @@ export const channelService: ServiceImpl<typeof ChannelService> = {
       .from(streams)
       .innerJoin(channels, eq(streams.channelId, channels.id))
       .where(eq(streams.status, "live"));
-    const list = await Promise.all(rows.map(toChannelMsg));
-    return { channels: list, pageInfo: { total: list.length, page: 1, pageSize: list.length } };
+
+    // Dedup by channel (a zombie 'live' row + a fresh one can coexist), then keep
+    // only channels whose Redis live key is still alive (TTL is the truth, §5.2)
+    // so streams killed without donePublish don't linger in the list.
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    const mapped = await Promise.all([...byId.values()].map(toChannelMsg));
+    const live = mapped.filter((c) => c.isLive);
+    return { channels: live, pageInfo: { total: live.length, page: 1, pageSize: live.length } };
   },
 
   async validateStreamKey(req) {

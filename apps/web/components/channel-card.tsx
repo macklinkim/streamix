@@ -1,14 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
-
-export type Channel = {
-  slug: string;
-  title: string;
-  streamer: string;
-  category: string;
-  viewers: number;
-  thumbSeed: string;
-};
+import type { Channel } from "@streamix/proto";
 
 function formatViewers(n: number): string {
   if (n >= 10000) return `${(n / 10000).toFixed(1)}만`;
@@ -16,23 +7,27 @@ function formatViewers(n: number): string {
   return String(n);
 }
 
+// Real thumbnail once captured (§ ADR-3); deterministic placeholder otherwise.
+function thumbSrc(channel: Channel): string {
+  return channel.thumbnailUrl || `https://picsum.photos/seed/${channel.slug}/640/360`;
+}
+
 export function ChannelCard({ channel }: { channel: Channel }) {
   return (
     <Link href={`/watch/${channel.slug}`} className="group block">
       <div className="relative aspect-video overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
-        <Image
-          src={`https://picsum.photos/seed/${channel.thumbSeed}/640/360`}
+        {/* Plain img: thumbnail host is dynamic (media server), not a next/image domain. */}
+        <img
+          src={thumbSrc(channel)}
           alt={channel.title}
-          fill
-          sizes="(max-width: 768px) 100vw, 320px"
-          className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
         />
         <span className="absolute left-2 top-2 flex items-center gap-1.5 rounded bg-live px-1.5 py-0.5 text-[11px] font-bold uppercase text-white">
           <span className="live-dot size-1.5 rounded-full bg-white" />
           Live
         </span>
         <span className="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 font-mono text-[11px] text-zinc-100">
-          시청자 {formatViewers(channel.viewers)}
+          시청자 {formatViewers(channel.viewerCount)}
         </span>
       </div>
 
@@ -42,8 +37,8 @@ export function ChannelCard({ channel }: { channel: Channel }) {
           <h3 className="truncate text-sm font-semibold text-zinc-100 group-hover:text-accent">
             {channel.title}
           </h3>
-          <p className="truncate text-sm text-zinc-400">{channel.streamer}</p>
-          <p className="truncate text-xs text-zinc-500">{channel.category}</p>
+          <p className="truncate text-sm text-zinc-400">@{channel.slug}</p>
+          {channel.category && <p className="truncate text-xs text-zinc-500">{channel.category}</p>}
         </div>
       </div>
     </Link>
