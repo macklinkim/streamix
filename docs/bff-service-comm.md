@@ -22,7 +22,7 @@
 | svc-chat | `chat.v1.ChatService`       | Join(서버스트림)/Send/Moderate                                     |
 
 - 주소: dev는 `localhost:<port>`, prod(Fly)은 사설 네트워킹 `<app>.internal:<port>`.
-- 인증: BFF가 access JWT 검증 후 내부 호출에 유저 컨텍스트(메타데이터) 전파. 내부는 내부망 신뢰 + 서비스 토큰(mTLS는 🧪).
+- 인증: BFF가 access JWT 검증 후 내부 호출에 유저 컨텍스트를 헤더로 전파 — **`x-user-id`**(인증 유저), **`x-display-name`**(표시명, **URL-encoded** — HTTP 헤더 ASCII 제약). 서비스는 `decodeURIComponent`로 복원. 내부는 내부망 신뢰 + 서비스 토큰(mTLS는 🧪).
 - 에러: 서비스는 `docs/error-contract.md`의 AppErrorCode→Connect 코드로 매핑, BFF는 그대로 클라에 전달.
 
 ## svc-media ↔ svc-core

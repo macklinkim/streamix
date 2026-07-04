@@ -66,6 +66,37 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
+  apps/svc-chat:
+    dependencies:
+      "@bufbuild/protobuf":
+        specifier: ^2.2.3
+        version: 2.12.1
+      "@connectrpc/connect":
+        specifier: ^2.0.0
+        version: 2.1.2(@bufbuild/protobuf@2.12.1)
+      "@connectrpc/connect-node":
+        specifier: ^2.0.0
+        version: 2.1.2(@bufbuild/protobuf@2.12.1)(@connectrpc/connect@2.1.2(@bufbuild/protobuf@2.12.1))
+      "@streamix/proto":
+        specifier: workspace:*
+        version: link:../../packages/proto
+      "@streamix/schemas":
+        specifier: workspace:*
+        version: link:../../packages/schemas
+      ioredis:
+        specifier: ^5.4.2
+        version: 5.11.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.0
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
   apps/svc-core:
     dependencies:
       "@bufbuild/protobuf":
