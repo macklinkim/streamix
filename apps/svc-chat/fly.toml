@@ -1,0 +1,13 @@
+# Deploy from repo root: fly deploy --config apps/svc-chat/fly.toml --dockerfile apps/svc-chat/Dockerfile
+# Internal gRPC service (streamix-svc-chat.internal:50052). REDIS_URL via secrets.
+app = "streamix-svc-chat"
+primary_region = "nrt"
+
+[build]
+
+[env]
+  PORT = "50052"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

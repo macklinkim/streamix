@@ -1,0 +1,17 @@
+# Deploy from repo root: fly deploy --config apps/svc-core/fly.toml --dockerfile apps/svc-core/Dockerfile
+# Internal gRPC service: reached by the BFF over Fly private networking
+# (streamix-svc-core.internal:50051). No public http_service. Secrets (JWT_SECRET,
+# DATABASE_URL, REDIS_URL, PLAYBACK_SECRET) via `fly secrets set` (§10).
+app = "streamix-svc-core"
+primary_region = "nrt"
+
+[build]
+
+[env]
+  PORT = "50051"
+  MEDIA_PUBLIC_URL = "https://streamix-svc-media.fly.dev"
+
+# Keep at least one machine warm so the BFF can always reach it (no cold start).
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

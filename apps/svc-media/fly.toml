@@ -1,0 +1,31 @@
+# Deploy from repo root: fly deploy --config apps/svc-media/fly.toml --dockerfile apps/svc-media/Dockerfile
+# RTMP ingest needs a raw TCP port + a dedicated IP (`fly ips allocate-v4`).
+# HLS is served over HTTP (interim; R2 offload lands with credentials, ADR-8).
+app = "streamix-svc-media"
+primary_region = "nrt"
+
+[build]
+
+[env]
+  RTMP_PORT = "1935"
+  HTTP_PORT = "8090"
+  CORE_URL = "http://streamix-svc-core.internal:50051"
+
+# RTMP ingest (raw TCP).
+[[services]]
+  protocol = "tcp"
+  internal_port = 1935
+  [[services.ports]]
+    port = 1935
+
+# HLS authz HTTP (signed URLs). Keep warm — this is the playback data plane.
+[http_service]
+  internal_port = 8090
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  size = "shared-cpu-2x"
+  memory = "1gb"

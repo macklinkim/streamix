@@ -1,0 +1,54 @@
+name: Deploy
+
+# Hybrid deploy (ADR-8): backend/media -> Fly.io, web -> Vercel.
+# Requires repo secrets FLY_API_TOKEN and VERCEL_TOKEN (+ a linked Vercel project
+# whose Root Directory is apps/web). Until those exist this workflow no-ops on PRs
+# and only runs on main.
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-fly:
+    runs-on: ubuntu-latest
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      # svc-core first: the others reach it over private networking.
+      - name: Deploy svc-core
+        run: flyctl deploy --config apps/svc-core/fly.toml --dockerfile apps/svc-core/Dockerfile --remote-only
+      - name: Deploy svc-chat
+        run: flyctl deploy --config apps/svc-chat/fly.toml --dockerfile apps/svc-chat/Dockerfile --remote-only
+      - name: Deploy svc-media
+        run: flyctl deploy --config apps/svc-media/fly.toml --dockerfile apps/svc-media/Dockerfile --remote-only
+      - name: Deploy bff
+        run: flyctl deploy --config apps/bff/fly.toml --dockerfile apps/bff/Dockerfile --remote-only
+
+      - name: Post-deploy smoke (bff health)
+        run: curl -fsS https://streamix-bff.fly.dev/health
+
+      - name: Rollback bff on smoke failure
+        if: failure()
+        run: flyctl releases --app streamix-bff && echo "run 'flyctl deploy --image <previous>' or 'flyctl releases rollback' to revert"
+
+  deploy-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy web to Vercel (prod)
+        run: |
+          npm i -g vercel@latest
+          vercel pull --yes --environment=production --token=$VERCEL_TOKEN
+          vercel build --prod --token=$VERCEL_TOKEN
+          vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
