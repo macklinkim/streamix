@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import type { ServiceImpl, HandlerContext } from "@connectrpc/connect";
 import type { MessageInitShape } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
@@ -143,8 +144,20 @@ export const channelService: ServiceImpl<typeof ChannelService> = {
   },
 
   async getPlaybackUrl(req) {
-    // STUB: real signed R2/CDN URL lands in Phase 3 (§5.2 data-plane authz).
-    const expiresAt = BigInt(Math.floor(Date.now() / 1000) + 300);
-    return { url: `http://localhost:8088/hls/${req.slug}/index.m3u8`, expiresAt };
+    // Signed short-lived HLS URL (§5.2 data-plane playback authz). svc-media
+    // verifies the HMAC before serving; keyed by channelId, not the stream key.
+    const [c] = await db
+      .select({ id: channels.id })
+      .from(channels)
+      .where(eq(channels.slug, req.slug))
+      .limit(1);
+    if (!c) throw appError(AppErrorCode.NOT_FOUND, "channel not found");
+
+    const exp = Math.floor(Date.now() / 1000) + 300;
+    const token = createHmac("sha256", env.PLAYBACK_SECRET).update(`${c.id}.${exp}`).digest("hex");
+    return {
+      url: `${env.MEDIA_PUBLIC_URL}/hls/${c.id}/index.m3u8?token=${token}&exp=${exp}`,
+      expiresAt: BigInt(exp),
+    };
   },
 };

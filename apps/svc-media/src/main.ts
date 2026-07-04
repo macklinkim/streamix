@@ -6,6 +6,7 @@ import ffmpegStatic from "ffmpeg-static";
 import { ConnectError } from "@connectrpc/connect";
 import { env } from "./env.js";
 import { core } from "./core-client.js";
+import { startHlsServer } from "./hls-server.js";
 
 const ffmpeg = ffmpegStatic as unknown as string;
 mkdirSync(env.MEDIA_ROOT, { recursive: true });
@@ -15,9 +16,9 @@ const sessions = new Map<string, Session>();
 
 const streamKeyOf = (streamPath: string) => streamPath.split("/").pop() ?? "";
 
+// RTMP-only: HLS is served by our own authz server (hls-server.ts), not NMS http.
 const nms = new NodeMediaServer({
   rtmp: { port: env.RTMP_PORT, chunk_size: 60000, gop_cache: true, ping: 30, ping_timeout: 60 },
-  http: { port: env.HTTP_PORT, mediaroot: env.MEDIA_ROOT, allow_origin: "*" },
 });
 
 // postPublish (stream established): validate the key + claim live state via Core
@@ -73,6 +74,7 @@ nms.on("donePublish", (id) => {
 });
 
 nms.run();
+startHlsServer();
 console.log(
   `svc-media rtmp :${env.RTMP_PORT} http :${env.HTTP_PORT} (mediaroot ${env.MEDIA_ROOT})`,
 );

@@ -10,6 +10,9 @@ const Env = z.object({
   REFRESH_TTL: z.string().default("30d"),
   // Live-state key TTL; refreshed by media heartbeat (§5.2 zombie-stream guard).
   LIVE_TTL_SECONDS: z.coerce.number().default(90),
+  // Playback URL signing (§5.2). MUST match svc-media's PLAYBACK_SECRET.
+  PLAYBACK_SECRET: z.string().default("dev-insecure-playback-secret"),
+  MEDIA_PUBLIC_URL: z.string().default("http://localhost:8090"),
 });
 
 export const env = Env.parse(process.env);
