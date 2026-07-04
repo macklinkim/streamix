@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PaperPlaneRight } from "@phosphor-icons/react";
 import { wsUrl } from "@/lib/connect";
-import { getToken } from "@/lib/auth";
+import { useAuth } from "@/lib/auth-store";
 
 type ChatMessage = { id: string; displayName: string; text: string };
 
@@ -11,11 +11,11 @@ export function Chat({ channelId }: { channelId: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [connected, setConnected] = useState(false);
   const [draft, setDraft] = useState("");
+  const token = useAuth((s) => s.token);
   const wsRef = useRef<WebSocket | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const token = getToken();
     if (!token) return; // chat requires auth (login first)
 
     let closed = false;
@@ -42,7 +42,7 @@ export function Chat({ channelId }: { channelId: string }) {
       clearTimeout(retry);
       wsRef.current?.close();
     };
-  }, [channelId]);
+  }, [channelId, token]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
@@ -55,7 +55,7 @@ export function Chat({ channelId }: { channelId: string }) {
     setDraft("");
   };
 
-  const hasToken = typeof window !== "undefined" && Boolean(getToken());
+  const hasToken = Boolean(token);
 
   return (
     <div className="flex h-full flex-col rounded-lg border border-zinc-800 bg-zinc-900/50">

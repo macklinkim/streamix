@@ -3,6 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { SiteHeader } from "@/components/site-header";
 import { Sidebar } from "@/components/sidebar";
+import { AuthHydrator } from "@/components/auth-hydrator";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ko" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased">
         <Providers>
+          <AuthHydrator />
           <SiteHeader />
           <div className="mx-auto flex max-w-[1600px]">
             <Sidebar />

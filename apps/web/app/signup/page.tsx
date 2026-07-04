@@ -5,18 +5,19 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { ConnectError } from "@connectrpc/connect";
+import { Code, ConnectError } from "@connectrpc/connect";
 import { authClient } from "@/lib/connect";
 import { useAuth } from "@/lib/auth-store";
 import { Field, inputCls } from "@/components/field";
 
 const schema = z.object({
+  displayName: z.string().min(2, "2자 이상 입력하세요").max(20),
   email: z.string().email("올바른 이메일을 입력하세요"),
   password: z.string().min(8, "비밀번호는 8자 이상이어야 합니다"),
 });
 type Form = z.infer<typeof schema>;
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const setAuth = useAuth((s) => s.setAuth);
   const {
@@ -28,28 +29,30 @@ export default function LoginPage() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const res = await authClient.login(data);
+      await authClient.register(data);
+      const res = await authClient.login({ email: data.email, password: data.password });
       setAuth(res.accessToken, res.user ?? null);
       router.push("/");
     } catch (e) {
-      setError("root", {
-        message:
-          e instanceof ConnectError ? "이메일 또는 비밀번호가 올바르지 않습니다." : "로그인 실패",
-      });
+      const exists = e instanceof ConnectError && e.code === Code.AlreadyExists;
+      setError("root", { message: exists ? "이미 가입된 이메일입니다." : "회원가입 실패" });
     }
   });
 
   return (
     <div className="mx-auto max-w-sm py-16">
-      <h1 className="mb-6 text-2xl font-bold tracking-tight">로그인</h1>
+      <h1 className="mb-6 text-2xl font-bold tracking-tight">회원가입</h1>
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        <Field label="닉네임" error={errors.displayName?.message}>
+          <input className={inputCls} {...register("displayName")} />
+        </Field>
         <Field label="이메일" error={errors.email?.message}>
           <input type="email" autoComplete="email" className={inputCls} {...register("email")} />
         </Field>
         <Field label="비밀번호" error={errors.password?.message}>
           <input
             type="password"
-            autoComplete="current-password"
+            autoComplete="new-password"
             className={inputCls}
             {...register("password")}
           />
@@ -60,13 +63,13 @@ export default function LoginPage() {
           disabled={isSubmitting}
           className="h-10 rounded-md bg-accent font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.99] disabled:opacity-50"
         >
-          {isSubmitting ? "로그인 중…" : "로그인"}
+          {isSubmitting ? "가입 중…" : "회원가입"}
         </button>
       </form>
       <p className="mt-4 text-sm text-zinc-400">
-        아직 계정이 없나요?{" "}
-        <Link href="/signup" className="font-medium text-accent hover:underline">
-          회원가입
+        이미 계정이 있나요?{" "}
+        <Link href="/login" className="font-medium text-accent hover:underline">
+          로그인
         </Link>
       </p>
     </div>
