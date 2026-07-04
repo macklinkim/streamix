@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { createReadStream, readFileSync, existsSync, statSync } from "node:fs";
 import { join, normalize } from "node:path";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { env } from "./env.js";
+import { env, thumbRoot } from "./env.js";
 
 // Data-plane HLS serving with signed-URL authz (§5.2). The playlist is fetched
 // with ?token&exp (from Core.GetPlaybackUrl); the playlist's segment URIs are
@@ -24,6 +24,24 @@ function tokenValid(channelId: string, token: string | null, exp: string | null)
 export function startHlsServer(): void {
   const server = createServer((req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");
+
+    // Thumbnails are public (low-sensitivity list-card previews, no token).
+    const thumb = url.pathname.match(/^\/thumb\/([^/]+)\.jpg$/);
+    if (thumb) {
+      const p = join(thumbRoot, `${thumb[1]}.jpg`);
+      if (!existsSync(p)) {
+        res.writeHead(404).end("not found");
+        return;
+      }
+      res.writeHead(200, {
+        "Content-Type": "image/jpeg",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "no-cache",
+      });
+      createReadStream(p).pipe(res);
+      return;
+    }
+
     const m = url.pathname.match(/^\/hls\/([^/]+)\/(.+)$/);
     if (!m) {
       res.writeHead(404).end("not found");

@@ -96,10 +96,24 @@ const segNoTok = seg?.split("?")[0];
 const segBad = await fetch(`${base}/${segNoTok}`).catch(() => null);
 ok("unsigned segment blocked (403)", segBad?.status === 403, `status=${segBad?.status}`);
 
+// thumbnail captured (first frame grabbed ~4s after publish) + served publicly
+await sleep(3000);
+const thumb = await fetch(`http://127.0.0.1:8090/thumb/${channelId}.jpg`).catch(() => null);
+ok(
+  "thumbnail captured & served (200 jpeg)",
+  thumb?.status === 200 && thumb.headers.get("content-type") === "image/jpeg",
+  `status=${thumb?.status}`,
+);
+
 push.kill("SIGKILL");
 await sleep(2500); // donePublish -> stopStream
 const after = await channel.getChannel({ slug });
 ok("is_live cleared after stream ends", after.channel?.isLive === false);
+
+// retention: HLS dir + thumbnail reaped after the ~8s grace
+await sleep(9000);
+const reaped = await fetch(`http://127.0.0.1:8090/thumb/${channelId}.jpg`).catch(() => null);
+ok("retention reaped thumbnail (404)", reaped?.status === 404, `status=${reaped?.status}`);
 
 console.log(process.exitCode ? "\nSMOKE FAILED" : "\nSMOKE OK");
 process.exit(process.exitCode ?? 0);

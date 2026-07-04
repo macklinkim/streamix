@@ -47,6 +47,8 @@ async function toChannelMsg(row: ChannelRow): Promise<MessageInitShape<typeof Ch
     category: row.category ?? "",
     isLive: isLive === 1,
     viewerCount: viewers ? Number(viewers) : 0,
+    // Media serves this once captured; the client falls back if it 404s.
+    thumbnailUrl: isLive === 1 ? `${env.MEDIA_PUBLIC_URL}/thumb/${row.id}.jpg` : "",
   };
 }
 
