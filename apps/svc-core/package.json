@@ -1,0 +1,30 @@
+{
+  "name": "@streamix/svc-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.2.3",
+    "@connectrpc/connect": "^2.0.0",
+    "@connectrpc/connect-node": "^2.0.0",
+    "@streamix/db": "workspace:*",
+    "@streamix/proto": "workspace:*",
+    "@streamix/schemas": "workspace:*",
+    "argon2": "^0.41.1",
+    "drizzle-orm": "^0.38.3",
+    "ioredis": "^5.4.2",
+    "jose": "^5.9.6",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

@@ -66,6 +66,49 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
+  apps/svc-core:
+    dependencies:
+      "@bufbuild/protobuf":
+        specifier: ^2.2.3
+        version: 2.12.1
+      "@connectrpc/connect":
+        specifier: ^2.0.0
+        version: 2.1.2(@bufbuild/protobuf@2.12.1)
+      "@connectrpc/connect-node":
+        specifier: ^2.0.0
+        version: 2.1.2(@bufbuild/protobuf@2.12.1)(@connectrpc/connect@2.1.2(@bufbuild/protobuf@2.12.1))
+      "@streamix/db":
+        specifier: workspace:*
+        version: link:../../packages/db
+      "@streamix/proto":
+        specifier: workspace:*
+        version: link:../../packages/proto
+      "@streamix/schemas":
+        specifier: workspace:*
+        version: link:../../packages/schemas
+      argon2:
+        specifier: ^0.41.1
+        version: 0.41.1
+      drizzle-orm:
+        specifier: ^0.38.3
+        version: 0.38.4(@types/react@19.2.17)(postgres@3.4.9)(react@19.2.7)
+      ioredis:
+        specifier: ^5.4.2
+        version: 5.11.1
+      jose:
+        specifier: ^5.9.6
+        version: 5.10.0
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.0
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
   apps/web:
     dependencies:
       "@phosphor-icons/react":
@@ -407,6 +450,24 @@ packages:
         integrity: sha512-/yCrWGCoA1SVKOks25EGadP9Pnj0oAIHGpl2wH2M2Y46dPM2ueb8wyCVOD7O3WCTkaJ0IkKvzhl1JY7+uCT2Dw==,
       }
     engines: { node: ">=v18" }
+
+  "@connectrpc/connect-node@2.1.2":
+    resolution:
+      {
+        integrity: sha512-+i/aAOpsI8sIx1mbYp6d99zvxaUSF6t/jP9Ux9maAmjsZPgmIQ3JuIeYi0zJIP9zlCnBlJjkpPosshCgdRuThQ==,
+      }
+    engines: { node: ">=20" }
+    peerDependencies:
+      "@bufbuild/protobuf": ^2.7.0
+      "@connectrpc/connect": 2.1.2
+
+  "@connectrpc/connect@2.1.2":
+    resolution:
+      {
+        integrity: sha512-MXkBijtcX09R10Eb6sFeIetc6w6746eio6xtfuyVOH7oQAacT1X0GzMIQFux6Qy8cq3W/T5qX5Bei8YbFtmRGA==,
+      }
+    peerDependencies:
+      "@bufbuild/protobuf": ^2.7.0
 
   "@drizzle-team/brocli@0.10.2":
     resolution:
@@ -1421,6 +1482,12 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  "@ioredis/commands@1.10.0":
+    resolution:
+      {
+        integrity: sha512-UmeW7z4LfctwoQ5wkhVzgq8tXkreED2xZGpX+Bg+zA+WJFZCT6c062AfCK/Dfk81xZnnwdhJCUMkitihRaoC2Q==,
+      }
+
   "@jridgewell/gen-mapping@0.3.13":
     resolution:
       {
@@ -1535,6 +1602,13 @@ packages:
       {
         integrity: sha512-8awtpHXCx/bNpFt4mt2xdkgtgVvKqty8VbjHI/WWWQuEw+KLzFot3f4+LkQY9YmOtq7A5GdOnqoIC8Pdygjk2g==,
       }
+
+  "@phc/format@1.0.0":
+    resolution:
+      {
+        integrity: sha512-m7X9U6BG2+J+R1lSOdCiITLLrxm+cWlNI3HUFA92oLO77ObGNzaKdh8pMLqdZcshtkKuV84olNNXDfMc4FezBQ==,
+      }
+    engines: { node: ">=10" }
 
   "@phosphor-icons/react@2.1.10":
     resolution:
@@ -1961,6 +2035,13 @@ packages:
       }
     engines: { node: ">=12" }
 
+  argon2@0.41.1:
+    resolution:
+      {
+        integrity: sha512-dqCW8kJXke8Ik+McUcMDltrbuAWETPyU6iq+4AhxqKphWi7pChB/Zgd/Tp/o8xRLbg8ksMj46F/vph9wnxpTzQ==,
+      }
+    engines: { node: ">=16.17.0" }
+
   argparse@2.0.1:
     resolution:
       {
@@ -2085,6 +2166,13 @@ packages:
         integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==,
       }
     engines: { node: ">=6" }
+
+  cluster-key-slot@1.1.1:
+    resolution:
+      {
+        integrity: sha512-rwHwUfXL40Chm1r08yrhU3qpUvdVlgkKNeyeGPOxnW8/SyVDvgRaed/Uz54AqWNaTCAThlj6QAs3TZcKI0xDEw==,
+      }
+    engines: { node: ">=0.10.0" }
 
   color-convert@2.0.1:
     resolution:
@@ -2213,6 +2301,13 @@ packages:
       {
         integrity: sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ==,
       }
+
+  denque@2.1.0:
+    resolution:
+      {
+        integrity: sha512-HVQE3AAb/pxF8fQAoiqpvg9i3evqug3hoiwakOyZAwJm+6vZehbkYXZ0l4JxS+I3QxM97v5aaRNhj8v5oBhekw==,
+      }
+    engines: { node: ">=0.10" }
 
   dequal@2.0.3:
     resolution:
@@ -2789,6 +2884,13 @@ packages:
       }
     engines: { node: ^14.17.0 || ^16.13.0 || >=18.0.0 }
 
+  ioredis@5.11.1:
+    resolution:
+      {
+        integrity: sha512-ehuGcf94bQXhfagULNXrJdfnWO38v070jxSx/qE87Kjzmu2fU7ro5EFAb+OPituLqgfyuQaym5DlrNydW2sJ9A==,
+      }
+    engines: { node: ">=12.22.0" }
+
   ipaddr.js@2.4.0:
     resolution:
       {
@@ -2891,6 +2993,12 @@ packages:
         integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==,
       }
     hasBin: true
+
+  jose@5.10.0:
+    resolution:
+      {
+        integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==,
+      }
 
   js-tokens@4.0.0:
     resolution:
@@ -3293,6 +3401,20 @@ packages:
       sass:
         optional: true
 
+  node-addon-api@8.9.0:
+    resolution:
+      {
+        integrity: sha512-ekZMeaaIzSQTSpr7X2X3iJM7lTzgnx8ahAG9pJfT/7+14mlEM8ZYQ9cgCDvSSRbReFK0oHli3WrZdCiRsgAT9Q==,
+      }
+    engines: { node: ^18 || ^20 || >= 21 }
+
+  node-gyp-build@4.8.4:
+    resolution:
+      {
+        integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==,
+      }
+    hasBin: true
+
   npm-run-path@5.3.0:
     resolution:
       {
@@ -3547,6 +3669,20 @@ packages:
         integrity: sha512-P4nbQYQfePJxRSmY+v/KINxVucm4NF3p3s7pJveMTtom52FR4YGltUQLB8idDXwDDWW+eYrWDFbuzUnjoWHF7g==,
       }
 
+  redis-errors@1.2.0:
+    resolution:
+      {
+        integrity: sha512-1qny3OExCf0UvUV/5wpYKf2YwPcOqXzkwKKSmKHiE6ZMQs5heeE/c8eXK+PNllPvmjgAbfnsbpkGZWy8cBpn9w==,
+      }
+    engines: { node: ">=4" }
+
+  redis-parser@3.0.0:
+    resolution:
+      {
+        integrity: sha512-DJnGAeenTdpMEH6uAJRK/uiyEIH9WVsUmoLwzudwGJUwZPp80PDBWPHXSAGNPwNvIXAbe7MSUB1zQFugFml66A==,
+      }
+    engines: { node: ">=4" }
+
   require-directory@2.1.1:
     resolution:
       {
@@ -3737,6 +3873,12 @@ packages:
         integrity: sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg==,
       }
     engines: { node: ">= 10.x" }
+
+  standard-as-callback@2.1.0:
+    resolution:
+      {
+        integrity: sha512-qoRRSyROncaz1z0mvYqIE4lCd9p2R90i6GxW3uZv5ucSu8tU7B5HXUP1gG8pVZsYNVaXjk8ClXHPttLyxAL48A==,
+      }
 
   string-argv@0.3.2:
     resolution:
@@ -4215,6 +4357,15 @@ snapshots:
       "@types/conventional-commits-parser": 5.0.2
       chalk: 5.6.2
 
+  "@connectrpc/connect-node@2.1.2(@bufbuild/protobuf@2.12.1)(@connectrpc/connect@2.1.2(@bufbuild/protobuf@2.12.1))":
+    dependencies:
+      "@bufbuild/protobuf": 2.12.1
+      "@connectrpc/connect": 2.1.2(@bufbuild/protobuf@2.12.1)
+
+  "@connectrpc/connect@2.1.2(@bufbuild/protobuf@2.12.1)":
+    dependencies:
+      "@bufbuild/protobuf": 2.12.1
+
   "@drizzle-team/brocli@0.10.2": {}
 
   "@emnapi/runtime@1.11.2":
@@ -4627,6 +4778,8 @@ snapshots:
   "@img/sharp-win32-x64@0.34.5":
     optional: true
 
+  "@ioredis/commands@1.10.0": {}
+
   "@jridgewell/gen-mapping@0.3.13":
     dependencies:
       "@jridgewell/sourcemap-codec": 1.5.5
@@ -4673,6 +4826,8 @@ snapshots:
     optional: true
 
   "@petamoriken/float16@3.9.3": {}
+
+  "@phc/format@1.0.0": {}
 
   "@phosphor-icons/react@2.1.10(react-dom@19.2.7(react@19.2.7))(react@19.2.7)":
     dependencies:
@@ -4935,6 +5090,12 @@ snapshots:
 
   ansi-styles@6.2.3: {}
 
+  argon2@0.41.1:
+    dependencies:
+      "@phc/format": 1.0.0
+      node-addon-api: 8.9.0
+      node-gyp-build: 4.8.4
+
   argparse@2.0.1: {}
 
   array-ify@1.0.0: {}
@@ -4994,6 +5155,8 @@ snapshots:
       wrap-ansi: 7.0.0
 
   clsx@2.1.1: {}
+
+  cluster-key-slot@1.1.1: {}
 
   color-convert@2.0.1:
     dependencies:
@@ -5060,6 +5223,8 @@ snapshots:
       ms: 2.1.3
 
   deep-is@0.1.4: {}
+
+  denque@2.1.0: {}
 
   dequal@2.0.3: {}
 
@@ -5433,6 +5598,18 @@ snapshots:
 
   ini@4.1.1: {}
 
+  ioredis@5.11.1:
+    dependencies:
+      "@ioredis/commands": 1.10.0
+      cluster-key-slot: 1.1.1
+      debug: 4.4.3
+      denque: 2.1.0
+      redis-errors: 1.2.0
+      redis-parser: 3.0.0
+      standard-as-callback: 2.1.0
+    transitivePeerDependencies:
+      - supports-color
+
   ipaddr.js@2.4.0: {}
 
   is-arrayish@0.2.1: {}
@@ -5468,6 +5645,8 @@ snapshots:
   jiti@2.6.1: {}
 
   jiti@2.7.0: {}
+
+  jose@5.10.0: {}
 
   js-tokens@4.0.0: {}
 
@@ -5677,6 +5856,10 @@ snapshots:
       - "@babel/core"
       - babel-plugin-macros
 
+  node-addon-api@8.9.0: {}
+
+  node-gyp-build@4.8.4: {}
+
   npm-run-path@5.3.0:
     dependencies:
       path-key: 4.0.0
@@ -5807,6 +5990,12 @@ snapshots:
 
   real-require@1.0.0: {}
 
+  redis-errors@1.2.0: {}
+
+  redis-parser@3.0.0:
+    dependencies:
+      redis-errors: 1.2.0
+
   require-directory@2.1.1: {}
 
   require-from-string@2.0.2: {}
@@ -5913,6 +6102,8 @@ snapshots:
   source-map@0.6.1: {}
 
   split2@4.2.0: {}
+
+  standard-as-callback@2.1.0: {}
 
   string-argv@0.3.2: {}
 

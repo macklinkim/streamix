@@ -1,0 +1,15 @@
+import { z } from "zod";
+
+const Env = z.object({
+  PORT: z.coerce.number().default(50051),
+  DATABASE_URL: z.string().default("postgres://streamix:streamix@localhost:5432/streamix"),
+  REDIS_URL: z.string().default("redis://localhost:6379"),
+  // Dev-only default; prod injects a real secret via Fly secrets (§10).
+  JWT_SECRET: z.string().default("dev-insecure-secret-change-me"),
+  ACCESS_TTL: z.string().default("15m"),
+  REFRESH_TTL: z.string().default("30d"),
+  // Live-state key TTL; refreshed by media heartbeat (§5.2 zombie-stream guard).
+  LIVE_TTL_SECONDS: z.coerce.number().default(90),
+});
+
+export const env = Env.parse(process.env);
