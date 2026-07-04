@@ -3,4 +3,8 @@ import { Redis } from "ioredis";
 import { env } from "./env.js";
 
 export const db: Database = createDb(env.DATABASE_URL);
-export const redis = new Redis(env.REDIS_URL);
+
+// Fail commands fast on outage (don't hang) and never crash on a connection
+// error — callers degrade gracefully (§10 Redis SPOF fallback).
+export const redis = new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2 });
+redis.on("error", () => {});

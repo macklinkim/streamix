@@ -2,11 +2,16 @@ import type { Interceptor } from "@connectrpc/connect";
 import { Code, ConnectError } from "@connectrpc/connect";
 import { redis } from "./redis.js";
 
-// Fixed-window counter. Returns true if this hit exceeds the limit.
+// Fixed-window counter. Returns true if this hit exceeds the limit. Fails OPEN
+// on a Redis outage (availability over throttling, §10) so RPCs keep working.
 async function overLimit(key: string, limit: number, windowSec: number): Promise<boolean> {
-  const n = await redis.incr(key);
-  if (n === 1) await redis.expire(key, windowSec);
-  return n > limit;
+  try {
+    const n = await redis.incr(key);
+    if (n === 1) await redis.expire(key, windowSec);
+    return n > limit;
+  } catch {
+    return false;
+  }
 }
 
 // Rate-limits browser->BFF unary RPCs. Login/Register are throttled per email

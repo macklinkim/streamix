@@ -26,18 +26,25 @@ async function joinRoom(channelId: string, socket: WebSocket): Promise<void> {
     created.sub.on("message", (_ch, payload) => {
       for (const s of created.sockets) if (s.readyState === 1) s.send(payload);
     });
-    await created.sub.subscribe(chatChannel(channelId));
+    try {
+      await created.sub.subscribe(chatChannel(channelId));
+    } catch (e) {
+      // Redis down: don't leave a broken room behind; caller marks unavailable.
+      rooms.delete(channelId);
+      created.sub.disconnect();
+      throw e;
+    }
     room = created;
   }
   room.sockets.add(socket);
-  await redis.incr(viewersKey(channelId));
+  await redis.incr(viewersKey(channelId)).catch(() => {}); // viewer count is best-effort
 }
 
 async function leaveRoom(channelId: string, socket: WebSocket): Promise<void> {
   const room = rooms.get(channelId);
   if (!room) return;
   room.sockets.delete(socket);
-  await redis.decr(viewersKey(channelId));
+  await redis.decr(viewersKey(channelId)).catch(() => {});
   if (room.sockets.size === 0) {
     await room.sub.unsubscribe().catch(() => {});
     room.sub.disconnect();
@@ -60,7 +67,12 @@ export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
     /* fall back to default display name */
   }
 
-  await joinRoom(channelId, socket);
+  try {
+    await joinRoom(channelId, socket);
+  } catch {
+    // Chat depends on Redis pub/sub; on outage close cleanly (unavailable), no crash.
+    return socket.close(WsCloseCode.SERVER_ERROR, "chat unavailable");
+  }
   socket.on("close", () => void leaveRoom(channelId, socket));
 
   let sendTimes: number[] = [];

@@ -34,21 +34,34 @@ function viewersKey(channelId: string): string {
   return `viewers:${channelId}`;
 }
 
-async function toChannelMsg(row: ChannelRow): Promise<MessageInitShape<typeof ChannelSchema>> {
-  const [isLive, viewers] = await Promise.all([
-    redis.exists(liveKey(row.id)),
-    redis.get(viewersKey(row.id)),
-  ]);
+async function toChannelMsg(
+  row: ChannelRow,
+  fallbackLive = false,
+): Promise<MessageInitShape<typeof ChannelSchema>> {
+  // Redis is the liveness truth; on outage degrade to the caller's fallback
+  // (ListLive passes the Postgres status; §10 Redis SPOF fallback).
+  let isLive = fallbackLive;
+  let viewers = 0;
+  try {
+    const [exists, v] = await Promise.all([
+      redis.exists(liveKey(row.id)),
+      redis.get(viewersKey(row.id)),
+    ]);
+    isLive = exists === 1;
+    viewers = v ? Number(v) : 0;
+  } catch {
+    /* Redis unavailable -> keep fallbackLive, viewers 0 */
+  }
   return {
     id: row.id,
     ownerUserId: row.ownerUserId,
     slug: row.slug,
     title: row.title,
     category: row.category ?? "",
-    isLive: isLive === 1,
-    viewerCount: viewers ? Number(viewers) : 0,
+    isLive,
+    viewerCount: viewers,
     // Media serves this once captured; the client falls back if it 404s.
-    thumbnailUrl: isLive === 1 ? `${env.MEDIA_PUBLIC_URL}/thumb/${row.id}.jpg` : "",
+    thumbnailUrl: isLive ? `${env.MEDIA_PUBLIC_URL}/thumb/${row.id}.jpg` : "",
   };
 }
 
@@ -105,7 +118,8 @@ export const channelService: ServiceImpl<typeof ChannelService> = {
     // only channels whose Redis live key is still alive (TTL is the truth, §5.2)
     // so streams killed without donePublish don't linger in the list.
     const byId = new Map(rows.map((r) => [r.id, r]));
-    const mapped = await Promise.all([...byId.values()].map(toChannelMsg));
+    // fallbackLive=true: if Redis is down, trust Postgres status='live' (§10).
+    const mapped = await Promise.all([...byId.values()].map((r) => toChannelMsg(r, true)));
     const live = mapped.filter((c) => c.isLive);
     return { channels: live, pageInfo: { total: live.length, page: 1, pageSize: live.length } };
   },
@@ -146,8 +160,9 @@ export const channelService: ServiceImpl<typeof ChannelService> = {
   },
 
   async heartbeat(req) {
-    // Refresh TTL so Core doesn't reap a healthy stream (§5.2 zombie guard).
-    await redis.expire(liveKey(req.channelId), env.LIVE_TTL_SECONDS);
+    // Refresh TTL (§5.2 zombie guard). SET (not EXPIRE) also re-registers the
+    // key if it was lost — e.g. after a Redis restart — so the stream recovers.
+    await redis.set(liveKey(req.channelId), "1", "EX", env.LIVE_TTL_SECONDS);
     return {};
   },
 
