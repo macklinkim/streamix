@@ -1,12 +1,13 @@
 import { createServer } from "node:http";
-import { createReadStream, existsSync, statSync } from "node:fs";
+import { createReadStream, readFileSync, existsSync, statSync } from "node:fs";
 import { join, normalize } from "node:path";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { env } from "./env.js";
 
-// Data-plane HLS serving with signed-URL authz (§5.2). The master playlist is
-// fetched with ?token&exp (from Core.GetPlaybackUrl); a valid token sets a
-// short-lived cookie so hls.js segment requests stay authorized. Unsigned = 403.
+// Data-plane HLS serving with signed-URL authz (§5.2). The playlist is fetched
+// with ?token&exp (from Core.GetPlaybackUrl); the playlist's segment URIs are
+// rewritten to carry the same token so hls.js stays authorized cross-origin
+// without cookies (browser-friendly). Unsigned / expired -> 403.
 function sign(payload: string): string {
   return createHmac("sha256", env.PLAYBACK_SECRET).update(payload).digest("hex");
 }
@@ -20,18 +21,6 @@ function tokenValid(channelId: string, token: string | null, exp: string | null)
   return timingSafeEqual(Buffer.from(token), Buffer.from(expected));
 }
 
-function cookieValid(channelId: string, cookieHeader: string | undefined): boolean {
-  if (!cookieHeader) return false;
-  const match = cookieHeader.split(";").map((c) => c.trim().split("="));
-  const val = match.find(([k]) => k === `pb_${channelId}`)?.[1];
-  if (!val) return false;
-  const [token, exp] = decodeURIComponent(val).split(".");
-  return tokenValid(channelId, token ?? null, exp ?? null);
-}
-
-const contentType = (file: string) =>
-  file.endsWith(".m3u8") ? "application/vnd.apple.mpegurl" : "video/mp2t";
-
 export function startHlsServer(): void {
   const server = createServer((req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");
@@ -43,9 +32,7 @@ export function startHlsServer(): void {
     const [, channelId, rawFile] = m;
     const token = url.searchParams.get("token");
     const exp = url.searchParams.get("exp");
-
-    const byToken = tokenValid(channelId!, token, exp);
-    if (!byToken && !cookieValid(channelId!, req.headers.cookie)) {
+    if (!tokenValid(channelId!, token, exp)) {
       res.writeHead(403).end("forbidden");
       return;
     }
@@ -58,18 +45,25 @@ export function startHlsServer(): void {
       return;
     }
 
-    const headers: Record<string, string> = {
-      "Content-Type": contentType(safe),
-      "Access-Control-Allow-Origin": "*",
-      "Cache-Control": "no-cache",
-    };
-    // A token-authorized playlist grants a cookie for subsequent segments.
-    // (Prod cross-origin needs SameSite=None; Secure; here dev is same-origin.)
-    if (byToken && token && exp) {
-      headers["Set-Cookie"] =
-        `pb_${channelId}=${encodeURIComponent(`${token}.${exp}`)}; Path=/hls/${channelId}/; Max-Age=300; HttpOnly`;
+    const cors = { "Access-Control-Allow-Origin": "*", "Cache-Control": "no-cache" };
+
+    if (safe.endsWith(".m3u8")) {
+      const q = `?token=${token}&exp=${exp}`;
+      const rewritten = readFileSync(filePath, "utf8")
+        .split("\n")
+        .map((line) => {
+          const t = line.trim();
+          return t && !t.startsWith("#") && (t.endsWith(".ts") || t.endsWith(".m4s"))
+            ? `${t}${q}`
+            : line;
+        })
+        .join("\n");
+      res.writeHead(200, { ...cors, "Content-Type": "application/vnd.apple.mpegurl" });
+      res.end(rewritten);
+      return;
     }
-    res.writeHead(200, headers);
+
+    res.writeHead(200, { ...cors, "Content-Type": "video/mp2t" });
     createReadStream(filePath).pipe(res);
   });
 

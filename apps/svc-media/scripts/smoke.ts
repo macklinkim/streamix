@@ -68,7 +68,7 @@ await sleep(5000); // let ingest establish + a few HLS segments write
 const live = await channel.getChannel({ slug });
 ok("Core shows is_live during stream", live.channel?.isLive === true);
 
-// signed playback URL from Core -> 200 + #EXTM3U, and a cookie for segments
+// signed playback URL from Core -> 200 + #EXTM3U; segment URIs carry the token
 const playback = await channel.getPlaybackUrl({ slug });
 const signed = await fetch(playback.url).catch(() => null);
 const body = signed ? await signed.text() : "";
@@ -77,24 +77,24 @@ ok(
   signed?.status === 200 && body.includes("#EXTM3U"),
   `status=${signed?.status}`,
 );
-const cookie = signed?.headers.get("set-cookie")?.split(";")[0] ?? "";
 
 // unsigned (token stripped) -> 403
 const unsigned = await fetch(playback.url.split("?")[0]!).catch(() => null);
 ok("unsigned HLS blocked (403)", unsigned?.status === 403, `status=${unsigned?.status}`);
 
-// a segment authorized by the cookie -> 200
+// the rewritten playlist's segment URI already carries ?token -> 200
 const seg = body
   .split("\n")
-  .find((l) => l.trim().endsWith(".ts"))
+  .find((l) => l.includes(".ts"))
   ?.trim();
-const segUrl = `${playback.url.split("/index.m3u8")[0]}/${seg}`;
-const segRes = await fetch(segUrl, cookie ? { headers: { cookie } } : {}).catch(() => null);
-ok(
-  "segment served via cookie (200)",
-  segRes?.status === 200,
-  `status=${segRes?.status} seg=${seg}`,
-);
+const base = playback.url.split("/index.m3u8")[0];
+const segRes = await fetch(`${base}/${seg}`).catch(() => null);
+ok("token-signed segment served (200)", segRes?.status === 200, `status=${segRes?.status}`);
+
+// same segment without the token -> 403
+const segNoTok = seg?.split("?")[0];
+const segBad = await fetch(`${base}/${segNoTok}`).catch(() => null);
+ok("unsigned segment blocked (403)", segBad?.status === 403, `status=${segBad?.status}`);
 
 push.kill("SIGKILL");
 await sleep(2500); // donePublish -> stopStream
