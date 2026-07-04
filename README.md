@@ -26,6 +26,10 @@ pnpm build
 pnpm --filter @streamix/bff dev  # http://localhost:8080/health
 ```
 
+## 배포
+
+하이브리드(ADR-8): web=Vercel · 백엔드/미디어=Fly.io · HLS=R2. 배포 설정(Dockerfile·fly.toml·`.github/workflows/deploy.yml`)은 리포에 포함. 실행 절차는 [`docs/DEPLOY.md`](./docs/DEPLOY.md).
+
 ## 검증 철학
 
 완료 판정 = **테스트 통과가 아니라 실제 구동/배포 스모크**. 자동 테스트는 크리티컬 패스 회귀 방어에만 얇게. (§9)
