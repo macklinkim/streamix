@@ -11,6 +11,11 @@ const Env = z.object({
   THUMB_INTERVAL_SECONDS: z.coerce.number().default(15),
   // A channel dir with no HLS update for this long is reaped (§ ADR-3 retention).
   RETENTION_TTL_SECONDS: z.coerce.number().default(120),
+  // Browser-ingest transcode target bitrate (b:v = maxrate, bufsize = 2x). §1.2 결함 3.
+  INGEST_VIDEO_BITRATE: z.string().default("2500k"),
+  // Max unflushed ingest bytes buffered for a stalled ffmpeg before we drop the
+  // connection (4009). Caps svc-media heap growth under backpressure. §1.2 결함 6.
+  INGEST_BUFFER_LIMIT_MB: z.coerce.number().default(64),
 });
 
 export const env = Env.parse(process.env);

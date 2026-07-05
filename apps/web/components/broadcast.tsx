@@ -6,16 +6,20 @@ import { Broadcast as BroadcastIcon, StopCircle } from "@phosphor-icons/react";
 // trim() guards against config junk (stray whitespace/BOM) breaking the WS URL.
 const ingestUrl = (process.env.NEXT_PUBLIC_MEDIA_INGEST_URL ?? "ws://localhost:8090").trim();
 
-// Browser screen-share broadcasting: getDisplayMedia -> MediaRecorder(webm)
+// Browser screen-share broadcasting: getDisplayMedia -> MediaRecorder
 // -> WS /ingest -> svc-media ffmpeg -> the same RTMP/HLS pipeline OBS uses.
-function pickMimeType(): string | undefined {
-  const candidates = [
-    "video/webm;codecs=h264,opus",
-    "video/webm;codecs=vp9,opus",
-    "video/webm;codecs=vp8,opus",
-    "video/webm",
+// Codec negotiation (ADR-9): prefer formats the server can remux without
+// re-encoding (mp4/H.264 -> full copy, webm/H.264 -> video copy). The chosen
+// `codec` label is sent to the server so it picks the matching ffmpeg branch;
+// VP8 falls back to full transcoding server-side.
+function pickMimeType(): { mimeType: string; codec: string } | undefined {
+  const candidates: Array<{ mimeType: string; codec: string }> = [
+    { mimeType: "video/mp4;codecs=avc1.42E01E,mp4a.40.2", codec: "mp4-h264" },
+    { mimeType: "video/webm;codecs=h264", codec: "webm-h264" },
+    { mimeType: "video/webm;codecs=vp8,opus", codec: "webm-vp8" },
+    { mimeType: "video/webm", codec: "webm-vp8" },
   ];
-  return candidates.find((t) => MediaRecorder.isTypeSupported(t));
+  return candidates.find((c) => MediaRecorder.isTypeSupported(c.mimeType));
 }
 
 type Phase = "idle" | "starting" | "live" | "error";
@@ -45,9 +49,13 @@ export function ScreenBroadcast({ streamKey }: { streamKey: string }) {
 
     if (videoRef.current) videoRef.current.srcObject = stream;
 
-    const ws = new WebSocket(`${ingestUrl}/ingest?key=${encodeURIComponent(streamKey)}`);
+    const picked = pickMimeType();
+    const codecParam = picked ? `&codec=${picked.codec}` : "";
+    const ws = new WebSocket(
+      `${ingestUrl}/ingest?key=${encodeURIComponent(streamKey)}${codecParam}`,
+    );
     const recorder = new MediaRecorder(stream, {
-      mimeType: pickMimeType(),
+      mimeType: picked?.mimeType,
       videoBitsPerSecond: 2_500_000,
     });
 
