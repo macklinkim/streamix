@@ -32,8 +32,13 @@ export function Chat({ channelId }: { channelId: string }) {
       };
       ws.onmessage = (evt) => {
         const m = JSON.parse(evt.data);
+        if (m.type === "batch" && Array.isArray(m.items)) {
+          const items = m.items.filter((it: ChatMessage) => it.text);
+          if (items.length) setMessages((prev) => [...prev, ...items].slice(-200));
+          return;
+        }
         if (m.type === "error") return;
-        if (m.text) setMessages((prev) => [...prev.slice(-199), m]);
+        if (m.text) setMessages((prev) => [...prev.slice(-199), m]); // legacy single (back-compat)
       };
     };
     connect();
