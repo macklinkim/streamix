@@ -1,0 +1,31 @@
+# MediaMTX config for the LL-HLS spike (M3-1) and subsequent M3 work.
+# Ingest: RTMP. Packaging: Low-Latency HLS. WebRTC/SRT disabled (unused surface).
+logLevel: info
+
+# --- ingest ---
+rtmp: yes
+rtmpAddress: :1935
+
+# --- packaging: Low-Latency HLS ---
+hls: yes
+hlsAddress: :8888
+hlsAllowOrigins: ['*']
+hlsVariant: lowLatency
+hlsAlwaysRemux: no
+hlsSegmentCount: 7
+hlsSegmentDuration: 1s
+hlsPartDuration: 200ms
+hlsSegmentMaxSize: 50M
+# Serve the low-latency parts directly (no directory index needed for the spike).
+
+# --- unused protocols off ---
+rtsp: no
+webrtc: no
+srt: no
+
+# --- control API (M3-2 hooks target this later) ---
+api: yes
+apiAddress: :9997
+
+paths:
+  all_others:

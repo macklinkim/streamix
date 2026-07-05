@@ -45,6 +45,17 @@ services:
     volumes:
       - miniodata:/data
 
+  # LL-HLS packager (ADR-10). RTMP ingest -> Low-Latency HLS. Ports are distinct
+  # from the rest of the stack (1935 RTMP / 8888 HLS / 9997 control API).
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    ports:
+      - "1936:1935" # RTMP ingest (host 1936: dev svc-media/NMS holds 1935)
+      - "8888:8888" # LL-HLS
+      - "9997:9997" # control API (runOnReady/runOnNotReady hooks land in M3-2)
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml:ro
+
   nginx:
     image: nginx:1.27-alpine
     ports:
