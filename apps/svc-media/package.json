@@ -15,7 +15,6 @@
     "@connectrpc/connect-node": "^2.0.0",
     "@streamix/proto": "workspace:*",
     "ffmpeg-static": "^5.2.0",
-    "node-media-server": "^2.7.0",
     "ws": "^8.18.0",
     "zod": "^3.24.1"
   },
