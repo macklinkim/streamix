@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { Readable } from "node:stream";
 import { createReadStream, existsSync } from "node:fs";
 import { join } from "node:path";
 import { createHmac, timingSafeEqual } from "node:crypto";
@@ -143,13 +144,20 @@ export function startHlsServer(
       }
       const ct = r.headers.get("content-type") ?? "application/octet-stream";
       if (safeFile.endsWith(".m3u8")) {
+        // Playlists need the full text for token re-signing (small, cheap).
         const body = rewritePlaylist(await r.text(), `?token=${token}&exp=${exp}`);
         res.writeHead(200, { "Cache-Control": "no-cache", "Content-Type": ct });
         res.end(body);
       } else {
-        const buf = Buffer.from(await r.arrayBuffer());
+        // Media (segments + LL-HLS parts/preload hints): stream bytes through as
+        // they arrive. Buffering the whole part first added up to a part-duration
+        // of latency per request on the low-latency path.
         res.writeHead(200, { "Cache-Control": "no-cache", "Content-Type": ct });
-        res.end(buf);
+        if (r.body) {
+          Readable.fromWeb(r.body as import("node:stream/web").ReadableStream).pipe(res);
+        } else {
+          res.end();
+        }
       }
     })();
   });
