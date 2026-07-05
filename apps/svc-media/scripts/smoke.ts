@@ -82,13 +82,48 @@ ok(
 const unsigned = await fetch(playback.url.split("?")[0]!).catch(() => null);
 ok("unsigned HLS blocked (403)", unsigned?.status === 403, `status=${unsigned?.status}`);
 
-// the rewritten playlist's segment URI already carries ?token -> 200
-const seg = body
-  .split("\n")
-  .find((l) => l.includes(".ts"))
-  ?.trim();
+// the rewritten playlist's segment URI already carries ?token -> 200.
+// MediaMTX (ADR-10) serves a master playlist + fMP4 (.mp4/.m4s); legacy .ts kept.
 const base = playback.url.split("/index.m3u8")[0];
-const segRes = await fetch(`${base}/${seg}`).catch(() => null);
+// Real media only: skip LL-HLS "gap.mp4" placeholders (they 404 by design);
+// fall back to an #EXT-X-PART URI when no full segment is in the window yet.
+const segLine = (text: string) => {
+  const full = text
+    .split("\n")
+    .find(
+      (l) => !l.startsWith("#") && !l.startsWith("gap.") && /\.(ts|mp4|m4s)(\?|$)/.test(l.trim()),
+    )
+    ?.trim();
+  if (full) return full;
+  return text.match(/#EXT-X-PART:.*URI="([^"]+)"/)?.[1];
+};
+// LL-HLS parts rotate quickly; refetch the playlist and retry so the smoke
+// doesn't fail on a segment that expired between the two requests.
+async function fetchFreshSegment(): Promise<{ seg?: string; status?: number }> {
+  for (let i = 0; i < 5; i++) {
+    const pl = await fetch(playback.url).catch(() => null);
+    let text = pl ? await pl.text() : "";
+    const variant = text
+      .split("\n")
+      .find((l) => !l.startsWith("#") && l.includes(".m3u8"))
+      ?.trim();
+    if (variant && !segLine(text)) {
+      const vRes = await fetch(`${base}/${variant}`).catch(() => null);
+      text = vRes ? await vRes.text() : "";
+    }
+    const candidate = segLine(text);
+    if (process.env.SMOKE_DEBUG) console.log(`--- attempt ${i} playlist ---\n${text}`);
+    if (candidate) {
+      const r = await fetch(`${base}/${candidate}`).catch(() => null);
+      if (r?.status === 200) return { seg: candidate, status: 200 };
+      if (i === 4) return { seg: candidate, status: r?.status };
+    }
+    await sleep(1000);
+  }
+  return {};
+}
+const { seg, status: segStatus } = await fetchFreshSegment();
+const segRes = { status: segStatus };
 ok("token-signed segment served (200)", segRes?.status === 200, `status=${segRes?.status}`);
 
 // same segment without the token -> 403

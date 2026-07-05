@@ -120,7 +120,19 @@ if (live) {
     const res = await fetch(url);
     m3u8Status = res.status;
     if (res.ok) {
-      hasSegments = /\.ts/.test(await res.text());
+      // MediaMTX LL-HLS (ADR-10): master playlist references a variant .m3u8;
+      // media playlists carry fMP4 (.mp4/.m4s). Legacy .ts kept for safety.
+      let text = await res.text();
+      const variant = text
+        .split("\n")
+        .find((l) => !l.startsWith("#") && l.includes(".m3u8"))
+        ?.trim();
+      if (variant) {
+        const base = url.split("/index.m3u8")[0];
+        const vRes = await fetch(`${base}/${variant}`).catch(() => null);
+        if (vRes?.ok) text = await vRes.text();
+      }
+      hasSegments = /\.(ts|mp4|m4s)/.test(text);
       if (hasSegments) break;
     }
     await sleep(1000);
