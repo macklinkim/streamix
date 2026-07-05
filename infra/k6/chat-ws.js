@@ -52,9 +52,13 @@ export default function (data) {
     });
     socket.on("message", (raw) => {
       const m = JSON.parse(raw);
-      if (m.sentAtMs) {
-        fanout.add(Date.now() - m.sentAtMs);
-        received.add(1);
+      // BFF may coalesce bursts into {type:"batch", items:[...]} (M4); count each.
+      const items = m.type === "batch" ? m.items : [m];
+      for (const it of items) {
+        if (it.sentAtMs) {
+          fanout.add(Date.now() - it.sentAtMs);
+          received.add(1);
+        }
       }
     });
   });

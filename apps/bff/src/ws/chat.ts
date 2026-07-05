@@ -10,22 +10,90 @@ import { verifyAccessToken } from "../auth.js";
 const SEND_BURST = 5;
 const SEND_WINDOW_MS = 3000;
 
+// Fan-out backpressure + micro-batching (M4, ADR-11). Chat favors recency over
+// completeness: a socket whose kernel/app buffer is backed up past the limit is
+// skipped (message dropped) rather than blocking the room; the connection stays.
+const BUFFERED_LIMIT = 1 << 20; // 1MB per-socket bufferedAmount ceiling
+const BATCH_WINDOW_MS = 50; // coalescing window for bursty inbound
+const DROP_LOG_INTERVAL_MS = 60_000;
+
 const chatChannel = (id: string) => `chat:${id}`;
 const viewersKey = (id: string) => `viewers:${id}`;
 
 // One Redis subscription per room per BFF instance (ADR-4 refcount), shared by
 // all sockets watching that room. Publish path is svc-chat.
-type Room = { sub: Redis; sockets: Set<WebSocket> };
+// queue/timer implement per-room micro-batching; drops counts backpressure skips.
+type Room = {
+  sub: Redis;
+  sockets: Set<WebSocket>;
+  queue: string[];
+  timer: ReturnType<typeof setTimeout> | null;
+  drops: number;
+};
 const rooms = new Map<string, Room>();
+
+// Fan-out one frame to every live socket, skipping backed-up ones (drop = recency).
+function fanout(room: Room, frame: string): void {
+  for (const s of room.sockets) {
+    if (s.readyState !== 1) continue;
+    if (s.bufferedAmount > BUFFERED_LIMIT) {
+      room.drops++;
+      continue;
+    }
+    s.send(frame);
+  }
+}
+
+// Flush the room queue: single message keeps the legacy wire form (back-compat);
+// 2+ coalesce into {type:"batch", items:[...]}. Clears any pending timer.
+function flush(room: Room): void {
+  if (room.timer) {
+    clearTimeout(room.timer);
+    room.timer = null;
+  }
+  const batch = room.queue;
+  if (batch.length === 0) return;
+  room.queue = [];
+  const frame =
+    batch.length === 1
+      ? batch[0]!
+      : JSON.stringify({ type: "batch", items: batch.map((p) => JSON.parse(p)) });
+  fanout(room, frame);
+}
+
+// (a) An isolated message (queue length 1, no window open) flushes immediately —
+// zero added latency under low load. (b) Anything arriving during the open 50ms
+// window coalesces and ships as one batch when the timer fires.
+function enqueue(room: Room, payload: string): void {
+  room.queue.push(payload);
+  if (room.queue.length === 1 && room.timer === null) {
+    flush(room);
+    room.timer = setTimeout(() => flush(room), BATCH_WINDOW_MS);
+  }
+}
+
+// Single shared reporter: log rooms that dropped in the last window, then reset.
+setInterval(() => {
+  for (const [id, room] of rooms) {
+    if (room.drops > 0) {
+      console.warn(`[chat] room=${id} backpressure_drops=${room.drops} window=60s`);
+      room.drops = 0;
+    }
+  }
+}, DROP_LOG_INTERVAL_MS).unref();
 
 async function joinRoom(channelId: string, socket: WebSocket): Promise<void> {
   let room = rooms.get(channelId);
   if (!room) {
-    const created: Room = { sub: createSubscriber(), sockets: new Set() };
+    const created: Room = {
+      sub: createSubscriber(),
+      sockets: new Set(),
+      queue: [],
+      timer: null,
+      drops: 0,
+    };
     rooms.set(channelId, created);
-    created.sub.on("message", (_ch, payload) => {
-      for (const s of created.sockets) if (s.readyState === 1) s.send(payload);
-    });
+    created.sub.on("message", (_ch, payload) => enqueue(created, payload));
     try {
       await created.sub.subscribe(chatChannel(channelId));
     } catch (e) {
@@ -46,6 +114,7 @@ async function leaveRoom(channelId: string, socket: WebSocket): Promise<void> {
   room.sockets.delete(socket);
   await redis.decr(viewersKey(channelId)).catch(() => {});
   if (room.sockets.size === 0) {
+    if (room.timer) clearTimeout(room.timer);
     await room.sub.unsubscribe().catch(() => {});
     room.sub.disconnect();
     rooms.delete(channelId);
