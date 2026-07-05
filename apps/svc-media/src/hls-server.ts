@@ -51,7 +51,7 @@ function grabCookie(r: Response): void {
   const set = r.headers.getSetCookie?.() ?? [];
   if (set.length) mtxCookie = set[set.length - 1]!.split(";")[0]!;
 }
-async function mtxFetch(pathAndQuery: string): Promise<Response> {
+export async function mtxFetch(pathAndQuery: string): Promise<Response> {
   const url = `${mtx.hlsOrigin}${pathAndQuery}`;
   const doFetch = (cookie: string) =>
     fetch(url, { headers: cookie ? { cookie } : {}, redirect: "manual" });

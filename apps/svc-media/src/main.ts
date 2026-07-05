@@ -6,7 +6,7 @@ import ffmpegStatic from "ffmpeg-static";
 import { ConnectError } from "@connectrpc/connect";
 import { env, mtx, thumbRoot } from "./env.js";
 import { core } from "./core-client.js";
-import { startHlsServer } from "./hls-server.js";
+import { startHlsServer, mtxFetch } from "./hls-server.js";
 import { attachIngest } from "./ingest.js";
 import { sweepRetention, reapChannel } from "./retention.js";
 
@@ -28,25 +28,64 @@ const claiming = new Set<string>(); // paths with an in-flight StartStream
 
 const keyOf = (mtxPath: string) => mtxPath.split("/").pop() ?? "";
 
-// Grab one JPEG frame off MediaMTX RTMP for the channel's list card (ADR-3).
-// RTMP_PORT now points at MediaMTX (ingest.ts publishes there too).
-function captureThumbnail(channelId: string, mtxPath: string): void {
-  spawn(
-    ffmpeg,
-    [
-      "-y",
-      "-i",
-      `rtmp://127.0.0.1:${env.RTMP_PORT}/${mtxPath}`,
-      "-frames:v",
-      "1",
-      "-vf",
-      "scale=320:-1",
-      "-q:v",
-      "4",
-      join(thumbRoot, `${channelId}.jpg`),
-    ],
-    { stdio: "ignore" },
-  );
+// Grab one JPEG frame for the channel's list card (ADR-3, M5 경량화): instead of
+// opening a fresh RTMP connection every interval, pull the newest full HLS
+// segment (init + fMP4 fragment) off the MediaMTX origin over HTTP and extract
+// one frame from bytes already produced. Warm-up 404/gap windows are simply
+// skipped — the caller's existing retry cadence (4s first shot + interval)
+// covers them.
+async function captureThumbnail(channelId: string, mtxPath: string): Promise<void> {
+  try {
+    let pl = await mtxFetch(`/${mtxPath}/index.m3u8`);
+    if (pl.status !== 200) return;
+    let text = await pl.text();
+    const variant = text
+      .split("\n")
+      .find((l) => !l.startsWith("#") && l.includes(".m3u8"))
+      ?.trim();
+    if (variant) {
+      pl = await mtxFetch(`/${mtxPath}/${variant}`);
+      if (pl.status !== 200) return;
+      text = await pl.text();
+    }
+    const initUri = text.match(/#EXT-X-MAP:URI="([^"]+)"/)?.[1];
+    const segs = text
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith("#") && !l.startsWith("gap.") && /\.(mp4|m4s|ts)$/.test(l));
+    const seg = segs[segs.length - 1];
+    if (!seg) return; // still warming up — next tick retries
+    const parts: Buffer[] = [];
+    if (initUri) {
+      const r = await mtxFetch(`/${mtxPath}/${initUri}`);
+      if (r.status !== 200) return;
+      parts.push(Buffer.from(await r.arrayBuffer()));
+    }
+    const r = await mtxFetch(`/${mtxPath}/${seg}`);
+    if (r.status !== 200) return;
+    parts.push(Buffer.from(await r.arrayBuffer()));
+
+    const ff = spawn(
+      ffmpeg,
+      [
+        "-y",
+        "-i",
+        "pipe:0",
+        "-frames:v",
+        "1",
+        "-vf",
+        "scale=320:-1",
+        "-q:v",
+        "4",
+        join(thumbRoot, `${channelId}.jpg`),
+      ],
+      { stdio: ["pipe", "ignore", "ignore"] },
+    );
+    ff.stdin.on("error", () => {});
+    ff.stdin.end(Buffer.concat(parts));
+  } catch {
+    /* origin hiccup — next interval retries */
+  }
 }
 
 // Best-effort kick so the single-writer invariant holds: the key was already
@@ -74,9 +113,9 @@ async function onPublishReady(mtxPath: string): Promise<void> {
   try {
     const { channelId } = await core.startStream({ streamKey: keyOf(mtxPath) });
     const hb = setInterval(() => void core.heartbeat({ channelId }).catch(() => {}), 30_000);
-    setTimeout(() => captureThumbnail(channelId, mtxPath), 4000); // first frame once warm
+    setTimeout(() => void captureThumbnail(channelId, mtxPath), 4000); // first frame once warm
     const thumb = setInterval(
-      () => captureThumbnail(channelId, mtxPath),
+      () => void captureThumbnail(channelId, mtxPath),
       env.THUMB_INTERVAL_SECONDS * 1000,
     );
     sessions.set(mtxPath, { channelId, hb, thumb });
