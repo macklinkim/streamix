@@ -21,6 +21,10 @@ export const channels = pgTable("channels", {
   title: text("title").notNull(),
   category: text("category"),
   streamKeyHash: text("stream_key_hash").notNull(),
+  // Owner-facing key identification (§ studio key management): a short prefix
+  // of the plaintext key + when it was issued. Never enough to reconstruct it.
+  streamKeyPrefix: text("stream_key_prefix"),
+  streamKeyIssuedAt: timestamp("stream_key_issued_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

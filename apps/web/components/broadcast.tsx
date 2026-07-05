@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Broadcast as BroadcastIcon, StopCircle } from "@phosphor-icons/react";
 
-const ingestUrl = process.env.NEXT_PUBLIC_MEDIA_INGEST_URL ?? "ws://localhost:8090";
+// trim() guards against config junk (stray whitespace/BOM) breaking the WS URL.
+const ingestUrl = (process.env.NEXT_PUBLIC_MEDIA_INGEST_URL ?? "ws://localhost:8090").trim();
 
 // Browser screen-share broadcasting: getDisplayMedia -> MediaRecorder(webm)
 // -> WS /ingest -> svc-media ffmpeg -> the same RTMP/HLS pipeline OBS uses.
@@ -76,7 +77,7 @@ export function ScreenBroadcast({ streamKey }: { streamKey: string }) {
       stop(
         e.code === 4403
           ? "스트림 키가 유효하지 않습니다. 키를 재발급해 주세요."
-          : "송출 연결이 끊어졌습니다. 다시 시도해 주세요.",
+          : `송출 연결이 끊어졌습니다. 다시 시도해 주세요. (코드 ${e.code})`,
       );
     };
     recorder.ondataavailable = (e) => {

@@ -86,6 +86,8 @@ export const channelService: ServiceImpl<typeof ChannelService> = {
           title,
           category: req.category || null,
           streamKeyHash: hashStreamKey(streamKey),
+          streamKeyPrefix: streamKey.slice(0, 13),
+          streamKeyIssuedAt: new Date(),
         })
         .returning();
       return { channel: await toChannelMsg(c!), streamKey };
@@ -132,7 +134,14 @@ export const channelService: ServiceImpl<typeof ChannelService> = {
       .where(eq(channels.ownerUserId, ownerUserId))
       .limit(1);
     // No channel yet is a normal state, not an error: channel stays unset.
-    return c ? { channel: await toChannelMsg(c) } : {};
+    if (!c) return {};
+    return {
+      channel: await toChannelMsg(c),
+      streamKeyPrefix: c.streamKeyPrefix ?? "",
+      streamKeyIssuedAt: c.streamKeyIssuedAt
+        ? BigInt(Math.floor(c.streamKeyIssuedAt.getTime() / 1000))
+        : 0n,
+    };
   },
 
   async rotateStreamKey(_req, ctx) {
@@ -140,7 +149,11 @@ export const channelService: ServiceImpl<typeof ChannelService> = {
     const streamKey = generateStreamKey();
     const [c] = await db
       .update(channels)
-      .set({ streamKeyHash: hashStreamKey(streamKey) })
+      .set({
+        streamKeyHash: hashStreamKey(streamKey),
+        streamKeyPrefix: streamKey.slice(0, 13),
+        streamKeyIssuedAt: new Date(),
+      })
       .where(eq(channels.ownerUserId, ownerUserId))
       .returning({ id: channels.id });
     if (!c) throw appError(AppErrorCode.NOT_FOUND, "channel not found");

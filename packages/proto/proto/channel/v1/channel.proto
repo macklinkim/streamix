@@ -87,6 +87,10 @@ message GetMyChannelRequest {}
 message GetMyChannelResponse {
   // Unset if the authed user has no channel yet.
   Channel channel = 1;
+  // Owner-only key identification: short plaintext prefix (e.g. "live_a1b2c3de")
+  // and issue time (unix seconds). Never enough to reconstruct the key.
+  string stream_key_prefix = 2;
+  int64 stream_key_issued_at = 3;
 }
 
 message RotateStreamKeyRequest {}

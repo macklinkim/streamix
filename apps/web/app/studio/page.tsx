@@ -102,16 +102,22 @@ function ChannelPanel({
   channel,
   token,
   initialKey,
+  keyPrefix,
+  keyIssuedAt,
 }: {
   channel: Channel;
   token: string;
   // Create-time plaintext key, so a fresh channel can broadcast immediately.
   initialKey: string;
+  // Owner-only key identification (prefix + issue time) for managing the key.
+  keyPrefix: string;
+  keyIssuedAt: bigint;
 }) {
   // The key is only shown in plaintext at create/rotate time; otherwise masked.
   const [streamKey, setStreamKey] = useState(initialKey);
   const [rotating, setRotating] = useState(false);
   const [rotateError, setRotateError] = useState("");
+  const queryClient = useQueryClient();
 
   async function rotate() {
     setRotating(true);
@@ -122,6 +128,7 @@ function ChannelPanel({
         { headers: { authorization: `Bearer ${token}` } },
       );
       setStreamKey(res.streamKey);
+      await queryClient.invalidateQueries({ queryKey: ["my-channel"] });
     } catch {
       setRotateError("키 재발급에 실패했습니다.");
     } finally {
@@ -175,6 +182,17 @@ function ChannelPanel({
                 <span className="break-all text-accent">{streamKey}</span>
                 <CopyButton value={streamKey} />
               </dd>
+            ) : keyPrefix ? (
+              <dd>
+                <span className="text-zinc-100">{keyPrefix}…</span>
+                <span className="ml-2 text-xs text-zinc-500">
+                  {keyIssuedAt > 0n &&
+                    `${new Date(Number(keyIssuedAt) * 1000).toLocaleString("ko-KR")} 발급`}
+                </span>
+                <p className="mt-1 text-xs text-zinc-500">
+                  전체 키는 발급 때 한 번만 표시됩니다. 잃어버렸다면 재발급하세요.
+                </p>
+              </dd>
             ) : (
               <dd className="text-zinc-500">
                 보안을 위해 저장된 키는 다시 보여드릴 수 없습니다. 잃어버렸다면 재발급하세요.
@@ -207,9 +225,8 @@ export default function StudioPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["my-channel"],
-    queryFn: async () =>
-      (await channelClient.getMyChannel({}, { headers: { authorization: `Bearer ${token}` } }))
-        .channel ?? null,
+    queryFn: () =>
+      channelClient.getMyChannel({}, { headers: { authorization: `Bearer ${token}` } }),
     enabled: ready && !!token,
   });
 
@@ -232,8 +249,14 @@ export default function StudioPage() {
           <div className="h-40 rounded-lg bg-zinc-900" />
           <div className="h-40 rounded-lg bg-zinc-900" />
         </div>
-      ) : data ? (
-        <ChannelPanel channel={data} token={token!} initialKey={createdKey} />
+      ) : data?.channel ? (
+        <ChannelPanel
+          channel={data.channel}
+          token={token!}
+          initialKey={createdKey}
+          keyPrefix={data.streamKeyPrefix}
+          keyIssuedAt={data.streamKeyIssuedAt}
+        />
       ) : (
         <>
           <h1 className="mb-6 text-2xl font-bold tracking-tight">방송 설정</h1>

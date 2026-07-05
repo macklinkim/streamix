@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import type { Server } from "node:http";
+import type { Writable } from "node:stream";
 import { WebSocketServer, type WebSocket } from "ws";
 import ffmpegStatic from "ffmpeg-static";
 import { env } from "./env.js";
@@ -18,6 +19,24 @@ export function attachIngest(server: Server): void {
     const url = new URL(req.url ?? "/", "http://localhost");
     const streamKey = url.searchParams.get("key") ?? "";
 
+    // Attach the message handler SYNCHRONOUSLY and buffer until ffmpeg is up:
+    // the first chunk carries the webm EBML header, and dropping it during the
+    // key-validation await leaves ffmpeg with an unparseable stream.
+    const pending: Buffer[] = [];
+    let sink: Writable | null = null;
+    let closed = false;
+    ws.on("message", (chunk: Buffer) => {
+      if (sink) {
+        if (!sink.destroyed) sink.write(chunk);
+      } else {
+        pending.push(chunk);
+      }
+    });
+    ws.on("close", () => {
+      closed = true;
+      if (sink && !sink.destroyed) sink.end(); // EOF -> ffmpeg flush -> RTMP unpublish
+    });
+
     void (async () => {
       // Fast-reject bad keys before spawning ffmpeg (NMS would also reject,
       // but only after the RTMP handshake — this gives the browser a clean error).
@@ -31,6 +50,7 @@ export function attachIngest(server: Server): void {
         ws.close(1011, "core unavailable");
         return;
       }
+      if (closed) return;
 
       const ff = spawn(
         ffmpeg,
@@ -66,12 +86,12 @@ export function attachIngest(server: Server): void {
         if (ws.readyState === ws.OPEN) ws.close(1011, `encoder exited (${code})`);
       });
 
-      ws.on("message", (chunk: Buffer) => {
-        if (!ff.stdin.destroyed) ff.stdin.write(chunk);
-      });
+      for (const chunk of pending) ff.stdin.write(chunk);
+      pending.length = 0;
+      sink = ff.stdin;
+      if (closed) ff.stdin.end(); // ws closed during validation -> flush + teardown
       ws.on("close", () => {
-        if (!ff.stdin.destroyed) ff.stdin.end(); // EOF -> ffmpeg flushes -> RTMP unpublish
-        setTimeout(() => ff.kill("SIGKILL"), 5000).unref();
+        setTimeout(() => ff.kill("SIGKILL"), 5000).unref(); // backstop if EOF hangs
       });
     })();
   });
