@@ -8,6 +8,48 @@ import { core } from "./core-client.js";
 
 const ffmpeg = ffmpegStatic as unknown as string;
 
+// ADR-9 codec negotiation: the studio page picks a MediaRecorder format the
+// server can remux cheaply and passes its label as ?codec=. Copy paths skip
+// re-encoding entirely (max CPU saving); everything else falls back to the
+// M1 rate-controlled transcode for backward compatibility.
+function codecArgs(codec: string): string[] {
+  if (codec === "mp4-h264") {
+    // fMP4 (H.264 + AAC): both streams FLV-compatible -> full copy, zero encode.
+    return ["-c:v", "copy", "-c:a", "copy"];
+  }
+  if (codec === "webm-h264") {
+    // H.264 video copies; Opus audio must become AAC (FLV can't carry Opus).
+    return ["-c:v", "copy", "-c:a", "aac", "-ar", "48000", "-b:a", "128k"];
+  }
+  // VP8 / unspecified: full transcode with M1 rate control (§1.2 결함 3~5).
+  const bitrate = env.INGEST_VIDEO_BITRATE; // e.g. "2500k"
+  const bufsize = `${parseInt(bitrate, 10) * 2}${bitrate.replace(/[0-9]/g, "")}`;
+  return [
+    "-c:v",
+    "libx264",
+    "-preset",
+    "veryfast",
+    "-tune",
+    "zerolatency",
+    "-pix_fmt",
+    "yuv420p",
+    "-b:v",
+    bitrate,
+    "-maxrate",
+    bitrate,
+    "-bufsize",
+    bufsize,
+    "-force_key_frames",
+    "expr:gte(t,n_forced*2)",
+    "-c:a",
+    "aac",
+    "-ar",
+    "48000",
+    "-b:a",
+    "128k",
+  ];
+}
+
 // Browser broadcast ingest (F: screen share). The studio page pipes
 // MediaRecorder webm chunks over WS; ffmpeg transcodes stdin -> local RTMP,
 // so the existing publish pipeline (key validation, SET NX single writer,
@@ -18,6 +60,7 @@ export function attachIngest(server: Server): void {
   wss.on("connection", (ws: WebSocket, req) => {
     const url = new URL(req.url ?? "/", "http://localhost");
     const streamKey = url.searchParams.get("key") ?? "";
+    const codec = url.searchParams.get("codec") ?? "";
 
     // Attach the message handler SYNCHRONOUSLY and buffer until ffmpeg is up:
     // the first chunk carries the webm EBML header, and dropping it during the
@@ -52,39 +95,12 @@ export function attachIngest(server: Server): void {
       }
       if (closed) return;
 
-      const bitrate = env.INGEST_VIDEO_BITRATE; // e.g. "2500k"
-      const bufsize = `${parseInt(bitrate, 10) * 2}${bitrate.replace(/[0-9]/g, "")}`;
       const ff = spawn(
         ffmpeg,
         [
           "-i",
           "pipe:0",
-          "-c:v",
-          "libx264",
-          "-preset",
-          "veryfast",
-          "-tune",
-          "zerolatency",
-          "-pix_fmt",
-          "yuv420p",
-          // Rate control: cap output so scene complexity can't spike bitrate and
-          // stall viewers (§1.2 결함 3). maxrate=b:v with a 2x bufsize (CBR-ish).
-          "-b:v",
-          bitrate,
-          "-maxrate",
-          bitrate,
-          "-bufsize",
-          bufsize,
-          // 2s keyframes independent of source fps (§1.2 결함 4), aligned to hls_time=2.
-          "-force_key_frames",
-          "expr:gte(t,n_forced*2)",
-          "-c:a",
-          "aac",
-          // Keep MediaRecorder's 48kHz Opus; drop the needless 44.1k resample (§1.2 결함 5).
-          "-ar",
-          "48000",
-          "-b:a",
-          "128k",
+          ...codecArgs(codec),
           "-f",
           "flv",
           `rtmp://127.0.0.1:${env.RTMP_PORT}/live/${streamKey}`,
