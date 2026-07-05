@@ -7,6 +7,7 @@ import { ConnectError } from "@connectrpc/connect";
 import { env, thumbRoot } from "./env.js";
 import { core } from "./core-client.js";
 import { startHlsServer } from "./hls-server.js";
+import { attachIngest } from "./ingest.js";
 import { sweepRetention, reapChannel } from "./retention.js";
 
 const ffmpeg = ffmpegStatic as unknown as string;
@@ -113,7 +114,7 @@ nms.on("donePublish", (id) => {
 setInterval(sweepRetention, 60_000);
 
 nms.run();
-startHlsServer();
+attachIngest(startHlsServer());
 console.log(
   `svc-media rtmp :${env.RTMP_PORT} http :${env.HTTP_PORT} (mediaroot ${env.MEDIA_ROOT})`,
 );

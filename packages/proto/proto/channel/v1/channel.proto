@@ -82,6 +82,20 @@ message GetPlaybackUrlResponse {
   int64 expires_at = 2;
 }
 
+message GetMyChannelRequest {}
+
+message GetMyChannelResponse {
+  // Unset if the authed user has no channel yet.
+  Channel channel = 1;
+}
+
+message RotateStreamKeyRequest {}
+
+message RotateStreamKeyResponse {
+  // New plaintext stream key (old one is invalidated); only its hash is stored.
+  string stream_key = 1;
+}
+
 message HeartbeatRequest {
   string channel_id = 1;
 }
@@ -96,5 +110,7 @@ service ChannelService {
   rpc StopStream(StopStreamRequest) returns (StopStreamResponse);
   rpc ValidateStreamKey(ValidateStreamKeyRequest) returns (ValidateStreamKeyResponse);
   rpc GetPlaybackUrl(GetPlaybackUrlRequest) returns (GetPlaybackUrlResponse);
+  rpc GetMyChannel(GetMyChannelRequest) returns (GetMyChannelResponse);
+  rpc RotateStreamKey(RotateStreamKeyRequest) returns (RotateStreamKeyResponse);
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
 }

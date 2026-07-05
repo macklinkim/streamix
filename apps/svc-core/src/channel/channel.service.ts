@@ -124,6 +124,29 @@ export const channelService: ServiceImpl<typeof ChannelService> = {
     return { channels: live, pageInfo: { total: live.length, page: 1, pageSize: live.length } };
   },
 
+  async getMyChannel(_req, ctx) {
+    const ownerUserId = requireUserId(ctx);
+    const [c] = await db
+      .select()
+      .from(channels)
+      .where(eq(channels.ownerUserId, ownerUserId))
+      .limit(1);
+    // No channel yet is a normal state, not an error: channel stays unset.
+    return c ? { channel: await toChannelMsg(c) } : {};
+  },
+
+  async rotateStreamKey(_req, ctx) {
+    const ownerUserId = requireUserId(ctx);
+    const streamKey = generateStreamKey();
+    const [c] = await db
+      .update(channels)
+      .set({ streamKeyHash: hashStreamKey(streamKey) })
+      .where(eq(channels.ownerUserId, ownerUserId))
+      .returning({ id: channels.id });
+    if (!c) throw appError(AppErrorCode.NOT_FOUND, "channel not found");
+    return { streamKey };
+  },
+
   async validateStreamKey(req) {
     const [c] = await db
       .select({ id: channels.id })

@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
 export const file_channel_v1_channel: GenFile =
   /*@__PURE__*/
   fileDesc(
-    "ChhjaGFubmVsL3YxL2NoYW5uZWwucHJvdG8SCmNoYW5uZWwudjEimQEKB0NoYW5uZWwSCgoCaWQYASABKAkSFQoNb3duZXJfdXNlcl9pZBgCIAEoCRIMCgRzbHVnGAMgASgJEg0KBXRpdGxlGAQgASgJEhAKCGNhdGVnb3J5GAUgASgJEg8KB2lzX2xpdmUYBiABKAgSFAoMdmlld2VyX2NvdW50GAcgASgFEhUKDXRodW1ibmFpbF91cmwYCCABKAkiRQoUQ3JlYXRlQ2hhbm5lbFJlcXVlc3QSDQoFdGl0bGUYASABKAkSDAoEc2x1ZxgCIAEoCRIQCghjYXRlZ29yeRgDIAEoCSJRChVDcmVhdGVDaGFubmVsUmVzcG9uc2USJAoHY2hhbm5lbBgBIAEoCzITLmNoYW5uZWwudjEuQ2hhbm5lbBISCgpzdHJlYW1fa2V5GAIgASgJIiEKEUdldENoYW5uZWxSZXF1ZXN0EgwKBHNsdWcYASABKAkiOgoSR2V0Q2hhbm5lbFJlc3BvbnNlEiQKB2NoYW5uZWwYASABKAsyEy5jaGFubmVsLnYxLkNoYW5uZWwiSAoPTGlzdExpdmVSZXF1ZXN0EiMKBHBhZ2UYASABKAsyFS5jb21tb24udjEuUGFnaW5hdGlvbhIQCghjYXRlZ29yeRgCIAEoCSJhChBMaXN0TGl2ZVJlc3BvbnNlEiUKCGNoYW5uZWxzGAEgAygLMhMuY2hhbm5lbC52MS5DaGFubmVsEiYKCXBhZ2VfaW5mbxgCIAEoCzITLmNvbW1vbi52MS5QYWdlSW5mbyIoChJTdGFydFN0cmVhbVJlcXVlc3QSEgoKc3RyZWFtX2tleRgBIAEoCSIpChNTdGFydFN0cmVhbVJlc3BvbnNlEhIKCmNoYW5uZWxfaWQYASABKAkiJwoRU3RvcFN0cmVhbVJlcXVlc3QSEgoKY2hhbm5lbF9pZBgBIAEoCSIUChJTdG9wU3RyZWFtUmVzcG9uc2UiLgoYVmFsaWRhdGVTdHJlYW1LZXlSZXF1ZXN0EhIKCnN0cmVhbV9rZXkYASABKAkiPgoZVmFsaWRhdGVTdHJlYW1LZXlSZXNwb25zZRINCgV2YWxpZBgBIAEoCBISCgpjaGFubmVsX2lkGAIgASgJIiUKFUdldFBsYXliYWNrVXJsUmVxdWVzdBIMCgRzbHVnGAEgASgJIjkKFkdldFBsYXliYWNrVXJsUmVzcG9uc2USCwoDdXJsGAEgASgJEhIKCmV4cGlyZXNfYXQYAiABKAMiJgoQSGVhcnRiZWF0UmVxdWVzdBISCgpjaGFubmVsX2lkGAEgASgJIhMKEUhlYXJ0YmVhdFJlc3BvbnNlMpwFCg5DaGFubmVsU2VydmljZRJUCg1DcmVhdGVDaGFubmVsEiAuY2hhbm5lbC52MS5DcmVhdGVDaGFubmVsUmVxdWVzdBohLmNoYW5uZWwudjEuQ3JlYXRlQ2hhbm5lbFJlc3BvbnNlEksKCkdldENoYW5uZWwSHS5jaGFubmVsLnYxLkdldENoYW5uZWxSZXF1ZXN0Gh4uY2hhbm5lbC52MS5HZXRDaGFubmVsUmVzcG9uc2USRQoITGlzdExpdmUSGy5jaGFubmVsLnYxLkxpc3RMaXZlUmVxdWVzdBocLmNoYW5uZWwudjEuTGlzdExpdmVSZXNwb25zZRJOCgtTdGFydFN0cmVhbRIeLmNoYW5uZWwudjEuU3RhcnRTdHJlYW1SZXF1ZXN0Gh8uY2hhbm5lbC52MS5TdGFydFN0cmVhbVJlc3BvbnNlEksKClN0b3BTdHJlYW0SHS5jaGFubmVsLnYxLlN0b3BTdHJlYW1SZXF1ZXN0Gh4uY2hhbm5lbC52MS5TdG9wU3RyZWFtUmVzcG9uc2USYAoRVmFsaWRhdGVTdHJlYW1LZXkSJC5jaGFubmVsLnYxLlZhbGlkYXRlU3RyZWFtS2V5UmVxdWVzdBolLmNoYW5uZWwudjEuVmFsaWRhdGVTdHJlYW1LZXlSZXNwb25zZRJXCg5HZXRQbGF5YmFja1VybBIhLmNoYW5uZWwudjEuR2V0UGxheWJhY2tVcmxSZXF1ZXN0GiIuY2hhbm5lbC52MS5HZXRQbGF5YmFja1VybFJlc3BvbnNlEkgKCUhlYXJ0YmVhdBIcLmNoYW5uZWwudjEuSGVhcnRiZWF0UmVxdWVzdBodLmNoYW5uZWwudjEuSGVhcnRiZWF0UmVzcG9uc2ViBnByb3RvMw",
+    "ChhjaGFubmVsL3YxL2NoYW5uZWwucHJvdG8SCmNoYW5uZWwudjEimQEKB0NoYW5uZWwSCgoCaWQYASABKAkSFQoNb3duZXJfdXNlcl9pZBgCIAEoCRIMCgRzbHVnGAMgASgJEg0KBXRpdGxlGAQgASgJEhAKCGNhdGVnb3J5GAUgASgJEg8KB2lzX2xpdmUYBiABKAgSFAoMdmlld2VyX2NvdW50GAcgASgFEhUKDXRodW1ibmFpbF91cmwYCCABKAkiRQoUQ3JlYXRlQ2hhbm5lbFJlcXVlc3QSDQoFdGl0bGUYASABKAkSDAoEc2x1ZxgCIAEoCRIQCghjYXRlZ29yeRgDIAEoCSJRChVDcmVhdGVDaGFubmVsUmVzcG9uc2USJAoHY2hhbm5lbBgBIAEoCzITLmNoYW5uZWwudjEuQ2hhbm5lbBISCgpzdHJlYW1fa2V5GAIgASgJIiEKEUdldENoYW5uZWxSZXF1ZXN0EgwKBHNsdWcYASABKAkiOgoSR2V0Q2hhbm5lbFJlc3BvbnNlEiQKB2NoYW5uZWwYASABKAsyEy5jaGFubmVsLnYxLkNoYW5uZWwiSAoPTGlzdExpdmVSZXF1ZXN0EiMKBHBhZ2UYASABKAsyFS5jb21tb24udjEuUGFnaW5hdGlvbhIQCghjYXRlZ29yeRgCIAEoCSJhChBMaXN0TGl2ZVJlc3BvbnNlEiUKCGNoYW5uZWxzGAEgAygLMhMuY2hhbm5lbC52MS5DaGFubmVsEiYKCXBhZ2VfaW5mbxgCIAEoCzITLmNvbW1vbi52MS5QYWdlSW5mbyIoChJTdGFydFN0cmVhbVJlcXVlc3QSEgoKc3RyZWFtX2tleRgBIAEoCSIpChNTdGFydFN0cmVhbVJlc3BvbnNlEhIKCmNoYW5uZWxfaWQYASABKAkiJwoRU3RvcFN0cmVhbVJlcXVlc3QSEgoKY2hhbm5lbF9pZBgBIAEoCSIUChJTdG9wU3RyZWFtUmVzcG9uc2UiLgoYVmFsaWRhdGVTdHJlYW1LZXlSZXF1ZXN0EhIKCnN0cmVhbV9rZXkYASABKAkiPgoZVmFsaWRhdGVTdHJlYW1LZXlSZXNwb25zZRINCgV2YWxpZBgBIAEoCBISCgpjaGFubmVsX2lkGAIgASgJIiUKFUdldFBsYXliYWNrVXJsUmVxdWVzdBIMCgRzbHVnGAEgASgJIjkKFkdldFBsYXliYWNrVXJsUmVzcG9uc2USCwoDdXJsGAEgASgJEhIKCmV4cGlyZXNfYXQYAiABKAMiFQoTR2V0TXlDaGFubmVsUmVxdWVzdCI8ChRHZXRNeUNoYW5uZWxSZXNwb25zZRIkCgdjaGFubmVsGAEgASgLMhMuY2hhbm5lbC52MS5DaGFubmVsIhgKFlJvdGF0ZVN0cmVhbUtleVJlcXVlc3QiLQoXUm90YXRlU3RyZWFtS2V5UmVzcG9uc2USEgoKc3RyZWFtX2tleRgBIAEoCSImChBIZWFydGJlYXRSZXF1ZXN0EhIKCmNoYW5uZWxfaWQYASABKAkiEwoRSGVhcnRiZWF0UmVzcG9uc2UyywYKDkNoYW5uZWxTZXJ2aWNlElQKDUNyZWF0ZUNoYW5uZWwSIC5jaGFubmVsLnYxLkNyZWF0ZUNoYW5uZWxSZXF1ZXN0GiEuY2hhbm5lbC52MS5DcmVhdGVDaGFubmVsUmVzcG9uc2USSwoKR2V0Q2hhbm5lbBIdLmNoYW5uZWwudjEuR2V0Q2hhbm5lbFJlcXVlc3QaHi5jaGFubmVsLnYxLkdldENoYW5uZWxSZXNwb25zZRJFCghMaXN0TGl2ZRIbLmNoYW5uZWwudjEuTGlzdExpdmVSZXF1ZXN0GhwuY2hhbm5lbC52MS5MaXN0TGl2ZVJlc3BvbnNlEk4KC1N0YXJ0U3RyZWFtEh4uY2hhbm5lbC52MS5TdGFydFN0cmVhbVJlcXVlc3QaHy5jaGFubmVsLnYxLlN0YXJ0U3RyZWFtUmVzcG9uc2USSwoKU3RvcFN0cmVhbRIdLmNoYW5uZWwudjEuU3RvcFN0cmVhbVJlcXVlc3QaHi5jaGFubmVsLnYxLlN0b3BTdHJlYW1SZXNwb25zZRJgChFWYWxpZGF0ZVN0cmVhbUtleRIkLmNoYW5uZWwudjEuVmFsaWRhdGVTdHJlYW1LZXlSZXF1ZXN0GiUuY2hhbm5lbC52MS5WYWxpZGF0ZVN0cmVhbUtleVJlc3BvbnNlElcKDkdldFBsYXliYWNrVXJsEiEuY2hhbm5lbC52MS5HZXRQbGF5YmFja1VybFJlcXVlc3QaIi5jaGFubmVsLnYxLkdldFBsYXliYWNrVXJsUmVzcG9uc2USUQoMR2V0TXlDaGFubmVsEh8uY2hhbm5lbC52MS5HZXRNeUNoYW5uZWxSZXF1ZXN0GiAuY2hhbm5lbC52MS5HZXRNeUNoYW5uZWxSZXNwb25zZRJaCg9Sb3RhdGVTdHJlYW1LZXkSIi5jaGFubmVsLnYxLlJvdGF0ZVN0cmVhbUtleVJlcXVlc3QaIy5jaGFubmVsLnYxLlJvdGF0ZVN0cmVhbUtleVJlc3BvbnNlEkgKCUhlYXJ0YmVhdBIcLmNoYW5uZWwudjEuSGVhcnRiZWF0UmVxdWVzdBodLmNoYW5uZWwudjEuSGVhcnRiZWF0UmVzcG9uc2ViBnByb3RvMw",
     [file_common_v1_common],
   );
 
@@ -360,6 +360,72 @@ export const GetPlaybackUrlResponseSchema: GenMessage<GetPlaybackUrlResponse> =
   messageDesc(file_channel_v1_channel, 14);
 
 /**
+ * @generated from message channel.v1.GetMyChannelRequest
+ */
+export type GetMyChannelRequest = Message<"channel.v1.GetMyChannelRequest"> & {};
+
+/**
+ * Describes the message channel.v1.GetMyChannelRequest.
+ * Use `create(GetMyChannelRequestSchema)` to create a new message.
+ */
+export const GetMyChannelRequestSchema: GenMessage<GetMyChannelRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 15);
+
+/**
+ * @generated from message channel.v1.GetMyChannelResponse
+ */
+export type GetMyChannelResponse = Message<"channel.v1.GetMyChannelResponse"> & {
+  /**
+   * Unset if the authed user has no channel yet.
+   *
+   * @generated from field: channel.v1.Channel channel = 1;
+   */
+  channel?: Channel | undefined;
+};
+
+/**
+ * Describes the message channel.v1.GetMyChannelResponse.
+ * Use `create(GetMyChannelResponseSchema)` to create a new message.
+ */
+export const GetMyChannelResponseSchema: GenMessage<GetMyChannelResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 16);
+
+/**
+ * @generated from message channel.v1.RotateStreamKeyRequest
+ */
+export type RotateStreamKeyRequest = Message<"channel.v1.RotateStreamKeyRequest"> & {};
+
+/**
+ * Describes the message channel.v1.RotateStreamKeyRequest.
+ * Use `create(RotateStreamKeyRequestSchema)` to create a new message.
+ */
+export const RotateStreamKeyRequestSchema: GenMessage<RotateStreamKeyRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 17);
+
+/**
+ * @generated from message channel.v1.RotateStreamKeyResponse
+ */
+export type RotateStreamKeyResponse = Message<"channel.v1.RotateStreamKeyResponse"> & {
+  /**
+   * New plaintext stream key (old one is invalidated); only its hash is stored.
+   *
+   * @generated from field: string stream_key = 1;
+   */
+  streamKey: string;
+};
+
+/**
+ * Describes the message channel.v1.RotateStreamKeyResponse.
+ * Use `create(RotateStreamKeyResponseSchema)` to create a new message.
+ */
+export const RotateStreamKeyResponseSchema: GenMessage<RotateStreamKeyResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 18);
+
+/**
  * @generated from message channel.v1.HeartbeatRequest
  */
 export type HeartbeatRequest = Message<"channel.v1.HeartbeatRequest"> & {
@@ -375,7 +441,7 @@ export type HeartbeatRequest = Message<"channel.v1.HeartbeatRequest"> & {
  */
 export const HeartbeatRequestSchema: GenMessage<HeartbeatRequest> =
   /*@__PURE__*/
-  messageDesc(file_channel_v1_channel, 15);
+  messageDesc(file_channel_v1_channel, 19);
 
 /**
  * @generated from message channel.v1.HeartbeatResponse
@@ -388,7 +454,7 @@ export type HeartbeatResponse = Message<"channel.v1.HeartbeatResponse"> & {};
  */
 export const HeartbeatResponseSchema: GenMessage<HeartbeatResponse> =
   /*@__PURE__*/
-  messageDesc(file_channel_v1_channel, 16);
+  messageDesc(file_channel_v1_channel, 20);
 
 /**
  * @generated from service channel.v1.ChannelService
@@ -449,6 +515,22 @@ export const ChannelService: GenService<{
     methodKind: "unary";
     input: typeof GetPlaybackUrlRequestSchema;
     output: typeof GetPlaybackUrlResponseSchema;
+  };
+  /**
+   * @generated from rpc channel.v1.ChannelService.GetMyChannel
+   */
+  getMyChannel: {
+    methodKind: "unary";
+    input: typeof GetMyChannelRequestSchema;
+    output: typeof GetMyChannelResponseSchema;
+  };
+  /**
+   * @generated from rpc channel.v1.ChannelService.RotateStreamKey
+   */
+  rotateStreamKey: {
+    methodKind: "unary";
+    input: typeof RotateStreamKeyRequestSchema;
+    output: typeof RotateStreamKeyResponseSchema;
   };
   /**
    * @generated from rpc channel.v1.ChannelService.Heartbeat

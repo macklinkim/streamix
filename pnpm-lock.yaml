@@ -199,10 +199,16 @@ importers:
       node-media-server:
         specifier: ^2.7.0
         version: 2.7.4
+      ws:
+        specifier: ^8.18.0
+        version: 8.21.0
       zod:
         specifier: ^3.24.1
         version: 3.25.76
     devDependencies:
+      "@types/ws":
+        specifier: ^8.5.13
+        version: 8.18.1
       tsx:
         specifier: ^4.19.2
         version: 4.23.0

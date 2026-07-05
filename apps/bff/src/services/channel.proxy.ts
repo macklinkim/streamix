@@ -15,6 +15,14 @@ export const channelProxy: ServiceImpl<typeof ChannelService> = {
     const userId = await requireUser(ctx);
     return coreChannel.createChannel(req, { headers: { "x-user-id": userId } });
   },
+  async getMyChannel(req, ctx) {
+    const userId = await requireUser(ctx);
+    return coreChannel.getMyChannel(req, { headers: { "x-user-id": userId } });
+  },
+  async rotateStreamKey(req, ctx) {
+    const userId = await requireUser(ctx);
+    return coreChannel.rotateStreamKey(req, { headers: { "x-user-id": userId } });
+  },
   getChannel: (req) => coreChannel.getChannel(req),
   listLive: (req) => coreChannel.listLive(req),
   getPlaybackUrl: (req) => coreChannel.getPlaybackUrl(req),

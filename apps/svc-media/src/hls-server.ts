@@ -21,7 +21,7 @@ function tokenValid(channelId: string, token: string | null, exp: string | null)
   return timingSafeEqual(Buffer.from(token), Buffer.from(expected));
 }
 
-export function startHlsServer(): void {
+export function startHlsServer(): ReturnType<typeof createServer> {
   const server = createServer((req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");
 
@@ -88,4 +88,5 @@ export function startHlsServer(): void {
   server.listen(env.HTTP_PORT, () => {
     console.log(`svc-media hls authz server on :${env.HTTP_PORT}`);
   });
+  return server;
 }

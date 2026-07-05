@@ -16,9 +16,11 @@
     "@streamix/proto": "workspace:*",
     "ffmpeg-static": "^5.2.0",
     "node-media-server": "^2.7.0",
+    "ws": "^8.18.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/ws": "^8.5.13",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }
