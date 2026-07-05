@@ -68,9 +68,17 @@ export function attachIngest(server: Server): void {
     const pending: Buffer[] = [];
     let sink: Writable | null = null;
     let closed = false;
+    const bufferLimit = env.INGEST_BUFFER_LIMIT_MB * 1024 * 1024;
     ws.on("message", (chunk: Buffer) => {
       if (sink) {
-        if (!sink.destroyed) sink.write(chunk);
+        if (sink.destroyed) return;
+        const ok = sink.write(chunk);
+        // A stalled/slow ffmpeg lets unflushed bytes pile up in the Node writable
+        // buffer. Cap it so one wedged encoder can't OOM svc-media: drop the
+        // connection and let the close handler flush/kill ffmpeg. (§1.2 결함 6, G5)
+        if (!ok && sink.writableLength > bufferLimit) {
+          ws.close(4009, "ingest backpressure");
+        }
       } else {
         pending.push(chunk);
       }
