@@ -1,6 +1,13 @@
 # Deploy from repo root: fly deploy --config apps/svc-media/fly.toml --dockerfile apps/svc-media/Dockerfile
 # RTMP ingest needs a raw TCP port + a dedicated IP (`fly ips allocate-v4`).
 # HLS is served over HTTP (interim; R2 offload lands with credentials, ADR-8).
+#
+# ADR-10 (M3-5 prep, not yet deployed): MediaMTX now packages RTMP->LL-HLS and
+# MUST run co-located in this machine (sidecar), because ingest.ts publishes to
+# rtmp://127.0.0.1:${RTMP_PORT} — so 1935 below routes to MediaMTX, and svc-media
+# reaches its HLS/API on 127.0.0.1. The Dockerfile must bundle the mediamtx
+# binary + infra/mediamtx.yml and start both processes (see docs/DEPLOY.md).
+# In the sidecar config set MediaMTX's authHTTPAddress to http://127.0.0.1:8091.
 app = "streamix-svc-media"
 primary_region = "nrt"
 
@@ -10,8 +17,12 @@ primary_region = "nrt"
   RTMP_PORT = "1935"
   HTTP_PORT = "8090"
   CORE_URL = "http://streamix-svc-core.internal:50051"
+  # Co-located MediaMTX (see header note).
+  MEDIAMTX_HLS_ORIGIN = "http://127.0.0.1:8888"
+  MEDIAMTX_API_ORIGIN = "http://127.0.0.1:9997"
+  MEDIA_INTERNAL_PORT = "8091"
 
-# RTMP ingest (raw TCP).
+# RTMP ingest (raw TCP) -> co-located MediaMTX.
 [[services]]
   protocol = "tcp"
   internal_port = 1935

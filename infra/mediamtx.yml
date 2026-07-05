@@ -2,6 +2,20 @@
 # Ingest: RTMP. Packaging: Low-Latency HLS. WebRTC/SRT disabled (unused surface).
 logLevel: info
 
+# --- publish authorization (M3-2) ---
+# svc-media validates the stream key for every publish; deny closes the publish.
+# Reads go through svc-media's signed reverse proxy and the control API is
+# internal-only, so both are excluded from auth. In prod point authHTTPAddress at
+# http://streamix-svc-media.internal:8091/mtx/auth instead of host.docker.internal.
+authMethod: http
+authHTTPAddress: http://host.docker.internal:8091/mtx/auth
+authHTTPExclude:
+  - action: read
+  - action: playback
+  - action: api
+  - action: metrics
+  - action: pprof
+
 # --- ingest ---
 rtmp: yes
 rtmpAddress: :1935
@@ -9,7 +23,7 @@ rtmpAddress: :1935
 # --- packaging: Low-Latency HLS ---
 hls: yes
 hlsAddress: :8888
-hlsAllowOrigins: ['*']
+hlsAllowOrigins: ["*"]
 hlsVariant: lowLatency
 hlsAlwaysRemux: no
 hlsSegmentCount: 7

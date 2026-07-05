@@ -102,7 +102,26 @@ curl -fsS https://streamix-bff.fly.dev/health
 #   https://<vercel-domain>/watch/<slug> 재생 + 채팅 왕복 확인
 ```
 
+## MediaMTX LL-HLS 배포 (ADR-10 · M3-5 준비, 아직 미배포)
+
+svc-media는 더 이상 NMS/ffmpeg로 HLS를 패키징하지 않는다. **MediaMTX**가 RTMP→LL-HLS를
+담당하고, svc-media는 (1) 스트림키 검증(MediaMTX http auth 콜백), (2) 서명 URL 리버스
+프록시(MediaMTX HLS 앞단), (3) 라이브 상태 lifecycle(control API 폴링)을 맡는다.
+
+- **동일 머신 사이드카 필수**: `ingest.ts`(수정 금지)가 `rtmp://127.0.0.1:${RTMP_PORT}`로
+  퍼블리시하므로 MediaMTX는 svc-media와 **같은 Fly 머신**에서 돌아야 한다(별도 앱 불가).
+  fly.toml의 `1935` 서비스가 사이드카 MediaMTX로 라우팅된다.
+- **Dockerfile 변경(배포 시)**: svc-media 이미지에 `mediamtx` 바이너리 + `infra/mediamtx.yml`을
+  포함하고 두 프로세스를 함께 기동(예: 간단한 supervisor 또는 MediaMTX `runOnInit`으로 node
+  기동). MediaMTX 이미지는 scratch라 셸이 없어 훅으로 HTTP 콜을 못 하므로, 검증/라이프사이클은
+  http auth + control API로 구현되어 있다(코드 완료).
+- **prod 설정 차이**: `infra/mediamtx.yml`의 `authHTTPAddress`는 dev에서 `host.docker.internal:8091`,
+  prod(사이드카)에서는 `http://127.0.0.1:8091/mtx/auth`로 둔다(또는 `MTX_AUTHHTTPADDRESS` env로 주입).
+- **RTMP 전용 IP**: 기존과 동일하게 `fly ips allocate-v4 -a streamix-svc-media`.
+- **스모크(로컬 실측 완료)**: 서명 200 / 무서명·오토큰 403 / 썸네일 200 / 세그먼트·파트 프록시 200 /
+  무효키 퍼블리시 거절 / 종료 후 reap / g2g(프록시 경유) ~2–3s·재생 시작 ~2s(게이트 <6s·<3s 충족).
+
 ## 남은 최적화 (선택)
 
 - **R2 오프로딩**: 현재 svc-media가 HLS를 직접 서빙(서명 URL authz). CDN egress 절감을 위해 세그먼트를 R2에 업로드하고 `GetPlaybackUrl`을 R2 서명 URL로 전환. 로컬은 MinIO(S3 호환)로 검증 가능(`@aws-sdk/client-s3`).
-- 풀 관측성(Grafana/Loki/OTel), ABR 다중 화질, LL-HLS(MediaMTX 전환)는 §1.2 후속.
+- 풀 관측성(Grafana/Loki/OTel), ABR 다중 화질는 §1.2 후속.

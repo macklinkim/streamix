@@ -20,3 +20,20 @@ const Env = z.object({
 
 export const env = Env.parse(process.env);
 export const thumbRoot = join(env.MEDIA_ROOT, "_thumbs");
+
+// --- ADR-10: MediaMTX LL-HLS plane (appended; see M3 in 작업계획서-개선.md) ---
+// New vars only, kept at file end to avoid churn in the schema above.
+const MtxEnv = z.object({
+  // MediaMTX HLS origin the signed proxy (hls-server.ts) fetches from.
+  MEDIAMTX_HLS_ORIGIN: z.string().default("http://127.0.0.1:8888"),
+  // MediaMTX control API (paths/list) used to detect publish end.
+  MEDIAMTX_API_ORIGIN: z.string().default("http://127.0.0.1:9997"),
+  // Internal-only HTTP port that MediaMTX's http auth posts to (publish authz).
+  MEDIA_INTERNAL_PORT: z.coerce.number().default(8091),
+});
+const mtxEnv = MtxEnv.parse(process.env);
+export const mtx = {
+  hlsOrigin: mtxEnv.MEDIAMTX_HLS_ORIGIN,
+  apiOrigin: mtxEnv.MEDIAMTX_API_ORIGIN,
+  internalPort: mtxEnv.MEDIA_INTERNAL_PORT,
+};
