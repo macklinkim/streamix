@@ -1,35 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import type { Channel } from "@streamix/proto";
 import { channelClient } from "@/lib/connect";
 import { Player } from "@/components/player";
 import { Chat } from "@/components/chat";
 
 export default function WatchPage() {
   const { slug } = useParams<{ slug: string }>();
-  const [channel, setChannel] = useState<Channel | null>(null);
-  const [playbackUrl, setPlaybackUrl] = useState("");
-  const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!slug) return;
-    void (async () => {
-      try {
-        const res = await channelClient.getChannel({ slug });
-        setChannel(res.channel ?? null);
-        if (res.channel?.isLive) {
-          const pb = await channelClient.getPlaybackUrl({ slug });
-          setPlaybackUrl(pb.url);
-        }
-      } catch {
-        setError("채널을 찾을 수 없습니다.");
-      }
-    })();
-  }, [slug]);
+  // Poll the channel so offline→online (and back) transitions without reload.
+  const { data: channel, isError } = useQuery({
+    queryKey: ["channel", slug],
+    queryFn: async () => (await channelClient.getChannel({ slug })).channel ?? null,
+    enabled: !!slug,
+    refetchInterval: (q) => (q.state.data?.isLive ? 15_000 : 5_000),
+  });
 
-  if (error) return <p className="text-zinc-400">{error}</p>;
+  const { data: playbackUrl } = useQuery({
+    queryKey: ["playback", slug],
+    queryFn: async () => (await channelClient.getPlaybackUrl({ slug })).url,
+    enabled: !!channel?.isLive,
+  });
+
+  if (isError) return <p className="text-zinc-400">채널을 찾을 수 없습니다.</p>;
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
@@ -37,8 +31,15 @@ export default function WatchPage() {
         {channel?.isLive && playbackUrl ? (
           <Player src={playbackUrl} />
         ) : (
-          <div className="grid aspect-video w-full place-items-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-500">
-            {channel ? "오프라인 방송입니다" : "불러오는 중…"}
+          <div className="grid aspect-video w-full place-items-center rounded-lg border border-zinc-800 bg-zinc-900">
+            {channel ? (
+              <div className="text-center">
+                <p className="text-zinc-400">오프라인 방송입니다</p>
+                <p className="mt-1 text-xs text-zinc-600">방송이 시작되면 자동으로 재생됩니다</p>
+              </div>
+            ) : (
+              <p className="text-zinc-500">불러오는 중…</p>
+            )}
           </div>
         )}
 
