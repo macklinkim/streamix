@@ -29,7 +29,7 @@ const producer = spawn(ff, [
   "-c:a",
   "libopus",
   "-t",
-  "30",
+  process.env.STREAM_SECONDS ?? "30",
   "-f",
   "webm",
   "pipe:1",
