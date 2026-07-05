@@ -35,7 +35,8 @@ const producer = spawn(ff, [
   "pipe:1",
 ]);
 
-const ws = new WebSocket(`ws://localhost:8090/ingest?key=${streamKey}`);
+const base = process.env.MEDIA_WS_URL ?? "ws://localhost:8090";
+const ws = new WebSocket(`${base}/ingest?key=${streamKey}`);
 ws.on("open", () => {
   console.log("ingest connected, streaming 30s...");
   producer.stdout.on("data", (chunk: Buffer) => {

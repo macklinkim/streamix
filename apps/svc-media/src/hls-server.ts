@@ -23,6 +23,9 @@ function tokenValid(channelId: string, token: string | null, exp: string | null)
 
 export function startHlsServer(): ReturnType<typeof createServer> {
   const server = createServer((req, res) => {
+    // CORS on every response (403/404 included): the player must be able to
+    // read failure statuses cross-origin to retry while a stream warms up.
+    res.setHeader("Access-Control-Allow-Origin", "*");
     const url = new URL(req.url ?? "/", "http://localhost");
 
     // Thumbnails are public (low-sensitivity list-card previews, no token).
@@ -63,7 +66,7 @@ export function startHlsServer(): ReturnType<typeof createServer> {
       return;
     }
 
-    const cors = { "Access-Control-Allow-Origin": "*", "Cache-Control": "no-cache" };
+    const cors = { "Cache-Control": "no-cache" };
 
     if (safe.endsWith(".m3u8")) {
       const q = `?token=${token}&exp=${exp}`;

@@ -25,7 +25,12 @@ export function Player({ src }: { src: string }) {
     hls.on(Hls.Events.ERROR, (_evt, data) => {
       if (!data.fatal) return;
       if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-        setTimeout(() => hls.startLoad(), 1500); // stream may still be warming up
+        // Stream may still be warming up (manifest 404s right after going live).
+        // A fatal manifest error kills the loader, so re-load the source fully.
+        setTimeout(() => {
+          hls.loadSource(src);
+          hls.startLoad();
+        }, 2000);
       } else {
         hls.recoverMediaError();
       }
