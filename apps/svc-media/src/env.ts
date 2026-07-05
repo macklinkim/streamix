@@ -11,6 +11,8 @@ const Env = z.object({
   THUMB_INTERVAL_SECONDS: z.coerce.number().default(15),
   // A channel dir with no HLS update for this long is reaped (§ ADR-3 retention).
   RETENTION_TTL_SECONDS: z.coerce.number().default(120),
+  // Browser-ingest transcode target bitrate (b:v = maxrate, bufsize = 2x). §1.2 결함 3.
+  INGEST_VIDEO_BITRATE: z.string().default("2500k"),
 });
 
 export const env = Env.parse(process.env);

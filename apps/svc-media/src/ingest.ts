@@ -52,6 +52,8 @@ export function attachIngest(server: Server): void {
       }
       if (closed) return;
 
+      const bitrate = env.INGEST_VIDEO_BITRATE; // e.g. "2500k"
+      const bufsize = `${parseInt(bitrate, 10) * 2}${bitrate.replace(/[0-9]/g, "")}`;
       const ff = spawn(
         ffmpeg,
         [
@@ -65,12 +67,22 @@ export function attachIngest(server: Server): void {
           "zerolatency",
           "-pix_fmt",
           "yuv420p",
-          "-g",
-          "60",
+          // Rate control: cap output so scene complexity can't spike bitrate and
+          // stall viewers (§1.2 결함 3). maxrate=b:v with a 2x bufsize (CBR-ish).
+          "-b:v",
+          bitrate,
+          "-maxrate",
+          bitrate,
+          "-bufsize",
+          bufsize,
+          // 2s keyframes independent of source fps (§1.2 결함 4), aligned to hls_time=2.
+          "-force_key_frames",
+          "expr:gte(t,n_forced*2)",
           "-c:a",
           "aac",
+          // Keep MediaRecorder's 48kHz Opus; drop the needless 44.1k resample (§1.2 결함 5).
           "-ar",
-          "44100",
+          "48000",
           "-b:a",
           "128k",
           "-f",

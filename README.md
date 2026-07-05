@@ -26,6 +26,15 @@ pnpm build
 pnpm --filter @streamix/bff dev  # http://localhost:8080/health
 ```
 
+### OBS 권장 설정
+
+OBS(RTMP) 경로는 서버에서 `-c copy`로 재인코딩 없이 패키징하므로, 세그먼트 분할이 송출 측 키프레임 간격에 종속된다. `hls_time=2`(2초 세그먼트)와 정렬하려면 OBS에서:
+
+- **키프레임 간격(Keyframe Interval): 2초** (0/자동 금지 — 세그먼트 길이가 흔들린다)
+- **레이트 컨트롤: CBR** (시청자 버퍼링 방지)
+
+브라우저 송출 경로는 서버가 위 값을 자동 적용한다(트랜스코딩 시 `INGEST_VIDEO_BITRATE` 기본 `2500k`).
+
 ## 배포
 
 하이브리드(ADR-8): web=Vercel · 백엔드/미디어=Fly.io · HLS=R2. 배포 설정(Dockerfile·fly.toml·`.github/workflows/deploy.yml`)은 리포에 포함. 실행 절차는 [`docs/DEPLOY.md`](./docs/DEPLOY.md).
