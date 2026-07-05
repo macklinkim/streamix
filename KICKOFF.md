@@ -230,19 +230,18 @@ medium effort 특성상 프롬프트에 탐색 여지를 남기지 않는다:
 
 머지·판정은 트랙 에이전트가 아닌 통합 담당이 수행한다:
 
-1. [ ] T0 머지 → `docs/perf-baseline.md` 존재·재현 커맨드 확인.
-2. [ ] T-A 머지 → `pnpm build && pnpm typecheck` + smoke-ingest(codec 3종).
-3. [ ] T-C 머지 → 채팅 왕복 스모크 + 해피패스 E2E.
-4. [ ] T-B rebase(env.ts 충돌 시 T-A 변수 유지 + T-B 변수 병기) → 머지 → 미디어 스모크 전체.
-5. [ ] **M3-5 실행**: stage(Fly.io) 배포 + 배포 스모크(재생·무서명 403·채팅).
-6. [ ] **게이트 판정** (T0 베이스라인 대비, 개선계획 §2):
-   - G1: copy 경로 CPU 50%↓ — stage/로컬 재측정.
-   - G2: maxrate ±10% — ffprobe (T-A 보고 수치로 갈음 가능).
-   - G3: g2g <6s + 시작 <3s — stage 타임코드 대조.
-   - G4: 1,000VU k6 + 슬로우 클라이언트 격리.
-   - G5: 인제스트 버퍼 상한 스모크.
-7. [ ] 미달 항목은 개선계획 규약대로 "수용된 편차 + 근거" 문서화 후 종료. 판정 결과를
-       작업계획서-개선.md §4 각 항목에 체크 표기로 반영.
+1. [x] T0 머지(9ededb5) → `docs/perf-baseline.md` 존재·재현 커맨드 확인.
+2. [x] T-A 머지 → build+typecheck 그린 + smoke-ingest-codec 3종 ALL PASS.
+3. [x] T-C 머지(ee35009) → 채팅 왕복 스모크(bff smoke 9/9, "WS fanout: B receives A's message").
+4. [x] T-B rebase(충돌 0 — env.ts 말미 추가 규약 준수) → 머지 → 미디어 스모크 전체
+       (smoke.ts 9/9: 서명200/무서명403/썸네일/reap + ingest/codec 3종/backpressure — 스모크
+       스크립트는 fMP4/LL-HLS 대응으로 통합 단계에서 갱신, 커밋 48d2a78).
+5. [x] **M3-5 실행**: svc-media(MediaMTX 사이드카)+bff+web stage 배포, 배포 스모크 7/7 PASS
+       (prod 송출→live→서명 세그먼트 200→오프라인, 무효키 4403).
+6. [x] **게이트 판정** — 결과는 개선계획 §2 "판정 결과" 표: G1 PASS(0.0082코어, 97.8%↓) /
+       G2 PASS(+2.6%) / G3 PASS(stage 2.18/1.26/2.21s) / G4 편차 수용(격리 통과, 1,000VU는
+       sized-host 보류) / G5 PASS(4009).
+7. [x] 편차 문서화 완료(개선계획 §2·§4 체크 반영).
 
 ## 6. 전역 중단·조정 규칙
 
