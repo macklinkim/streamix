@@ -12,7 +12,7 @@ import type { Channel } from "@streamix/proto";
 import { channelClient } from "@/lib/connect";
 import { useAuth } from "@/lib/auth-store";
 import { Field, inputCls } from "@/components/field";
-import { ScreenBroadcast } from "@/components/broadcast";
+import { BroadcastPanel } from "@/components/broadcast";
 
 const schema = z.object({
   title: z.string().min(1, "제목을 입력하세요").max(140),
@@ -155,12 +155,12 @@ function ChannelPanel({
       </div>
 
       {streamKey ? (
-        <ScreenBroadcast streamKey={streamKey} />
+        <BroadcastPanel streamKey={streamKey} />
       ) : (
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <h2 className="text-sm font-semibold text-zinc-100">브라우저로 화면 방송</h2>
+          <h2 className="text-sm font-semibold text-zinc-100">방송시작</h2>
           <p className="mt-0.5 text-xs text-zinc-500">
-            화면 방송을 하려면 스트림 키가 필요합니다. 아래에서 키를 재발급하세요.
+            브라우저 방송을 하려면 스트림 키가 필요합니다. 아래에서 키를 재발급하세요.
           </p>
         </div>
       )}
