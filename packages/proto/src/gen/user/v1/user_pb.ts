@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
 export const file_user_v1_user: GenFile =
   /*@__PURE__*/
   fileDesc(
-    "ChJ1c2VyL3YxL3VzZXIucHJvdG8SB3VzZXIudjEiYQoEVXNlchIKCgJpZBgBIAEoCRINCgVlbWFpbBgCIAEoCRIUCgxkaXNwbGF5X25hbWUYAyABKAkSKAoKY3JlYXRlZF9hdBgEIAEoCzIULmNvbW1vbi52MS5UaW1lc3RhbXAiSAoPUmVnaXN0ZXJSZXF1ZXN0Eg0KBWVtYWlsGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCSIvChBSZWdpc3RlclJlc3BvbnNlEhsKBHVzZXIYASABKAsyDS51c2VyLnYxLlVzZXIiLwoMTG9naW5SZXF1ZXN0Eg0KBWVtYWlsGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIlkKDUxvZ2luUmVzcG9uc2USFAoMYWNjZXNzX3Rva2VuGAEgASgJEhUKDXJlZnJlc2hfdG9rZW4YAiABKAkSGwoEdXNlchgDIAEoCzINLnVzZXIudjEuVXNlciInCg5SZWZyZXNoUmVxdWVzdBIVCg1yZWZyZXNoX3Rva2VuGAEgASgJIj4KD1JlZnJlc2hSZXNwb25zZRIUCgxhY2Nlc3NfdG9rZW4YASABKAkSFQoNcmVmcmVzaF90b2tlbhgCIAEoCSILCglNZVJlcXVlc3QiKQoKTWVSZXNwb25zZRIbCgR1c2VyGAEgASgLMg0udXNlci52MS5Vc2VyMvMBCgtBdXRoU2VydmljZRI/CghSZWdpc3RlchIYLnVzZXIudjEuUmVnaXN0ZXJSZXF1ZXN0GhkudXNlci52MS5SZWdpc3RlclJlc3BvbnNlEjYKBUxvZ2luEhUudXNlci52MS5Mb2dpblJlcXVlc3QaFi51c2VyLnYxLkxvZ2luUmVzcG9uc2USPAoHUmVmcmVzaBIXLnVzZXIudjEuUmVmcmVzaFJlcXVlc3QaGC51c2VyLnYxLlJlZnJlc2hSZXNwb25zZRItCgJNZRISLnVzZXIudjEuTWVSZXF1ZXN0GhMudXNlci52MS5NZVJlc3BvbnNlYgZwcm90bzM",
+    "ChJ1c2VyL3YxL3VzZXIucHJvdG8SB3VzZXIudjEiYQoEVXNlchIKCgJpZBgBIAEoCRINCgVlbWFpbBgCIAEoCRIUCgxkaXNwbGF5X25hbWUYAyABKAkSKAoKY3JlYXRlZF9hdBgEIAEoCzIULmNvbW1vbi52MS5UaW1lc3RhbXAiSAoPUmVnaXN0ZXJSZXF1ZXN0Eg0KBWVtYWlsGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCSIvChBSZWdpc3RlclJlc3BvbnNlEhsKBHVzZXIYASABKAsyDS51c2VyLnYxLlVzZXIiLwoMTG9naW5SZXF1ZXN0Eg0KBWVtYWlsGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIlkKDUxvZ2luUmVzcG9uc2USFAoMYWNjZXNzX3Rva2VuGAEgASgJEhUKDXJlZnJlc2hfdG9rZW4YAiABKAkSGwoEdXNlchgDIAEoCzINLnVzZXIudjEuVXNlciInCg5SZWZyZXNoUmVxdWVzdBIVCg1yZWZyZXNoX3Rva2VuGAEgASgJIj4KD1JlZnJlc2hSZXNwb25zZRIUCgxhY2Nlc3NfdG9rZW4YASABKAkSFQoNcmVmcmVzaF90b2tlbhgCIAEoCSILCglNZVJlcXVlc3QiKQoKTWVSZXNwb25zZRIbCgR1c2VyGAEgASgLMg0udXNlci52MS5Vc2VyIlIKFlVwc2VydE9hdXRoVXNlclJlcXVlc3QSEwoLcHJvdmlkZXJfaWQYASABKAkSDQoFZW1haWwYAiABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJIjYKF1Vwc2VydE9hdXRoVXNlclJlc3BvbnNlEhsKBHVzZXIYASABKAsyDS51c2VyLnYxLlVzZXIyyQIKC0F1dGhTZXJ2aWNlEj8KCFJlZ2lzdGVyEhgudXNlci52MS5SZWdpc3RlclJlcXVlc3QaGS51c2VyLnYxLlJlZ2lzdGVyUmVzcG9uc2USNgoFTG9naW4SFS51c2VyLnYxLkxvZ2luUmVxdWVzdBoWLnVzZXIudjEuTG9naW5SZXNwb25zZRI8CgdSZWZyZXNoEhcudXNlci52MS5SZWZyZXNoUmVxdWVzdBoYLnVzZXIudjEuUmVmcmVzaFJlc3BvbnNlEi0KAk1lEhIudXNlci52MS5NZVJlcXVlc3QaEy51c2VyLnYxLk1lUmVzcG9uc2USVAoPVXBzZXJ0T2F1dGhVc2VyEh8udXNlci52MS5VcHNlcnRPYXV0aFVzZXJSZXF1ZXN0GiAudXNlci52MS5VcHNlcnRPYXV0aFVzZXJSZXNwb25zZWIGcHJvdG8z",
     [file_common_v1_common],
   );
 
@@ -219,6 +219,57 @@ export const MeResponseSchema: GenMessage<MeResponse> =
   messageDesc(file_user_v1_user, 8);
 
 /**
+ * Internal-only (BFF OAuth callback -> svc-core). Finds a user by provider_id
+ * or creates a password-less one. Blocked at the BFF edge like other internal RPCs.
+ *
+ * @generated from message user.v1.UpsertOauthUserRequest
+ */
+export type UpsertOauthUserRequest = Message<"user.v1.UpsertOauthUserRequest"> & {
+  /**
+   * e.g. "twitch:12345"
+   *
+   * @generated from field: string provider_id = 1;
+   */
+  providerId: string;
+
+  /**
+   * @generated from field: string email = 2;
+   */
+  email: string;
+
+  /**
+   * @generated from field: string display_name = 3;
+   */
+  displayName: string;
+};
+
+/**
+ * Describes the message user.v1.UpsertOauthUserRequest.
+ * Use `create(UpsertOauthUserRequestSchema)` to create a new message.
+ */
+export const UpsertOauthUserRequestSchema: GenMessage<UpsertOauthUserRequest> =
+  /*@__PURE__*/
+  messageDesc(file_user_v1_user, 9);
+
+/**
+ * @generated from message user.v1.UpsertOauthUserResponse
+ */
+export type UpsertOauthUserResponse = Message<"user.v1.UpsertOauthUserResponse"> & {
+  /**
+   * @generated from field: user.v1.User user = 1;
+   */
+  user?: User | undefined;
+};
+
+/**
+ * Describes the message user.v1.UpsertOauthUserResponse.
+ * Use `create(UpsertOauthUserResponseSchema)` to create a new message.
+ */
+export const UpsertOauthUserResponseSchema: GenMessage<UpsertOauthUserResponse> =
+  /*@__PURE__*/
+  messageDesc(file_user_v1_user, 10);
+
+/**
  * @generated from service user.v1.AuthService
  */
 export const AuthService: GenService<{
@@ -253,5 +304,13 @@ export const AuthService: GenService<{
     methodKind: "unary";
     input: typeof MeRequestSchema;
     output: typeof MeResponseSchema;
+  };
+  /**
+   * @generated from rpc user.v1.AuthService.UpsertOauthUser
+   */
+  upsertOauthUser: {
+    methodKind: "unary";
+    input: typeof UpsertOauthUserRequestSchema;
+    output: typeof UpsertOauthUserResponseSchema;
   };
 }> = /*@__PURE__*/ serviceDesc(file_user_v1_user, 0);

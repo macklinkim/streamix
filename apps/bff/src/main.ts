@@ -7,6 +7,7 @@ import { AuthService, ChannelService } from "@streamix/proto";
 import { authProxy } from "./services/auth.proxy.js";
 import { channelProxy } from "./services/channel.proxy.js";
 import { authRoutes } from "./routes/auth.js";
+import { twitchRoutes } from "./routes/twitch.js";
 import { handleChatWs } from "./ws/chat.js";
 import { rateLimitInterceptor } from "./rate-limit.js";
 import { env, corsOrigins } from "./env.js";
@@ -19,6 +20,7 @@ await app.register(cors, {
 });
 await app.register(websocket);
 await app.register(authRoutes);
+await app.register(twitchRoutes);
 await app.register(fastifyConnectPlugin, {
   interceptors: [rateLimitInterceptor],
   routes(router) {

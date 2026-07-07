@@ -35,7 +35,8 @@ export const authService: ServiceImpl<typeof AuthService> = {
 
   async login(req) {
     const [u] = await db.select().from(users).where(eq(users.email, req.email)).limit(1);
-    if (!u || !(await verifyPassword(u.passwordHash, req.password))) {
+    // OAuth-only accounts have no password hash — password login is unavailable.
+    if (!u || !u.passwordHash || !(await verifyPassword(u.passwordHash, req.password))) {
       throw appError(AppErrorCode.INVALID_CREDENTIALS);
     }
     return {
@@ -60,5 +61,38 @@ export const authService: ServiceImpl<typeof AuthService> = {
     const [u] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!u) throw appError(AppErrorCode.NOT_FOUND, "user not found");
     return { user: toUserMsg(u) };
+  },
+
+  // Internal-only: called by the BFF after a Twitch OAuth exchange. Matches on
+  // provider_id (stable across logins) and creates a password-less account on
+  // first sight. Blocked from the browser at the BFF edge.
+  async upsertOauthUser(req) {
+    const [existing] = await db
+      .select()
+      .from(users)
+      .where(eq(users.providerId, req.providerId))
+      .limit(1);
+    if (existing) return { user: toUserMsg(existing) };
+
+    const displayName = req.displayName || "twitch_user";
+    const fallbackEmail = `${req.providerId.replace(/:/g, "_")}@twitch.streamix.local`;
+    const email = req.email || fallbackEmail;
+    try {
+      const [u] = await db
+        .insert(users)
+        .values({ email, displayName, providerId: req.providerId })
+        .returning();
+      return { user: toUserMsg(u!) };
+    } catch (e) {
+      // A local account already owns this email — keep the OAuth account distinct.
+      if (isUniqueViolation(e)) {
+        const [u] = await db
+          .insert(users)
+          .values({ email: fallbackEmail, displayName, providerId: req.providerId })
+          .returning();
+        return { user: toUserMsg(u!) };
+      }
+      throw e;
+    }
   },
 };

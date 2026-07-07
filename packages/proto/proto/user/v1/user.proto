@@ -49,9 +49,22 @@ message MeResponse {
   User user = 1;
 }
 
+// Internal-only (BFF OAuth callback -> svc-core). Finds a user by provider_id
+// or creates a password-less one. Blocked at the BFF edge like other internal RPCs.
+message UpsertOauthUserRequest {
+  string provider_id = 1; // e.g. "twitch:12345"
+  string email = 2;
+  string display_name = 3;
+}
+
+message UpsertOauthUserResponse {
+  User user = 1;
+}
+
 service AuthService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc Refresh(RefreshRequest) returns (RefreshResponse);
   rpc Me(MeRequest) returns (MeResponse);
+  rpc UpsertOauthUser(UpsertOauthUserRequest) returns (UpsertOauthUserResponse);
 }

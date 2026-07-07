@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { TwitchLogo, Lightning } from "@phosphor-icons/react";
 import { apiLogin, AuthError } from "@/lib/session";
+import { bffUrl } from "@/lib/api-base";
 import { useAuth } from "@/lib/auth-store";
 import { hideLandingForToday } from "@/lib/landing-visibility";
 
@@ -98,7 +99,9 @@ export function LandingLogin({ onDone }: { onDone: () => void }) {
 
       <button
         type="button"
-        onClick={onDone}
+        onClick={() => {
+          window.location.href = `${bffUrl}/auth/twitch`;
+        }}
         className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#9146FF]/40 bg-[#9146FF]/10 text-sm font-semibold tracking-wide text-[#c9b3ff] transition-colors hover:bg-[#9146FF]/20"
       >
         <TwitchLogo weight="fill" className="size-4" />

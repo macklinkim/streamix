@@ -22,6 +22,14 @@ const Env = z.object({
   COOKIE_SECURE: z.coerce.boolean().default(false),
   // Optional explicit cookie domain (unset = host-only cookie on the BFF host).
   COOKIE_DOMAIN: z.string().optional(),
+  // Twitch OAuth (confidential client). Secret must come from a Fly secret in
+  // prod — never commit it. Empty client id disables the Twitch login routes.
+  TWITCH_CLIENT_ID: z.string().default(""),
+  TWITCH_CLIENT_SECRET: z.string().default(""),
+  // Must EXACTLY match a redirect URL registered in the Twitch console.
+  TWITCH_REDIRECT_URI: z.string().default("http://localhost:8080/auth/twitch/callback"),
+  // Where to send the browser back after a successful OAuth login.
+  WEB_URL: z.string().default("http://localhost:3000"),
   // Rate limits (§8 Phase 2). Configurable so the load rig can raise them.
   RATE_LIMIT_RPC_MAX: z.coerce.number().default(300),
   RATE_LIMIT_RPC_WINDOW: z.coerce.number().default(10),
