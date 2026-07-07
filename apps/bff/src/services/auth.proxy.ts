@@ -20,4 +20,8 @@ export const authProxy: ServiceImpl<typeof AuthService> = {
     const userId = await requireUser(ctx);
     return coreAuth.me(req, { headers: { "x-user-id": userId } });
   },
+  // Internal-only (BFF OAuth callback -> core). Never from the browser.
+  upsertOauthUser() {
+    throw new ConnectError("internal RPC, not exposed to browser", Code.PermissionDenied);
+  },
 };

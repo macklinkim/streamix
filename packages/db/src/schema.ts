@@ -7,8 +7,13 @@ export const streamStatus = pgEnum("stream_status", ["idle", "live", "ended"]);
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),
-  passwordHash: text("password_hash").notNull(),
+  // Null for OAuth-only accounts (e.g. Twitch); password login is unavailable
+  // for them until they set one.
+  passwordHash: text("password_hash"),
   displayName: text("display_name").notNull(),
+  // External identity, e.g. "twitch:12345". Unique so repeat OAuth logins map
+  // to the same account.
+  providerId: text("provider_id").unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
