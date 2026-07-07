@@ -3,9 +3,14 @@
 import Link from "next/link";
 import { MagnifyingGlass, VideoCamera, Broadcast } from "@phosphor-icons/react";
 import { useAuth } from "@/lib/auth-store";
+import { apiLogout } from "@/lib/session";
 
 function AuthNav() {
-  const { user, ready, logout } = useAuth();
+  const { user, ready, token, clear } = useAuth();
+  const logout = async () => {
+    await apiLogout(token); // revoke the server session + refresh cookie
+    clear();
+  };
   if (!ready) return <div className="h-9 w-32" />; // reserve space, avoid flash
 
   if (user) {

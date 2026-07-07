@@ -1,26 +1,40 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAuth, storedToken } from "@/lib/auth-store";
+import { useAuth } from "@/lib/auth-store";
 import { authClient } from "@/lib/connect";
+import { apiRefresh } from "@/lib/session";
 
-// Restores the session on load: if a token is stored, fetch the user via `me`,
-// otherwise mark auth ready as logged-out. Logs out on an invalid token.
+// Restores the session on load: the access token is memory-only, so we silently
+// mint a fresh one from the HttpOnly refresh cookie, then fetch the user. No
+// valid cookie => logged out.
 export function AuthHydrator() {
-  const hydrate = useAuth((s) => s.hydrate);
-  const logout = useAuth((s) => s.logout);
+  const setSession = useAuth((s) => s.setSession);
+  const clear = useAuth((s) => s.clear);
 
   useEffect(() => {
-    const token = storedToken();
-    if (!token) {
-      hydrate(null, null);
-      return;
-    }
-    authClient
-      .me({}, { headers: { authorization: `Bearer ${token}` } })
-      .then((res) => hydrate(token, res.user ?? null))
-      .catch(() => logout());
-  }, [hydrate, logout]);
+    let cancelled = false;
+    (async () => {
+      const token = await apiRefresh();
+      if (cancelled) return;
+      if (!token) {
+        clear();
+        return;
+      }
+      try {
+        const res = await authClient.me({}, { headers: { authorization: `Bearer ${token}` } });
+        const u = res.user;
+        if (!cancelled) {
+          setSession(token, u ? { id: u.id, email: u.email, displayName: u.displayName } : null);
+        }
+      } catch {
+        if (!cancelled) clear();
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [setSession, clear]);
 
   return null;
 }

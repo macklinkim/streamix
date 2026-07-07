@@ -5,8 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { ConnectError } from "@connectrpc/connect";
-import { authClient } from "@/lib/connect";
+import { apiLogin } from "@/lib/session";
 import { useAuth } from "@/lib/auth-store";
 import { Field, inputCls } from "@/components/field";
 
@@ -18,7 +17,7 @@ type Form = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const setAuth = useAuth((s) => s.setAuth);
+  const setSession = useAuth((s) => s.setSession);
   const {
     register,
     handleSubmit,
@@ -28,14 +27,11 @@ export default function LoginPage() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const res = await authClient.login(data);
-      setAuth(res.accessToken, res.user ?? null);
+      const res = await apiLogin(data);
+      setSession(res.accessToken, res.user);
       router.push("/");
-    } catch (e) {
-      setError("root", {
-        message:
-          e instanceof ConnectError ? "이메일 또는 비밀번호가 올바르지 않습니다." : "로그인 실패",
-      });
+    } catch {
+      setError("root", { message: "이메일 또는 비밀번호가 올바르지 않습니다." });
     }
   });
 

@@ -5,8 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { Code, ConnectError } from "@connectrpc/connect";
-import { authClient } from "@/lib/connect";
+import { apiLogin, apiRegister, AuthError } from "@/lib/session";
 import { useAuth } from "@/lib/auth-store";
 import { Field, inputCls } from "@/components/field";
 
@@ -19,7 +18,7 @@ type Form = z.infer<typeof schema>;
 
 export default function SignupPage() {
   const router = useRouter();
-  const setAuth = useAuth((s) => s.setAuth);
+  const setSession = useAuth((s) => s.setSession);
   const {
     register,
     handleSubmit,
@@ -29,12 +28,12 @@ export default function SignupPage() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await authClient.register(data);
-      const res = await authClient.login({ email: data.email, password: data.password });
-      setAuth(res.accessToken, res.user ?? null);
+      await apiRegister(data);
+      const res = await apiLogin({ email: data.email, password: data.password });
+      setSession(res.accessToken, res.user);
       router.push("/");
     } catch (e) {
-      const exists = e instanceof ConnectError && e.code === Code.AlreadyExists;
+      const exists = e instanceof AuthError && e.status === 409;
       setError("root", { message: exists ? "이미 가입된 이메일입니다." : "회원가입 실패" });
     }
   });
