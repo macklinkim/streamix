@@ -154,19 +154,13 @@ function ChannelPanel({
         </Link>
       </div>
 
-      {streamKey ? (
-        <BroadcastPanel streamKey={streamKey} />
-      ) : (
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <h2 className="text-sm font-semibold text-zinc-100">방송시작</h2>
-          <p className="mt-0.5 text-xs text-zinc-500">
-            브라우저 방송을 하려면 스트림 키가 필요합니다. 아래에서 키를 재발급하세요.
-          </p>
-        </div>
-      )}
+      <BroadcastPanel token={token} />
 
       <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-        <h2 className="text-sm font-semibold text-zinc-100">OBS로 송출</h2>
+        <h2 className="text-sm font-semibold text-zinc-100">OBS로 송출 (전용 스트림 키)</h2>
+        <p className="mt-0.5 text-xs text-zinc-500">
+          아래 키는 OBS 등 외부 인코더 전용입니다. 브라우저 방송은 위 방송시작 버튼만 누르면 됩니다.
+        </p>
         <dl className="mt-3 space-y-3 font-mono text-sm">
           <div>
             <dt className="text-xs uppercase text-zinc-500">서버</dt>

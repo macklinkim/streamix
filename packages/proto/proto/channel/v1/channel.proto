@@ -100,6 +100,17 @@ message RotateStreamKeyResponse {
   string stream_key = 1;
 }
 
+message IssueIngestTokenRequest {}
+
+message IssueIngestTokenResponse {
+  // Short-lived opaque browser ingest token ("bit_" prefix). Used as the WS
+  // ?key= for browser go-live so the durable OBS stream key is never exposed
+  // and reloads don't force a rotate (ADR-13). svc-media validates it via the
+  // same ValidateStreamKey RPC (prefix branch). Redis TTL 15m.
+  string token = 1;
+  int64 expires_at = 2;
+}
+
 message HeartbeatRequest {
   string channel_id = 1;
 }
@@ -116,5 +127,6 @@ service ChannelService {
   rpc GetPlaybackUrl(GetPlaybackUrlRequest) returns (GetPlaybackUrlResponse);
   rpc GetMyChannel(GetMyChannelRequest) returns (GetMyChannelResponse);
   rpc RotateStreamKey(RotateStreamKeyRequest) returns (RotateStreamKeyResponse);
+  rpc IssueIngestToken(IssueIngestTokenRequest) returns (IssueIngestTokenResponse);
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
 }

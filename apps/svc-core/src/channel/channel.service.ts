@@ -10,7 +10,38 @@ import { channels, streams } from "@streamix/db";
 import { db, redis } from "../deps.js";
 import { env } from "../env.js";
 import { appError, isUniqueViolation } from "../errors.js";
-import { generateStreamKey, hashStreamKey } from "./stream-key.js";
+import {
+  generateStreamKey,
+  hashStreamKey,
+  generateIngestToken,
+  INGEST_TOKEN_PREFIX,
+} from "./stream-key.js";
+
+// Browser ingest tokens live in Redis (ADR-13); 15m covers a go-live session,
+// and the web re-issues on reconnect.
+const INGEST_TOKEN_TTL_SECONDS = 900;
+function ingestTokenKey(token: string): string {
+  return `ingest:${token}`;
+}
+
+// Resolve a WS ?key= to a channelId. A "bit_" browser token is looked up in
+// Redis; anything else is a durable stream key matched by hash. Shared by
+// ValidateStreamKey and StartStream so both go-live paths accept both forms.
+async function resolveChannelId(streamKey: string): Promise<string | null> {
+  if (streamKey.startsWith(INGEST_TOKEN_PREFIX)) {
+    try {
+      return (await redis.get(ingestTokenKey(streamKey))) || null;
+    } catch {
+      return null; // Redis down -> token unverifiable; fail closed
+    }
+  }
+  const [c] = await db
+    .select({ id: channels.id })
+    .from(channels)
+    .where(eq(channels.streamKeyHash, hashStreamKey(streamKey)))
+    .limit(1);
+  return c?.id ?? null;
+}
 
 const slugSchema = z
   .string()
@@ -160,30 +191,38 @@ export const channelService: ServiceImpl<typeof ChannelService> = {
     return { streamKey };
   },
 
-  async validateStreamKey(req) {
+  async issueIngestToken(_req, ctx) {
+    const ownerUserId = requireUserId(ctx);
     const [c] = await db
       .select({ id: channels.id })
       .from(channels)
-      .where(eq(channels.streamKeyHash, hashStreamKey(req.streamKey)))
+      .where(eq(channels.ownerUserId, ownerUserId))
       .limit(1);
-    return { valid: Boolean(c), channelId: c?.id ?? "" };
+    if (!c) throw appError(AppErrorCode.NOT_FOUND, "channel not found");
+    const token = generateIngestToken();
+    await redis.set(ingestTokenKey(token), c.id, "EX", INGEST_TOKEN_TTL_SECONDS);
+    return {
+      token,
+      expiresAt: BigInt(Math.floor(Date.now() / 1000) + INGEST_TOKEN_TTL_SECONDS),
+    };
+  },
+
+  async validateStreamKey(req) {
+    const channelId = await resolveChannelId(req.streamKey);
+    return { valid: Boolean(channelId), channelId: channelId ?? "" };
   },
 
   async startStream(req) {
-    const [c] = await db
-      .select({ id: channels.id })
-      .from(channels)
-      .where(eq(channels.streamKeyHash, hashStreamKey(req.streamKey)))
-      .limit(1);
-    if (!c) throw appError(AppErrorCode.INVALID_STREAM_KEY);
+    const channelId = await resolveChannelId(req.streamKey);
+    if (!channelId) throw appError(AppErrorCode.INVALID_STREAM_KEY);
 
     // Core is the single writer of live state (§5.2). SET NX blocks a second encoder.
-    const acquired = await redis.set(liveKey(c.id), "1", "EX", env.LIVE_TTL_SECONDS, "NX");
+    const acquired = await redis.set(liveKey(channelId), "1", "EX", env.LIVE_TTL_SECONDS, "NX");
     if (acquired !== "OK") {
       throw new ConnectError("channel already live", Code.AlreadyExists);
     }
-    await db.insert(streams).values({ channelId: c.id, status: "live" });
-    return { channelId: c.id };
+    await db.insert(streams).values({ channelId, status: "live" });
+    return { channelId };
   },
 
   async stopStream(req) {

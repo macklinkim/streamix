@@ -7,6 +7,7 @@ import {
   VideoCamera,
   Monitor,
 } from "@phosphor-icons/react";
+import { channelClient } from "@/lib/connect";
 
 // trim() guards against config junk (stray whitespace/BOM) breaking the WS URL.
 const ingestUrl = (process.env.NEXT_PUBLIC_MEDIA_INGEST_URL ?? "ws://localhost:8090").trim();
@@ -43,7 +44,9 @@ function errorMessage(e: unknown): string {
   return "장치를 열지 못했습니다. 다시 시도해 주세요.";
 }
 
-export function BroadcastPanel({ streamKey }: { streamKey: string }) {
+// A fresh short-lived ingest token is issued at go-live (ADR-13), so browsing
+// broadcasting works after a reload without rotating the durable OBS key.
+export function BroadcastPanel({ token }: { token: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const cleanupRef = useRef<() => void>(() => {});
   const [phase, setPhase] = useState<Phase>("idle");
@@ -116,6 +119,22 @@ export function BroadcastPanel({ streamKey }: { streamKey: string }) {
     void refreshDevices(); // labels are available now that permission was granted
     if (videoRef.current) videoRef.current.srcObject = stream;
 
+    // Issue a short-lived browser ingest token for this session (ADR-13).
+    let ingestKey: string;
+    try {
+      const res = await channelClient.issueIngestToken(
+        {},
+        { headers: { authorization: `Bearer ${token}` } },
+      );
+      ingestKey = res.token;
+    } catch {
+      stream.getTracks().forEach((t) => t.stop());
+      if (videoRef.current) videoRef.current.srcObject = null;
+      setPhase("error");
+      setMessage("방송 토큰 발급에 실패했습니다. 다시 시도해 주세요.");
+      return;
+    }
+
     const picked = pickMimeType();
     let recorder: MediaRecorder;
     try {
@@ -134,7 +153,7 @@ export function BroadcastPanel({ streamKey }: { streamKey: string }) {
 
     const codecParam = picked ? `&codec=${picked.codec}` : "";
     const ws = new WebSocket(
-      `${ingestUrl}/ingest?key=${encodeURIComponent(streamKey)}${codecParam}`,
+      `${ingestUrl}/ingest?key=${encodeURIComponent(ingestKey)}${codecParam}`,
     );
 
     let stopped = false;
@@ -162,7 +181,7 @@ export function BroadcastPanel({ streamKey }: { streamKey: string }) {
       if (stopped) return;
       stop(
         e.code === 4403
-          ? "스트림 키가 유효하지 않습니다. 키를 재발급해 주세요."
+          ? "방송 세션이 만료되었습니다. 방송시작을 다시 눌러 주세요."
           : `송출 연결이 끊어졌습니다. 다시 시도해 주세요. (코드 ${e.code})`,
       );
     };
