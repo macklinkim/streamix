@@ -25,15 +25,18 @@ const ingestUrl = (process.env.NEXT_PUBLIC_MEDIA_INGEST_URL ?? "ws://localhost:8
 
 // Browser broadcasting: getUserMedia (camera, default) or getDisplayMedia (screen)
 // -> MediaRecorder -> WS /ingest -> svc-media ffmpeg -> the same RTMP/HLS pipeline
-// OBS uses. Codec negotiation (ADR-9/ADR-12): prefer formats the server can remux
-// without re-encoding (mp4/H.264 -> full copy, webm/H.264 -> video copy); VP8
-// falls back to full transcoding server-side.
+// OBS uses. Codec negotiation (ADR-9/ADR-12): prefer WebM/VP8, which MediaRecorder
+// streams cleanly over the non-seekable ingest pipe and ffmpeg transcodes reliably
+// (verified end-to-end on prod). The H.264 "copy" formats are demoted: both
+// fragmented-MP4 ("moov atom not found") and Chromium's webm+H.264 fail to parse
+// from a pipe. MP4 remains last so Safari (webm-less) still has an option — the
+// R1 real-device case, validated separately on hardware.
 function pickMimeType(): { mimeType: string; codec: string } | undefined {
   const candidates: Array<{ mimeType: string; codec: string }> = [
-    { mimeType: "video/mp4;codecs=avc1.42E01E,mp4a.40.2", codec: "mp4-h264" },
-    { mimeType: "video/webm;codecs=h264", codec: "webm-h264" },
     { mimeType: "video/webm;codecs=vp8,opus", codec: "webm-vp8" },
     { mimeType: "video/webm", codec: "webm-vp8" },
+    { mimeType: "video/webm;codecs=h264", codec: "webm-h264" },
+    { mimeType: "video/mp4;codecs=avc1.42E01E,mp4a.40.2", codec: "mp4-h264" },
   ];
   return candidates.find((c) => MediaRecorder.isTypeSupported(c.mimeType));
 }

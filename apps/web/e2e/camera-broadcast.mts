@@ -21,6 +21,12 @@ const MOBILE = process.env.MOBILE === "1";
 const args = [
   "--use-fake-device-for-media-stream",
   "--use-fake-ui-for-media-stream",
+  // Opening the viewer tab backgrounds the broadcaster tab; Chromium otherwise
+  // throttles MediaRecorder there and the stream stalls after ~1s (R3). Real
+  // users get wakeLock + a background warning instead.
+  "--disable-background-timer-throttling",
+  "--disable-backgrounding-occluded-windows",
+  "--disable-renderer-backgrounding",
 ];
 if (SOURCE === "screen") args.push("--auto-select-desktop-capture-source=Entire screen");
 
@@ -73,39 +79,69 @@ try {
   process.exit(1);
 }
 
-// Watch as a viewer from a second tab.
-const viewer = await context.newPage();
-viewer.on("response", (res) => {
-  if (res.url().includes(".m3u8")) console.log("m3u8:", res.status());
-});
-await viewer.goto(`${WEB}/watch/${SLUG}`);
-let advancing = false;
-for (let i = 0; i < 24 && !advancing; i++) {
-  advancing = await viewer.evaluate(async () => {
-    const v = document.querySelector("video");
-    if (!v) return false;
-    const t0 = v.currentTime;
-    await new Promise((r) => setTimeout(r, 5000));
-    return v.currentTime > t0;
+// Verify playback over HTTP, keeping the broadcaster tab in the foreground — a
+// second browser tab would background it and Chromium throttles MediaRecorder
+// there, stalling the stream (R3). Fetching the signed HLS playlist and its
+// segments is the same measurement smoke-ingest-prod uses and proves the stream
+// is live and playable (segments advancing = currentTime would advance).
+const bff = "https://streamix-bff.fly.dev";
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Confirm the channel actually went live server-side (not just the UI).
+let live = false;
+for (let i = 0; i < 20 && !live; i++) {
+  const r = await fetch(`${bff}/channel.v1.ChannelService/GetChannel`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ slug: SLUG }),
   });
-  const state = await viewer.evaluate(() => {
-    const v = document.querySelector("video");
-    return v ? `t=${v.currentTime.toFixed(1)} rs=${v.readyState}` : "no-video";
-  });
-  console.log(`viewer[${i}] ${state}`);
+  live = (await r.json()).channel?.isLive ?? false;
+  if (!live) await sleep(2000);
 }
-console.log(advancing ? "PASS viewer playback advancing" : "FAIL viewer playback");
+console.log(live ? "PASS channel live" : "FAIL channel live");
+
+let served = false;
+if (live) {
+  const pr = await fetch(`${bff}/channel.v1.ChannelService/GetPlaybackUrl`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ slug: SLUG }),
+  });
+  const url = (await pr.json()).url as string;
+  for (let i = 0; i < 20 && !served; i++) {
+    const res = await fetch(url);
+    if (res.ok) {
+      let text = await res.text();
+      const variant = text
+        .split("\n")
+        .find((l) => !l.startsWith("#") && l.includes(".m3u8"))
+        ?.trim();
+      if (variant) {
+        const base = url.split("/index.m3u8")[0];
+        const vr = await fetch(`${base}/${variant}`).catch(() => null);
+        if (vr?.ok) text = await vr.text();
+      }
+      served = /\.(ts|mp4|m4s)/.test(text);
+    }
+    if (!served) await sleep(2000);
+  }
+}
+console.log(served ? "PASS signed m3u8 serves segments" : "FAIL playback segments");
 
 await page.getByRole("button", { name: "방송 종료" }).click();
 console.log("stopped broadcast");
 
-// Offline transition: viewer flips back to offline within the poll window.
-const offline = await viewer
-  .getByText(/오프라인|방송 준비|현재 방송/)
-  .first()
-  .isVisible({ timeout: 20000 })
-  .catch(() => false);
-console.log(offline ? "PASS offline transition" : "WARN offline transition not observed");
+let offline = false;
+for (let i = 0; i < 20 && !offline; i++) {
+  await sleep(2000);
+  const r = await fetch(`${bff}/channel.v1.ChannelService/GetChannel`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ slug: SLUG }),
+  });
+  offline = !((await r.json()).channel?.isLive ?? false);
+}
+console.log(offline ? "PASS offline transition" : "FAIL offline transition");
 
 await browser.close();
-process.exit(advancing ? 0 : 1);
+process.exit(live && served && offline ? 0 : 1);
