@@ -45,7 +45,7 @@ export function Player({ src }: { src: string }) {
       autoPlay
       muted
       playsInline
-      className="aspect-video w-full rounded-lg bg-black"
+      className="aspect-video w-full rounded-lg bg-black object-contain"
     />
   );
 }

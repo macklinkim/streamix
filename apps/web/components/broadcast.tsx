@@ -6,8 +6,19 @@ import {
   StopCircle,
   VideoCamera,
   Monitor,
+  CameraRotate,
+  Warning,
 } from "@phosphor-icons/react";
 import { channelClient } from "@/lib/connect";
+
+// Mobile phones need native (portrait) capture and front/back switching; desktops
+// get a fixed 720p landscape + device pickers. Coarse UA check is enough here.
+function isMobile(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+type Facing = "user" | "environment";
 
 // trim() guards against config junk (stray whitespace/BOM) breaking the WS URL.
 const ingestUrl = (process.env.NEXT_PUBLIC_MEDIA_INGEST_URL ?? "ws://localhost:8090").trim();
@@ -55,6 +66,9 @@ export function BroadcastPanel({ token }: { token: string }) {
   const [devices, setDevices] = useState<Devices>({ cameras: [], mics: [] });
   const [cameraId, setCameraId] = useState("");
   const [micId, setMicId] = useState("");
+  const [facing, setFacing] = useState<Facing>("user");
+  const [backgrounded, setBackgrounded] = useState(false);
+  const mobile = isMobile();
 
   useEffect(() => () => cleanupRef.current(), []);
 
@@ -75,7 +89,7 @@ export function BroadcastPanel({ token }: { token: string }) {
     void refreshDevices();
   }, []);
 
-  async function acquireStream(): Promise<MediaStream> {
+  async function acquireStream(effFacing: Facing): Promise<MediaStream> {
     if (source === "screen") {
       return navigator.mediaDevices.getDisplayMedia({
         video: { width: 1280, height: 720, frameRate: 30 },
@@ -83,12 +97,16 @@ export function BroadcastPanel({ token }: { token: string }) {
       });
     }
     return navigator.mediaDevices.getUserMedia({
-      video: {
-        width: 1280,
-        height: 720,
-        frameRate: 30,
-        ...(cameraId ? { deviceId: { exact: cameraId } } : {}),
-      },
+      // Mobile: let the device pick its native (portrait) resolution and select
+      // the camera by facingMode. Desktop: fixed 720p landscape + deviceId.
+      video: mobile
+        ? { facingMode: effFacing, frameRate: 30 }
+        : {
+            width: 1280,
+            height: 720,
+            frameRate: 30,
+            ...(cameraId ? { deviceId: { exact: cameraId } } : {}),
+          },
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
@@ -97,13 +115,13 @@ export function BroadcastPanel({ token }: { token: string }) {
     });
   }
 
-  async function start() {
+  async function start(effFacing: Facing = facing) {
     setPhase("starting");
     setMessage("");
 
     let stream: MediaStream;
     try {
-      stream = await acquireStream();
+      stream = await acquireStream(effFacing);
     } catch (e) {
       // Screen picker cancel (NotAllowedError from getDisplayMedia) is not an
       // error state; a denied camera permission is.
@@ -156,10 +174,37 @@ export function BroadcastPanel({ token }: { token: string }) {
       `${ingestUrl}/ingest?key=${encodeURIComponent(ingestKey)}${codecParam}`,
     );
 
+    // Keep the phone awake while live; re-request on foreground (the lock is
+    // auto-released when the tab hides). Warn if the app is backgrounded, since
+    // MediaRecorder can be throttled/paused there (R3), and stop on pagehide.
+    let wakeLock: WakeLockSentinel | null = null;
+    const requestWakeLock = () => {
+      navigator.wakeLock
+        ?.request("screen")
+        .then((w) => {
+          wakeLock = w;
+        })
+        .catch(() => {});
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        setBackgrounded(true);
+      } else {
+        setBackgrounded(false);
+        requestWakeLock();
+      }
+    };
+    const onPageHide = () => stop();
+
     let stopped = false;
     const stop = (failMessage?: string) => {
       if (stopped) return;
       stopped = true;
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
+      void wakeLock?.release().catch(() => {});
+      wakeLock = null;
+      setBackgrounded(false);
       if (recorder.state !== "inactive") recorder.stop();
       stream.getTracks().forEach((t) => t.stop());
       if (ws.readyState === ws.OPEN || ws.readyState === ws.CONNECTING) ws.close();
@@ -176,6 +221,9 @@ export function BroadcastPanel({ token }: { token: string }) {
     ws.onopen = () => {
       recorder.start(500); // 500ms chunks keep ingest latency low
       setPhase("live");
+      requestWakeLock();
+      document.addEventListener("visibilitychange", onVisibility);
+      window.addEventListener("pagehide", onPageHide);
     };
     ws.onclose = (e) => {
       if (stopped) return;
@@ -190,6 +238,16 @@ export function BroadcastPanel({ token }: { token: string }) {
     };
     // Browser's own "공유 중지"/track-end (screen stop, device unplug) tears down.
     stream.getVideoTracks()[0]?.addEventListener("ended", () => stop());
+  }
+
+  // Front/back switch = clean restart (ADR-14): MediaRecorder can't swap tracks,
+  // so end the session and reconnect. The watch page's live/offline polling
+  // auto-recovers the viewer across the few-second gap.
+  async function switchCamera() {
+    const next: Facing = facing === "user" ? "environment" : "user";
+    setFacing(next);
+    cleanupRef.current();
+    await start(next);
   }
 
   const busy = phase === "starting" || phase === "live";
@@ -242,7 +300,25 @@ export function BroadcastPanel({ token }: { token: string }) {
               </button>
             ))}
           </div>
-          {source === "camera" && (
+          {source === "camera" && mobile && (
+            <div className="flex gap-2">
+              {(["user", "environment"] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFacing(f)}
+                  className={`h-9 flex-1 rounded-md border text-sm transition-colors ${
+                    facing === f
+                      ? "border-accent bg-accent/10 text-zinc-100"
+                      : "border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                  }`}
+                >
+                  {f === "user" ? "전면" : "후면"}
+                </button>
+              ))}
+            </div>
+          )}
+          {source === "camera" && !mobile && (
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <select
                 value={cameraId}
@@ -277,18 +353,38 @@ export function BroadcastPanel({ token }: { token: string }) {
 
       {phase === "error" && <p className="mt-3 text-xs text-live">{message}</p>}
 
+      {/* object-contain letterboxes any ratio, so portrait phone video isn't cropped. */}
       <video
         ref={videoRef}
         autoPlay
         muted
         playsInline
-        className={`mt-3 aspect-video w-full rounded-md bg-zinc-950 ${busy ? "" : "hidden"}`}
+        className={`mt-3 max-h-[70vh] w-full rounded-md bg-zinc-950 object-contain ${
+          busy ? "" : "hidden"
+        }`}
       />
-      {phase === "live" && (
-        <p className="mt-2 flex items-center gap-1.5 font-mono text-xs text-live">
-          <span className="size-1.5 animate-pulse rounded-full bg-live" /> 송출 중, 이 미리보기가
-          방송으로 나갑니다
+      {phase === "live" && backgrounded && (
+        <p className="mt-2 flex items-center gap-1.5 rounded-md bg-amber-500/10 px-2 py-1.5 text-xs text-amber-400">
+          <Warning size={14} weight="fill" /> 화면을 벗어나면 방송이 끊길 수 있어요. 이 탭을 열어
+          두세요.
         </p>
+      )}
+      {phase === "live" && (
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <p className="flex items-center gap-1.5 font-mono text-xs text-live">
+            <span className="size-1.5 animate-pulse rounded-full bg-live" /> 송출 중, 이 미리보기가
+            방송으로 나갑니다
+          </p>
+          {mobile && source === "camera" && (
+            <button
+              type="button"
+              onClick={() => void switchCamera()}
+              className="flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-zinc-800 px-2.5 text-xs text-zinc-300 transition-colors hover:border-zinc-700 active:scale-[0.98]"
+            >
+              <CameraRotate size={14} /> 카메라 전환
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
