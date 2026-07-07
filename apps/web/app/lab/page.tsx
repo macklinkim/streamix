@@ -25,8 +25,8 @@ const SLIDERS: { key: keyof ClothParams; label: string; min: number; max: number
     { key: "gravity", label: "gravity (붕괴 낙하 속도)", min: 200, max: 4000, step: 50 },
     {
       key: "revealRatio",
-      label: "revealRatio (자동 넘어가는 찢김 비율)",
-      min: 0.1,
+      label: "revealRatio (이탈 비율: 천이 얼마나 떨어지면 붕괴)",
+      min: 0.15,
       max: 0.9,
       step: 0.05,
     },

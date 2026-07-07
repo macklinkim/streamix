@@ -30,6 +30,7 @@ export function useTearable({ imageSrc, onReveal, params }: Options) {
 
     let raf = 0;
     let last = 0;
+    let frame = 0;
     let collapseTimer: ReturnType<typeof setTimeout> | null = null;
     const drag = { on: false, x: 0, y: 0 };
 
@@ -58,7 +59,14 @@ export function useTearable({ imageSrc, onReveal, params }: Options) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         cloth.draw(ctx);
 
-        if (!cloth.isCollapsing && cloth.tornRatio() > paramsRef.current.revealRatio) {
+        // Once enough of the sheet has come loose from the top, drop it all.
+        // Connectivity is O(points) so only check a few times a second.
+        frame++;
+        if (
+          !cloth.isCollapsing &&
+          frame % 8 === 0 &&
+          1 - cloth.attachedFraction() > paramsRef.current.revealRatio
+        ) {
           cloth.collapse();
           collapseTimer = setTimeout(fireReveal, COLLAPSE_FALLBACK_MS);
         }

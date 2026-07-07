@@ -30,15 +30,17 @@ export type ClothParams = {
 };
 
 export const DEFAULT_PARAMS: ClothParams = {
-  gravity: 1400,
-  damping: 0.99,
+  gravity: 1800,
+  damping: 0.98,
   iterations: 3,
-  tearFactor: 3.6,
+  tearFactor: 2.9,
   cutStretch: 1.5,
-  pull: 0.32,
-  momentum: 0.55,
-  radiusMul: 1.5,
-  revealRatio: 0.3,
+  pull: 0.38,
+  momentum: 0.6,
+  radiusMul: 1.7,
+  // Fraction of the sheet that must come loose from the top before it all drops
+  // and reveals. ~0.35 = a moderate tear frees a third of the cloth and it falls.
+  revealRatio: 0.35,
 };
 
 export class Cloth {
@@ -104,6 +106,46 @@ export class Cloth {
 
   private addConstraint(a: number, b: number, len: number): void {
     this.cons.push({ a, b, len, torn: false });
+  }
+
+  /**
+   * Fraction of the sheet still hanging from the pinned top edge (flood-fill
+   * over intact links). Drops toward 0 as tears disconnect pieces — direction-
+   * agnostic, so any tear pattern that frees enough cloth triggers the collapse.
+   */
+  attachedFraction(): number {
+    const n = this.pts.length;
+    const adj: number[][] = Array.from({ length: n }, () => []);
+    for (const c of this.cons) {
+      if (c.torn) continue;
+      adj[c.a].push(c.b);
+      adj[c.b].push(c.a);
+    }
+    const seen = new Uint8Array(n);
+    const stack: number[] = [];
+    for (let i = 0; i < n; i++) {
+      if (this.pts[i].pinned && this.pts[i].active) {
+        seen[i] = 1;
+        stack.push(i);
+      }
+    }
+    while (stack.length) {
+      const p = stack.pop()!;
+      for (const q of adj[p]) {
+        if (!seen[q] && this.pts[q].active) {
+          seen[q] = 1;
+          stack.push(q);
+        }
+      }
+    }
+    let attached = 0;
+    let total = 0;
+    for (let i = 0; i < n; i++) {
+      if (!this.pts[i].active) continue;
+      total++;
+      if (seen[i]) attached++;
+    }
+    return total ? attached / total : 1;
   }
 
   resize(width: number, height: number): void {
