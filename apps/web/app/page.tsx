@@ -2,6 +2,7 @@
 
 import { ChannelCard } from "@/components/channel-card";
 import { Reveal } from "@/components/reveal";
+import { LandingGate } from "@/components/landing/landing-gate";
 import { useLiveChannels } from "@/lib/hooks";
 
 function CardSkeleton() {
@@ -24,6 +25,7 @@ export default function HomePage() {
 
   return (
     <div>
+      <LandingGate />
       <div className="mb-6 flex items-baseline gap-3">
         <h1 className="text-2xl font-bold tracking-tight md:text-3xl">지금 라이브</h1>
         {channels && (
