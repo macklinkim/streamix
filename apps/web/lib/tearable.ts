@@ -26,7 +26,8 @@ export type ClothParams = {
   pull: number; // grab pull strength toward cursor (0..1)
   momentum: number; // how much drag velocity is carried (0..1)
   radiusMul: number; // tear radius = grid spacing * this
-  revealRatio: number; // torn fraction that auto-collapses (read by the hook)
+  revealRatio: number; // detached fraction that auto-collapses (read by the hook)
+  autoCollapseMs: number; // fall on its own after this long even if barely torn (0 = off)
 };
 
 export const DEFAULT_PARAMS: ClothParams = {
@@ -41,6 +42,8 @@ export const DEFAULT_PARAMS: ClothParams = {
   // Fraction of the sheet that must come loose from the top before it all drops
   // and reveals. ~0.35 = a moderate tear frees a third of the cloth and it falls.
   revealRatio: 0.35,
+  // Safety net: if tearing is fiddly, the sheet drops on its own after this.
+  autoCollapseMs: 5500,
 };
 
 export class Cloth {

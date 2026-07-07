@@ -30,6 +30,13 @@ const SLIDERS: { key: keyof ClothParams; label: string; min: number; max: number
       max: 0.9,
       step: 0.05,
     },
+    {
+      key: "autoCollapseMs",
+      label: "autoCollapseMs (자동 낙하 시간, 0=끔)",
+      min: 0,
+      max: 10000,
+      step: 500,
+    },
   ];
 
 const btn =

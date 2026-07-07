@@ -32,7 +32,15 @@ export function useTearable({ imageSrc, onReveal, params }: Options) {
     let last = 0;
     let frame = 0;
     let collapseTimer: ReturnType<typeof setTimeout> | null = null;
+    let autoTimer: ReturnType<typeof setTimeout> | null = null;
     const drag = { on: false, x: 0, y: 0 };
+
+    const triggerCollapse = () => {
+      const cloth = clothRef.current;
+      if (!cloth || cloth.isCollapsing) return;
+      cloth.collapse();
+      collapseTimer = setTimeout(fireReveal, COLLAPSE_FALLBACK_MS);
+    };
 
     const sizeToParent = () => {
       const rect = canvas.getBoundingClientRect();
@@ -51,6 +59,10 @@ export function useTearable({ imageSrc, onReveal, params }: Options) {
       clothRef.current = new Cloth(img, w, h, paramsRef.current);
       setReady(true);
 
+      // Safety net: drop the sheet on its own if the user can't tear enough.
+      const autoMs = paramsRef.current.autoCollapseMs;
+      if (autoMs > 0) autoTimer = setTimeout(triggerCollapse, autoMs);
+
       const loop = (t: number) => {
         const cloth = clothRef.current!;
         const dt = last ? Math.min(0.032, (t - last) / 1000) : 0.016;
@@ -67,8 +79,7 @@ export function useTearable({ imageSrc, onReveal, params }: Options) {
           frame % 8 === 0 &&
           1 - cloth.attachedFraction() > paramsRef.current.revealRatio
         ) {
-          cloth.collapse();
-          collapseTimer = setTimeout(fireReveal, COLLAPSE_FALLBACK_MS);
+          triggerCollapse();
         }
         if (cloth.isCollapsing && cloth.allGone()) fireReveal();
 
@@ -122,6 +133,7 @@ export function useTearable({ imageSrc, onReveal, params }: Options) {
     return () => {
       cancelAnimationFrame(raf);
       if (collapseTimer) clearTimeout(collapseTimer);
+      if (autoTimer) clearTimeout(autoTimer);
       ro.disconnect();
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
