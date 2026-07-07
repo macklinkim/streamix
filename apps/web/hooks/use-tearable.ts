@@ -1,14 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Cloth } from "@/lib/tearable";
+import { Cloth, DEFAULT_PARAMS, type ClothParams } from "@/lib/tearable";
 
-const REVEAL_RATIO = 0.3; // torn fraction that auto-triggers the collapse
 const COLLAPSE_FALLBACK_MS = 1600; // force reveal even if a few scraps linger
 
-type Options = { imageSrc: string; onReveal: () => void };
+// `params` is held by reference — the lab page mutates it live for tuning.
+type Options = { imageSrc: string; onReveal: () => void; params?: ClothParams };
 
-export function useTearable({ imageSrc, onReveal }: Options) {
+export function useTearable({ imageSrc, onReveal, params }: Options) {
+  const paramsRef = useRef<ClothParams>(params ?? DEFAULT_PARAMS);
+  paramsRef.current = params ?? DEFAULT_PARAMS;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const clothRef = useRef<Cloth | null>(null);
   const revealedRef = useRef(false);
@@ -45,7 +47,7 @@ export function useTearable({ imageSrc, onReveal }: Options) {
 
     const start = () => {
       const { w, h } = sizeToParent();
-      clothRef.current = new Cloth(img, w, h);
+      clothRef.current = new Cloth(img, w, h, paramsRef.current);
       setReady(true);
 
       const loop = (t: number) => {
@@ -56,7 +58,7 @@ export function useTearable({ imageSrc, onReveal }: Options) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         cloth.draw(ctx);
 
-        if (!cloth.isCollapsing && cloth.tornRatio() > REVEAL_RATIO) {
+        if (!cloth.isCollapsing && cloth.tornRatio() > paramsRef.current.revealRatio) {
           cloth.collapse();
           collapseTimer = setTimeout(fireReveal, COLLAPSE_FALLBACK_MS);
         }

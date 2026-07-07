@@ -15,10 +15,31 @@ type Point = {
 
 type Constraint = { a: number; b: number; len: number; torn: boolean };
 
-const GRAVITY = 1400; // px/s^2
-const DAMP = 0.99;
-const ITER = 3; // constraint relaxation passes
-const TEAR_FACTOR = 3.6; // tear when stretched past len * this (lower = rips sooner)
+// Tunable physics. The lab page (/lab) mutates this object live; whatever feels
+// right there is copied into DEFAULT_PARAMS and shipped.
+export type ClothParams = {
+  gravity: number; // px/s^2, fall speed on collapse
+  damping: number; // 0..1, lower = more jiggle
+  iterations: number; // constraint passes, higher = stiffer
+  tearFactor: number; // auto-tear when a link stretches past len * this
+  cutStretch: number; // drag-cut in-radius links stretched past len * this
+  pull: number; // grab pull strength toward cursor (0..1)
+  momentum: number; // how much drag velocity is carried (0..1)
+  radiusMul: number; // tear radius = grid spacing * this
+  revealRatio: number; // torn fraction that auto-collapses (read by the hook)
+};
+
+export const DEFAULT_PARAMS: ClothParams = {
+  gravity: 1400,
+  damping: 0.99,
+  iterations: 3,
+  tearFactor: 3.6,
+  cutStretch: 1.5,
+  pull: 0.32,
+  momentum: 0.55,
+  radiusMul: 1.5,
+  revealRatio: 0.3,
+};
 
 export class Cloth {
   private img: HTMLImageElement;
@@ -30,13 +51,15 @@ export class Cloth {
   private tornCount = 0;
   private collapsing = false;
   private started = false; // false = pristine sheet, drawn as one seamless image
+  private p: ClothParams;
   width: number;
   height: number;
 
-  constructor(img: HTMLImageElement, width: number, height: number) {
+  constructor(img: HTMLImageElement, width: number, height: number, params?: ClothParams) {
     this.img = img;
     this.width = width;
     this.height = height;
+    this.p = params ?? DEFAULT_PARAMS; // held by reference so live edits apply
     this.build();
   }
 
@@ -92,12 +115,13 @@ export class Cloth {
 
   step(dt: number): void {
     if (!this.started) return; // pristine sheet is static until first touched
-    const g = GRAVITY * dt * dt;
+    const g = this.p.gravity * dt * dt;
+    const damp = this.p.damping;
     for (const p of this.pts) {
       if (!p.active) continue;
       if (p.pinned) continue;
-      const vx = (p.x - p.px) * DAMP;
-      const vy = (p.y - p.py) * DAMP;
+      const vx = (p.x - p.px) * damp;
+      const vy = (p.y - p.py) * damp;
       p.px = p.x;
       p.py = p.y;
       p.x += vx;
@@ -106,7 +130,8 @@ export class Cloth {
       if (p.y > this.height + 240) p.active = false;
     }
 
-    for (let k = 0; k < ITER; k++) {
+    const iterations = Math.max(1, Math.round(this.p.iterations));
+    for (let k = 0; k < iterations; k++) {
       for (const c of this.cons) {
         if (c.torn) continue;
         const a = this.pts[c.a];
@@ -115,7 +140,7 @@ export class Cloth {
         const dx = b.x - a.x;
         const dy = b.y - a.y;
         const dist = Math.hypot(dx, dy) || 0.0001;
-        if (dist > c.len * TEAR_FACTOR) {
+        if (dist > c.len * this.p.tearFactor) {
           c.torn = true;
           this.tornCount++;
           continue;
@@ -136,14 +161,16 @@ export class Cloth {
   }
 
   /**
-   * Grab the cloth near the cursor and pull it — elastic, not an instant cut.
-   * Constraints resist and stretch (the "쫀득" feel); ripping happens only when
-   * a link is stretched past TEAR_FACTOR in step(), so a gentle drag stretches
-   * and a hard/fast drag tears.
+   * Grab the cloth near the cursor and pull it, then rip the links the drag has
+   * actually over-stretched. A still/gentle touch only jiggles (nothing crosses
+   * CUT_STRETCH); dragging through stretches links past it and tears along the
+   * path — the "쫀득 then rip" feel.
    */
   pointerGrab(x: number, y: number, radius: number, push: { dx: number; dy: number }): void {
     this.started = true; // goes live on first touch
     const r2 = radius * radius;
+    const pull = this.p.pull;
+    const momentum = this.p.momentum;
     for (const p of this.pts) {
       if (p.pinned || !p.active) continue;
       const dx = p.x - x;
@@ -151,9 +178,25 @@ export class Cloth {
       const d2 = dx * dx + dy * dy;
       if (d2 >= r2) continue;
       const f = 1 - Math.sqrt(d2) / radius; // 1 at cursor, 0 at the edge
-      // Gentle pull toward the cursor + a little drag momentum.
-      p.x += (x - p.x) * 0.16 * f + push.dx * 0.35 * f;
-      p.y += (y - p.y) * 0.16 * f + push.dy * 0.35 * f;
+      // Pull toward the cursor + carry drag momentum (strong enough to stretch).
+      p.x += (x - p.x) * pull * f + push.dx * momentum * f;
+      p.y += (y - p.y) * pull * f + push.dy * momentum * f;
+    }
+    // Tear the stretched links under the cursor.
+    const cut = this.p.cutStretch;
+    for (const c of this.cons) {
+      if (c.torn) continue;
+      const a = this.pts[c.a];
+      const b = this.pts[c.b];
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      const dx = mx - x;
+      const dy = my - y;
+      if (dx * dx + dy * dy >= r2) continue;
+      if (Math.hypot(b.x - a.x, b.y - a.y) > c.len * cut) {
+        c.torn = true;
+        this.tornCount++;
+      }
     }
   }
 
@@ -185,7 +228,7 @@ export class Cloth {
   }
 
   get tearRadius(): number {
-    return this.spacing * 1.5;
+    return this.spacing * this.p.radiusMul;
   }
 
   tornRatio(): number {
