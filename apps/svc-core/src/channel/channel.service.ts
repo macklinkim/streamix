@@ -207,6 +207,30 @@ export const channelService: ServiceImpl<typeof ChannelService> = {
     };
   },
 
+  async updateChannel(req, ctx) {
+    const ownerUserId = requireUserId(ctx);
+    // Empty title/category = "leave unchanged" (title is required, never cleared).
+    const set: { title?: string; category?: string } = {};
+    if (req.title) set.title = titleSchema.parse(req.title);
+    if (req.category) set.category = req.category.slice(0, 50);
+    if (Object.keys(set).length === 0) {
+      const [c] = await db
+        .select()
+        .from(channels)
+        .where(eq(channels.ownerUserId, ownerUserId))
+        .limit(1);
+      if (!c) throw appError(AppErrorCode.NOT_FOUND, "channel not found");
+      return { channel: await toChannelMsg(c) };
+    }
+    const [c] = await db
+      .update(channels)
+      .set(set)
+      .where(eq(channels.ownerUserId, ownerUserId))
+      .returning();
+    if (!c) throw appError(AppErrorCode.NOT_FOUND, "channel not found");
+    return { channel: await toChannelMsg(c) };
+  },
+
   async validateStreamKey(req) {
     const channelId = await resolveChannelId(req.streamKey);
     return { valid: Boolean(channelId), channelId: channelId ?? "" };

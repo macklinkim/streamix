@@ -82,6 +82,17 @@ message GetPlaybackUrlResponse {
   int64 expires_at = 2;
 }
 
+message UpdateChannelRequest {
+  // Owner-only. Empty string leaves the field unchanged (title stays required,
+  // so an empty title is ignored rather than clearing it).
+  string title = 1;
+  string category = 2;
+}
+
+message UpdateChannelResponse {
+  Channel channel = 1;
+}
+
 message GetMyChannelRequest {}
 
 message GetMyChannelResponse {
@@ -128,5 +139,6 @@ service ChannelService {
   rpc GetMyChannel(GetMyChannelRequest) returns (GetMyChannelResponse);
   rpc RotateStreamKey(RotateStreamKeyRequest) returns (RotateStreamKeyResponse);
   rpc IssueIngestToken(IssueIngestTokenRequest) returns (IssueIngestTokenResponse);
+  rpc UpdateChannel(UpdateChannelRequest) returns (UpdateChannelResponse);
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
 }

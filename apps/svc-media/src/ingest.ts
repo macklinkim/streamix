@@ -54,6 +54,12 @@ function codecArgs(codec: string): string[] {
 // MediaRecorder webm chunks over WS; ffmpeg transcodes stdin -> local RTMP,
 // so the existing publish pipeline (key validation, SET NX single writer,
 // HLS packaging, thumbnails, heartbeat, donePublish teardown) is reused as-is.
+// Channels with an in-flight browser ingest. A second WS for the same channel
+// (e.g. camera + screen started at once, fact 7) is rejected 4409 instead of
+// silently replacing the publish. Released on WS close, so an ADR-14 restart —
+// which closes the old socket before opening a new one — reconnects cleanly.
+const activeChannels = new Set<string>();
+
 export function attachIngest(server: Server): void {
   const wss = new WebSocketServer({ server, path: "/ingest" });
 
@@ -68,6 +74,7 @@ export function attachIngest(server: Server): void {
     const pending: Buffer[] = [];
     let sink: Writable | null = null;
     let closed = false;
+    let guardedChannel = ""; // set once we hold the dup-ingest guard for a channel
     const bufferLimit = env.INGEST_BUFFER_LIMIT_MB * 1024 * 1024;
     ws.on("message", (chunk: Buffer) => {
       if (sink) {
@@ -85,23 +92,38 @@ export function attachIngest(server: Server): void {
     });
     ws.on("close", () => {
       closed = true;
+      if (guardedChannel) activeChannels.delete(guardedChannel);
       if (sink && !sink.destroyed) sink.end(); // EOF -> ffmpeg flush -> RTMP unpublish
     });
 
     void (async () => {
       // Fast-reject bad keys before spawning ffmpeg (NMS would also reject,
       // but only after the RTMP handshake — this gives the browser a clean error).
+      let channelId: string;
       try {
-        const { valid } = await core.validateStreamKey({ streamKey });
-        if (!valid) {
+        const res = await core.validateStreamKey({ streamKey });
+        if (!res.valid) {
           ws.close(4403, "invalid stream key");
           return;
         }
+        channelId = res.channelId;
       } catch {
         ws.close(1011, "core unavailable");
         return;
       }
       if (closed) return;
+
+      // Reject a second concurrent ingest for the same channel (fact 7). The
+      // guard is released on WS close; an ADR-14 restart already closed its old
+      // socket, so its new connection is not blocked.
+      if (channelId && activeChannels.has(channelId)) {
+        ws.close(4409, "channel already ingesting");
+        return;
+      }
+      if (channelId) {
+        activeChannels.add(channelId);
+        guardedChannel = channelId;
+      }
 
       const ff = spawn(
         ffmpeg,

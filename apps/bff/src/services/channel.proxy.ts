@@ -27,6 +27,10 @@ export const channelProxy: ServiceImpl<typeof ChannelService> = {
     const userId = await requireUser(ctx);
     return coreChannel.issueIngestToken(req, { headers: { "x-user-id": userId } });
   },
+  async updateChannel(req, ctx) {
+    const userId = await requireUser(ctx);
+    return coreChannel.updateChannel(req, { headers: { "x-user-id": userId } });
+  },
   getChannel: (req) => coreChannel.getChannel(req),
   listLive: (req) => coreChannel.listLive(req),
   getPlaybackUrl: (req) => coreChannel.getPlaybackUrl(req),

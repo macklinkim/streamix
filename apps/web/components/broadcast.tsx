@@ -68,6 +68,7 @@ export function BroadcastPanel({ token }: { token: string }) {
   const [micId, setMicId] = useState("");
   const [facing, setFacing] = useState<Facing>("user");
   const [backgrounded, setBackgrounded] = useState(false);
+  const [title, setTitle] = useState("");
   const mobile = isMobile();
 
   useEffect(() => () => cleanupRef.current(), []);
@@ -153,6 +154,19 @@ export function BroadcastPanel({ token }: { token: string }) {
       return;
     }
 
+    // Optional broadcast title (empty leaves the existing title). Non-fatal —
+    // a title update failure must not block going live.
+    if (title.trim()) {
+      try {
+        await channelClient.updateChannel(
+          { title: title.trim() },
+          { headers: { authorization: `Bearer ${token}` } },
+        );
+      } catch {
+        /* keep broadcasting with the old title */
+      }
+    }
+
     const picked = pickMimeType();
     let recorder: MediaRecorder;
     try {
@@ -230,7 +244,9 @@ export function BroadcastPanel({ token }: { token: string }) {
       stop(
         e.code === 4403
           ? "방송 세션이 만료되었습니다. 방송시작을 다시 눌러 주세요."
-          : `송출 연결이 끊어졌습니다. 다시 시도해 주세요. (코드 ${e.code})`,
+          : e.code === 4409
+            ? "이미 다른 곳에서 이 채널을 방송 중입니다. 기존 방송을 종료한 뒤 다시 시도해 주세요."
+            : `송출 연결이 끊어졌습니다. 다시 시도해 주세요. (코드 ${e.code})`,
       );
     };
     recorder.ondataavailable = (e) => {
@@ -280,9 +296,17 @@ export function BroadcastPanel({ token }: { token: string }) {
         )}
       </div>
 
-      {/* Source + device pickers stay editable only before going live. */}
+      {/* Title + source + device pickers stay editable only before going live. */}
       {!busy && (
         <div className="mt-3 space-y-2">
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            maxLength={140}
+            placeholder="방송 제목 (선택 — 비우면 기존 제목 유지)"
+            aria-label="방송 제목"
+            className="h-9 w-full rounded-md border border-zinc-800 bg-zinc-950 px-2 text-sm text-zinc-200 placeholder:text-zinc-600"
+          />
           <div className="flex gap-2">
             {(["camera", "screen"] as const).map((s) => (
               <button
