@@ -29,17 +29,23 @@ export function LandingGate() {
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] overflow-hidden bg-zinc-950">
-      {/* Designed login stage behind the cloth (cyberpunk dark + purple glow). */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,rgba(145,70,255,0.18),transparent_60%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,10,12,0.4),rgba(10,10,12,0.9))]" />
+    <div className="fixed inset-0 z-[100] overflow-hidden">
+      {/* Designed login stage behind the cloth — a branded dark-purple scene, not
+          a black void, so torn holes read as "our screen" showing through. */}
+      <div className="absolute inset-0 bg-[linear-gradient(160deg,#4a2f95_0%,#2c1e63_50%,#170f36_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_44%,rgba(167,112,255,0.65),transparent_65%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_16%,rgba(180,120,255,0.35),transparent_48%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_88%,rgba(145,70,255,0.3),transparent_45%)]" />
 
+      {/* Login stage sits BEHIND the cloth and is already visible, so tearing
+          holes in the cloth reveals the real form (not a black void). On full
+          reveal it just pops forward and becomes interactive. */}
       <div className="absolute inset-0 grid place-items-center p-4">
         <div
-          className={`transition-all duration-700 ${
+          className={`transition-all duration-500 ${
             phase === "revealed"
-              ? "translate-y-0 opacity-100 blur-0"
-              : "pointer-events-none translate-y-3 opacity-0 blur-sm"
+              ? "scale-100 opacity-100"
+              : "pointer-events-none scale-[0.97] opacity-100"
           }`}
         >
           <LandingLogin onDone={() => setVisible(false)} />

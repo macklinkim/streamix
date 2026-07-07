@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Cloth } from "@/lib/tearable";
 
-const REVEAL_RATIO = 0.55; // torn fraction that auto-triggers the collapse
+const REVEAL_RATIO = 0.3; // torn fraction that auto-triggers the collapse
 const COLLAPSE_FALLBACK_MS = 1600; // force reveal even if a few scraps linger
 
 type Options = { imageSrc: string; onReveal: () => void };
@@ -86,7 +86,7 @@ export function useTearable({ imageSrc, onReveal }: Options) {
       const cloth = clothRef.current;
       if (!cloth) return;
       const p = pos(e);
-      cloth.pointerTear(p.x, p.y, cloth.tearRadius, { dx: p.x - drag.x, dy: p.y - drag.y });
+      cloth.pointerGrab(p.x, p.y, cloth.tearRadius, { dx: p.x - drag.x, dy: p.y - drag.y });
       drag.x = p.x;
       drag.y = p.y;
     };

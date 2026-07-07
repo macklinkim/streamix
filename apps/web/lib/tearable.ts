@@ -18,7 +18,7 @@ type Constraint = { a: number; b: number; len: number; torn: boolean };
 const GRAVITY = 1400; // px/s^2
 const DAMP = 0.99;
 const ITER = 3; // constraint relaxation passes
-const TEAR_FACTOR = 4.5; // tear when stretched past len * this
+const TEAR_FACTOR = 3.6; // tear when stretched past len * this (lower = rips sooner)
 
 export class Cloth {
   private img: HTMLImageElement;
@@ -29,6 +29,7 @@ export class Cloth {
   private cons: Constraint[] = [];
   private tornCount = 0;
   private collapsing = false;
+  private started = false; // false = pristine sheet, drawn as one seamless image
   width: number;
   height: number;
 
@@ -68,6 +69,7 @@ export class Cloth {
 
     this.cons = [];
     this.tornCount = 0;
+    this.started = false;
     const idx = (i: number, j: number) => j * (this.cols + 1) + i;
     for (let j = 0; j <= this.rows; j++) {
       for (let i = 0; i <= this.cols; i++) {
@@ -89,6 +91,7 @@ export class Cloth {
   }
 
   step(dt: number): void {
+    if (!this.started) return; // pristine sheet is static until first touched
     const g = GRAVITY * dt * dt;
     for (const p of this.pts) {
       if (!p.active) continue;
@@ -132,30 +135,25 @@ export class Cloth {
     }
   }
 
-  /** Tear constraints (and shove points) within a radius of the cursor. */
-  pointerTear(x: number, y: number, radius: number, push: { dx: number; dy: number }): void {
+  /**
+   * Grab the cloth near the cursor and pull it — elastic, not an instant cut.
+   * Constraints resist and stretch (the "쫀득" feel); ripping happens only when
+   * a link is stretched past TEAR_FACTOR in step(), so a gentle drag stretches
+   * and a hard/fast drag tears.
+   */
+  pointerGrab(x: number, y: number, radius: number, push: { dx: number; dy: number }): void {
+    this.started = true; // goes live on first touch
     const r2 = radius * radius;
-    for (const c of this.cons) {
-      if (c.torn) continue;
-      const a = this.pts[c.a];
-      const mx = (a.x + this.pts[c.b].x) / 2;
-      const my = (a.y + this.pts[c.b].y) / 2;
-      const dx = mx - x;
-      const dy = my - y;
-      if (dx * dx + dy * dy < r2) {
-        c.torn = true;
-        this.tornCount++;
-      }
-    }
-    // Nudge nearby points so the drag feels physical.
     for (const p of this.pts) {
       if (p.pinned || !p.active) continue;
       const dx = p.x - x;
       const dy = p.y - y;
-      if (dx * dx + dy * dy < r2) {
-        p.x += push.dx * 0.6;
-        p.y += push.dy * 0.6;
-      }
+      const d2 = dx * dx + dy * dy;
+      if (d2 >= r2) continue;
+      const f = 1 - Math.sqrt(d2) / radius; // 1 at cursor, 0 at the edge
+      // Gentle pull toward the cursor + a little drag momentum.
+      p.x += (x - p.x) * 0.16 * f + push.dx * 0.35 * f;
+      p.y += (y - p.y) * 0.16 * f + push.dy * 0.35 * f;
     }
   }
 
@@ -178,6 +176,7 @@ export class Cloth {
   collapse(): void {
     if (this.collapsing) return;
     this.collapsing = true;
+    this.started = true;
     for (const p of this.pts) p.pinned = false;
   }
 
@@ -186,7 +185,7 @@ export class Cloth {
   }
 
   get tearRadius(): number {
-    return this.spacing * 1.4;
+    return this.spacing * 1.5;
   }
 
   tornRatio(): number {
@@ -199,6 +198,11 @@ export class Cloth {
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
+    // Pristine sheet: one seamless drawImage, no mesh (no triangle seams).
+    if (!this.started) {
+      ctx.drawImage(this.img, 0, 0, this.width, this.height);
+      return;
+    }
     const idx = (i: number, j: number) => j * (this.cols + 1) + i;
     for (let j = 0; j < this.rows; j++) {
       for (let i = 0; i < this.cols; i++) {
@@ -232,11 +236,28 @@ export class Cloth {
     const f =
       (y0 * (u1 * v2 - u2 * v1) + y1 * (u2 * v0 - u0 * v2) + y2 * (u0 * v1 - u1 * v0)) / denom;
 
+    // Inflate the clip path outward from the centroid by ~1px so adjacent
+    // triangles overlap — kills the hairline seams that show the grid on the
+    // intact sheet. The transform stays on the original verts, so the overdraw
+    // just samples neighbouring texels and lines up.
+    const cx = (x0 + x1 + x2) / 3;
+    const cy = (y0 + y1 + y2) / 3;
+    const grow = (vx: number, vy: number): [number, number] => {
+      const dx = vx - cx;
+      const dy = vy - cy;
+      const len = Math.hypot(dx, dy) || 1;
+      const k = (len + 1.2) / len;
+      return [cx + dx * k, cy + dy * k];
+    };
+    const [gx0, gy0] = grow(x0, y0);
+    const [gx1, gy1] = grow(x1, y1);
+    const [gx2, gy2] = grow(x2, y2);
+
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.lineTo(x2, y2);
+    ctx.moveTo(gx0, gy0);
+    ctx.lineTo(gx1, gy1);
+    ctx.lineTo(gx2, gy2);
     ctx.closePath();
     ctx.clip();
     ctx.setTransform(a, b, c, d, e, f);

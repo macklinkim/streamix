@@ -51,7 +51,7 @@ export function LandingLogin({ onDone }: { onDone: () => void }) {
   });
 
   return (
-    <div className="w-[min(92vw,26rem)] rounded-2xl border border-white/10 bg-zinc-950/50 p-8 shadow-2xl backdrop-blur-xl">
+    <div className="w-[min(92vw,26rem)] rounded-2xl border border-[#9146FF]/25 bg-zinc-950/70 p-8 shadow-[0_0_60px_-15px_rgba(145,70,255,0.6)] backdrop-blur-xl">
       <div className="mb-7 text-center">
         <p className="mb-2 flex items-center justify-center gap-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-[#9146FF]">
           <Lightning weight="fill" className="size-3.5" />
