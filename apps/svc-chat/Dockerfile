@@ -1,5 +1,5 @@
 # Build from the REPO ROOT: docker build -f apps/svc-chat/Dockerfile -t streamix-svc-chat .
-FROM node:22-slim AS base
+FROM node:22-slim@sha256:a149cd71dccd68704a07d4e4ca3e610c27301852b0f556865cfdb6e2856f8bed AS base
 RUN corepack enable
 WORKDIR /app
 

@@ -1121,3 +1121,154 @@ npm package 공급망 compromise가 production Vercel token 탈취와 악성 web
 - CI/CD 공급망: **P0 신규 발견 2건** — mutable Fly action과 Vercel latest 설치를 배포 전 수정해야 한다.
 
 다음 우선순위: V8-2/V8-3 deploy 공급망 pinning → V7-1 migration deploy gate → 진행 중인 internal service 인증 검증.
+
+## 15. 작업 보고 검증 — 9차 (2026-07-12 19:03 KST)
+
+검증 대상: commit `b5f7204` (`fix(security): v7 feedback — deploy migration gate, strict ingest origins`), 갱신된 `outbox/report.md`
+
+확인 결과:
+
+- ingest Origin parser가 validation과 runtime에서 같은 배열을 사용하며 comma-only·path·query·credential·production HTTP를 거부한다. V7-2를 충족한다.
+- CI core readiness, log step 순서, PID cleanup 수정은 V7-3을 충족한다.
+- dummy hash bootstrap await와 timing 분포 측정은 V7-4/V7-5를 충족한다.
+- migration 실패가 svc-core 배포를 중단하도록 순서를 연결한 방향은 맞다.
+- 그러나 deploy secret scope와 migration rollout에 아래 중대 문제가 남는다.
+
+### V9-1. `FLY_API_TOKEN`이 dependency install script 전체에 노출됨 — P0
+
+근거:
+
+- deploy job은 `FLY_API_TOKEN`을 job-level env로 설정한다.
+- 새 workflow는 production migration을 위해 `pnpm install --frozen-lockfile`을 실행한다.
+- npm/pnpm dependency lifecycle script는 job env를 상속한다.
+- V8-2의 mutable `setup-flyctl@master`도 아직 그대로다.
+
+영향:
+
+workspace dependency 또는 transitive install script compromise가 Fly production token을 읽어 외부 전송할 수 있다. migration 보강이 오히려 token에 접근하는 실행 코드 범위를 크게 늘렸다.
+
+지시:
+
+1. job-level `FLY_API_TOKEN`을 제거한다.
+2. checkout, action setup, Node/pnpm setup, `pnpm install`에는 production token을 절대 제공하지 않는다.
+3. Fly 명령을 실행하는 최소 step에만 secret을 지정한다.
+4. migration step에서 proxy/ssh 명령이 끝난 뒤 `unset FLY_API_TOKEN`하고 나서 migrator를 실행한다. background flyctl process는 시작 시 필요한 token을 이미 상속한다.
+5. `setup-flyctl`을 full commit SHA로 pin한다. V8-2 완료 전 deploy를 안전하다고 판정하지 않는다.
+
+### V9-2. migration-first release가 old core와 완전 호환되지 않음 — P1
+
+근거:
+
+- migration은 기존 mixed-case email을 lowercase로 즉시 backfill한다.
+- migration 다음의 새 svc-core deploy는 별도로 실패할 수 있다.
+- 배포 전 old core는 email을 raw exact match로 조회한다.
+- migration 성공 후 new core deploy가 실패하면 old core가 계속 실행되며 사용자가 기존 mixed-case email을 입력할 때 row를 찾지 못할 수 있다.
+
+영향:
+
+DB migration은 성공했지만 application deploy가 실패한 상태에서 일부 기존 사용자의 login이 깨질 수 있다. DB rollback은 새 계정·email data 때문에 단순하지 않다.
+
+지시:
+
+- 권장 2단계 release:
+  1. canonical/raw 모두 조회 가능한 compatibility core를 먼저 배포한다.
+  2. collision preflight와 migration을 실행한다.
+  3. canonical-only 정책을 후속 release에서 정리한다.
+- 단일 release를 유지하면 maintenance window, new core image 사전 build 검증, deploy 실패 rollback 절차를 문서화한다.
+- migration 후 old core와 new core 양쪽 login compatibility test를 추가한다.
+
+### V9-3. production DB URL을 shell `sed`로 재작성함 — P1
+
+근거:
+
+- workflow는 `DATABASE_URL`의 host를 regex로 바꾸고 항상 `?sslmode=disable`을 덧붙인다.
+- URL에 기존 query가 있으면 `?`가 중복된다.
+- credential·IPv6·encoded character·socket 형식에 따라 regex가 잘못된 부분을 바꿀 수 있다.
+
+지시:
+
+- Node `URL` 또는 검증된 PostgreSQL connection-string parser로 hostname, port, `sslmode`만 변경한다.
+- 원본 URL과 변환 URL을 log에 출력하지 않는다.
+- query 있음, percent-encoded password, IPv6 host, database path가 있는 test fixture로 변환을 검증한다.
+
+### V9-4. 출력하는 schema journal은 production 적용 증거가 아님 — P1
+
+근거:
+
+- migration 후 `tail -3 packages/db/drizzle/meta/_journal.json`을 출력한다.
+- 이는 repository file이며 production DB의 migration table이 아니다.
+- migration이 어느 DB에 적용됐는지 또는 실제 index가 존재하는지 증명하지 않는다.
+
+지시:
+
+- production DB의 Drizzle migration table에서 마지막 applied migration id/hash를 query한다.
+- `users_email_canonical_unique` index 존재와 유효 상태를 DB catalog에서 확인한다.
+- connection secret 없이 app name, schema version, migration hash만 log한다.
+
+### V9-5. initial bootstrap과 sleeping core 의존 — P2
+
+workflow는 기존 `streamix-svc-core` machine에 SSH해 `DATABASE_URL`을 읽는다. 첫 배포처럼 core app/machine이 아직 없으면 migration 전에 실패한다. 기존 machine suspend 상태에서 SSH가 안정적으로 wake되는지도 실제 deploy 검증이 필요하다. bootstrap용 secret 전달 또는 Fly release command 등 기존 core에 의존하지 않는 경로를 마련한다.
+
+### 9차 판정
+
+- V7-2 Origin parser: **완료**.
+- V7-3 CI lifecycle: **완료**.
+- V7-4 timing 분포: **현재 hash 기준 완료**.
+- V7-5 dummy startup: **완료**.
+- V7-1 migration gate: **부분 완료** — 순서 연결 완료, secret scope·compatibility·실제 DB 증거 미완료.
+- CI/CD 공급망 P0: **미완료이며 노출 범위 확대**.
+
+다음 최우선: V9-1 token scope 축소와 action pinning → V9-2 compatible migration rollout → V9-3 URL parser. 진행 중 by-id RPC는 완료 보고 후 별도 검증한다.
+
+## 16. 작업 보고 검증 — 10차 (2026-07-12 19:13 KST)
+
+검증 대상: commit `b46b896` (`feat(security): channel existence gate for chat rooms (V4-1/V7-6)`), 갱신된 `outbox/report.md`
+
+독립 확인 결과:
+
+- proto typecheck, svc-core typecheck, BFF typecheck·lint 통과.
+- `ChannelExists`는 additive RPC이며 BFF public proxy에서 `PermissionDenied`로 차단된다.
+- 정상 core 상태에서 존재하지 않는 UUID는 room/Redis subscription 생성 전에 거부된다.
+- positive/negative cache, room 총량, 사용자별 생성률이 함께 적용돼 DB·Redis 자원 경계가 개선됐다.
+
+### V10-1. core 장애 시 신규 phantom room을 fail-open함 — P1
+
+근거:
+
+- `channelExists()`는 core RPC 오류 시 `true`를 반환한다.
+- 기존 room join은 existence RPC를 호출하지 않으므로 core 장애 중에도 별도로 유지할 수 있다.
+- 코드 주석의 “chat.Send would fail anyway”는 정확하지 않다. chat send는 `svc-chat`으로 전달되며 core와 독립적으로 동작한다. `coreAuth.me` 실패도 anonymous display name fallback 후 계속 진행된다.
+
+영향:
+
+core 장애 중 공격자는 존재하지 않는 UUID room을 만들고 svc-chat Redis channel에 메시지를 발행할 수 있다. room/resource 상한으로 폭발은 제한되지만 존재 gate의 보안 의미가 장애 시 사라진다.
+
+지시:
+
+- core 장애 시 **신규 room 생성만** fail-closed한다. 이미 `rooms` map에 존재하는 room join과 기존 chat은 계속 허용해 가용성을 보존한다.
+- `not_found`와 `core unavailable`을 다른 close code/reason으로 구분한다.
+- core outage test에서 기존 room 유지, 신규 valid channel cache hit 허용 여부, 신규 미확인 room 거부를 검증한다.
+
+### V10-2. 동일 channel existence cache miss의 request stampede — P2
+
+동시에 많은 socket이 같은 새 channel로 연결되면 cache가 채워지기 전 동일 DB RPC가 중복 실행된다. channel별 in-flight Promise를 공유해 하나의 lookup으로 합치고 완료 후 제거한다. timeout도 둔다.
+
+### V10-3. 자동 회귀 test가 repository에 없음 — P1
+
+보고된 existing/missing/negative-cache smoke는 일회성 실행이며 commit에 test 파일 변경이 없다.
+
+지시:
+
+- public `ChannelExists` 차단, 존재 channel join, missing UUID 거부, negative cache, core outage 정책을 CI 가능한 test로 남긴다.
+- room/subscriber map 크기가 missing UUID 요청 후 증가하지 않는지 직접 assert한다.
+
+### V10-4. core RPC 자체의 서비스 인증은 여전히 없음 — P1
+
+BFF public surface 차단은 적절하지만 svc-core는 private network caller가 보낸 RPC를 자체 인증하지 않는다. 기존 P2-1 service identity 작업 전에는 같은 Fly private network의 침해 workload가 `ChannelExists`를 포함한 internal RPC를 직접 호출할 수 있다. 이 RPC는 read-only라 단독 위험은 낮지만 trust boundary 문제는 유지된다.
+
+### 10차 판정
+
+- V4-1/V7-6: **정상 core 상태에서 완료, 장애 정책·자동 test 보완 필요**.
+- P2-2 WebSocket resource boundary: **대부분 완료**.
+
+다음 우선순위는 진행 중 deploy secret/migration 보완 검증이며, 이후 P2-1 internal service 인증을 검사한다.

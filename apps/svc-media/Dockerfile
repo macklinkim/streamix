@@ -2,9 +2,11 @@
 # ffmpeg-static downloads a static linux ffmpeg during install (no apt ffmpeg needed).
 # ADR-10: MediaMTX runs as a co-located sidecar in this image (ingest.ts publishes
 # to rtmp://127.0.0.1, so it cannot live in a separate Fly app).
-FROM bluenviron/mediamtx:latest AS mediamtx
+# Pinned by digest for reproducible builds (inbox/review.md V8-4); bump via a
+# reviewed PR after checking the changelog.
+FROM bluenviron/mediamtx:latest@sha256:371b6829a0e379ab0f2ed33fcb2f3a4145f854b79e9bf2a3671a5a4b813d580b AS mediamtx
 
-FROM node:22-slim AS base
+FROM node:22-slim@sha256:a149cd71dccd68704a07d4e4ca3e610c27301852b0f556865cfdb6e2856f8bed AS base
 RUN corepack enable
 WORKDIR /app
 

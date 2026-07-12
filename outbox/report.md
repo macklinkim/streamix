@@ -578,3 +578,64 @@ review.md 신규 갱신 없음 — 검증자가 반복 지적한 마지막 P2-2 
   P2-1 내부 서비스 인증, P2-4 잔여(이메일 인증·reset·MFA·감사),
   Fly staging IP/XFF 관측, V7-1 deploy run 실검증
 - prod 배포 (전 수정 미반영 — deploy.yml에 migration 포함됨)
+
+---
+
+# 11차 반복 (2026-07-12) — §14 V8 + §15 V9 CI/CD 공급망 (P0)
+
+review.md §14·§15 추가. 검증자 최우선(V9-1/V8-2/V8-3 공급망 P0) 처리 후 사용자 중지 요청.
+
+## 완료
+
+### V8-2/V8-3/V9-1. deploy 토큰 scope 축소 + action pinning — 완료 (P0)
+
+- `.github/workflows/deploy.yml` 재작성:
+  - `FLY_API_TOKEN` job-level env 제거 → flyctl 실행 step에만 개별 scope.
+    checkout/setup/`pnpm install`은 토큰 없이 실행 (install script가 토큰 접근 불가).
+  - migration step: flyctl proxy/ssh 후 `unset FLY_API_TOKEN` → migrator 실행
+    (V9-1 지시 4).
+  - `superfly/flyctl-actions/setup-flyctl`을 commit SHA
+    `fc53c09e1bc3be6f54706524e3b82c4f462f77be`(v1.5)로 pin (WebFetch로 SHA 확인).
+  - Vercel CLI를 `vercel@55.0.0`으로 lockfile pin (`npm i -g vercel@latest` 제거),
+    설치 step은 토큰 없이 `pnpm install`, deploy step에만 `VERCEL_TOKEN` scope.
+
+### V9-3. DB URL 재작성을 실제 파서로 — 완료
+
+- `packages/db/src/rewrite-url.ts`: raw URL을 stdin으로 받아(argv 노출 방지)
+  Node `URL`로 host/port/sslmode만 변경, 재작성 URL만 출력.
+- 실검증: encoded password(`p%40ss`) 보존, 기존 query 있으면 `&sslmode=disable`
+  append(`?` 중복 없음).
+
+### V9-4. production migration 적용 증거 — 완료
+
+- `packages/db/src/verify-schema.ts`: prod DB의 `drizzle.__drizzle_migrations`
+  마지막 hash + `users_email_canonical_unique` index 실재를 DB catalog에서 확인,
+  없으면 exit 1. connection string 미출력. deploy migration step에 편입.
+- 실검증: 로컬 DB에서 hash + `canonical email index present: true` 출력.
+
+### V8-1. postcss override 정확 버전 고정 — 완료
+
+- `">=8.5.10"` → `"8.5.16"` (열린 range → 검증 버전). lockfile 갱신.
+
+### V8-4. container 이미지 digest pin — 완료
+
+- 5개 prod Dockerfile `node:22-slim`을 `@sha256:a149cd71…`로 pin.
+- svc-media `bluenviron/mediamtx:latest`를 `@sha256:371b6829…`로 pin.
+- 주석에 reviewed-PR bump 방침 명시.
+
+## 검증 결과 (11차)
+
+- 전체 build 9/9, db typecheck 통과, audit clean
+- rewrite-url: encoded password/기존 query 케이스 정상
+- verify-schema: 로컬 DB index 확인 성공
+
+## 미완료 (사용자 중지)
+
+- V8-4 잔여: compose(minio/mediamtx latest) digest, node 정확 patch 버전 태그 병기
+- V9-2: 2단계 호환 release(old/new core email 조회 호환) — 단일 release 유지 결정,
+  maintenance window/rollback 문서화 필요
+- V9-5: 최초 bootstrap(core app 부재) migration 경로, suspend core SSH wake 검증
+- V8-5: audit를 install 직후로 이동, OSV/Dependabot 보조 스캐너
+- 그 외 이전 반복 잔여: V4-4 nonce CSP, V5-3/V5-4 gate 테스트·stress,
+  V2-5 bit_ token 1회 소비, P2-1 내부 서비스 인증, P2-4 잔여, Fly staging IP/XFF,
+  web refresh single-flight, prod 배포

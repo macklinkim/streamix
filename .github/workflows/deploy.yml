@@ -4,6 +4,12 @@ name: Deploy
 # Requires repo secrets FLY_API_TOKEN and VERCEL_TOKEN (+ a linked Vercel project
 # whose Root Directory is apps/web). Until those exist this workflow no-ops on PRs
 # and only runs on main.
+#
+# Supply-chain posture (inbox/review.md V8-2/V8-3/V9-1): deploy tokens are NEVER
+# job-level env. checkout / tool setup / `pnpm install` run with NO deploy secret,
+# so a compromised dependency install script cannot read them. Each token is
+# scoped to only the steps that run the deploy CLI. Third-party actions are
+# pinned to a commit SHA.
 on:
   push:
     branches: [main]
@@ -15,13 +21,12 @@ concurrency:
 jobs:
   deploy-fly:
     runs-on: ubuntu-latest
-    env:
-      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+      # Pinned to flyctl-actions v1.5 (SHA); bump via a reviewed PR (V8-2).
+      - uses: superfly/flyctl-actions/setup-flyctl@fc53c09e1bc3be6f54706524e3b82c4f462f77be
 
       - uses: pnpm/action-setup@v4
         with:
@@ -30,6 +35,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      # No FLY_API_TOKEN in scope here — install scripts can't reach it (V9-1).
       - name: Install (db package)
         run: pnpm install --frozen-lockfile
 
@@ -38,25 +44,43 @@ jobs:
       # run (raises, transactional — no partial writes) if existing rows collide
       # on lower(trim(email)); that failure stops this job here, so the old core
       # keeps running and collisions get resolved manually.
+      #
+      # Token is scoped to this step only. The URL is rewritten by a real URL
+      # parser (V9-3), never echoed, and the flyctl proxy inherits the token it
+      # needs at launch before we drop it for the migrator itself.
       - name: Migrate production DB
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
+          set -euo pipefail
           flyctl proxy 15432:5432 -a streamix-db &
           PROXY_PID=$!
           sleep 5
           RAW_URL=$(flyctl ssh console -a streamix-svc-core -C "printenv DATABASE_URL" | tr -d '\r' | grep '^postgres')
-          export DATABASE_URL=$(echo "$RAW_URL" | sed -E 's#@[^/]+/#@localhost:15432/#')"?sslmode=disable"
+          # flyctl work is done; drop the token before running any app code.
+          unset FLY_API_TOKEN
+          DATABASE_URL=$(printf '%s' "$RAW_URL" | pnpm --filter @streamix/db --silent db:rewrite-url 15432)
+          export DATABASE_URL
           pnpm --filter @streamix/db db:migrate
-          echo "schema journal:" && tail -3 packages/db/drizzle/meta/_journal.json
+          pnpm --filter @streamix/db db:verify-schema
           kill $PROXY_PID || true
 
       # svc-core first: the others reach it over private networking.
       - name: Deploy svc-core
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: flyctl deploy --config apps/svc-core/fly.toml --dockerfile apps/svc-core/Dockerfile --remote-only
       - name: Deploy svc-chat
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: flyctl deploy --config apps/svc-chat/fly.toml --dockerfile apps/svc-chat/Dockerfile --remote-only
       - name: Deploy svc-media
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: flyctl deploy --config apps/svc-media/fly.toml --dockerfile apps/svc-media/Dockerfile --remote-only
       - name: Deploy bff
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: flyctl deploy --config apps/bff/fly.toml --dockerfile apps/bff/Dockerfile --remote-only
 
       - name: Post-deploy smoke (bff health)
@@ -64,17 +88,29 @@ jobs:
 
       - name: Rollback bff on smoke failure
         if: failure()
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: flyctl releases --app streamix-bff && echo "run 'flyctl deploy --image <previous>' or 'flyctl releases rollback' to revert"
 
   deploy-web:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      # Pinned Vercel CLI from the lockfile (V8-3): installed with NO token in
+      # scope, so a compromised install can't exfiltrate it.
+      - name: Install Vercel CLI (pinned)
+        run: pnpm install --frozen-lockfile
       - name: Deploy web to Vercel (prod)
-        run: |
-          npm i -g vercel@latest
-          vercel pull --yes --environment=production --token=$VERCEL_TOKEN
-          vercel build --prod --token=$VERCEL_TOKEN
-          vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          pnpm exec vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          pnpm exec vercel build --prod --token="$VERCEL_TOKEN"
+          pnpm exec vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
