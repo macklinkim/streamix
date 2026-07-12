@@ -2,8 +2,8 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { Code, ConnectError } from "@connectrpc/connect";
 import { coreAuth } from "../clients.js";
 import { mintAccess, denylistJti } from "../token.js";
-import { tokenMeta, bearer } from "../auth.js";
-import { createSession, rotateSession, revokeSession } from "../session.js";
+import { tokenMeta, bearer, verifyAccessToken } from "../auth.js";
+import { createSession, rotateSession, revokeSession, revokeUser } from "../session.js";
 import { refreshCookie, clearCookie, readRefreshCookie } from "../cookies.js";
 import { overLimitAuth } from "../rate-limit.js";
 import { audit, emailFingerprint } from "../audit.js";
@@ -148,6 +148,32 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     const meta = await tokenMeta(bearer(req.headers.authorization));
     if (meta) await denylistJti(meta.jti, meta.ttl);
     audit("logout", { ip: req.ip });
+    reply.header("set-cookie", clearCookie());
+    return reply.code(204).send();
+  });
+
+  // Authenticated password change (P2-4). Verifies the current password in core,
+  // then revokes EVERY session of the user (all refresh families + the presented
+  // access token) so a change forces re-auth everywhere — a compromised session
+  // can't survive the victim's password reset.
+  app.post("/auth/change-password", async (req, reply) => {
+    if (!csrfOk(req)) return reply.code(403).send({ error: "csrf" });
+    const userId = await verifyAccessToken(bearer(req.headers.authorization));
+    if (!userId) return reply.code(401).send({ error: "authentication required" });
+    const body = (req.body ?? {}) as { currentPassword?: string; newPassword?: string };
+    try {
+      await coreAuth.changePassword(
+        { currentPassword: body.currentPassword ?? "", newPassword: body.newPassword ?? "" },
+        { headers: { "x-user-id": userId } },
+      );
+    } catch (e) {
+      return sendConnectError(reply, e);
+    }
+    // Kill all sessions (refresh families) + the current access token.
+    await revokeUser(userId);
+    const meta = await tokenMeta(bearer(req.headers.authorization));
+    if (meta) await denylistJti(meta.jti, meta.ttl);
+    audit("password_change", { ip: req.ip, userId });
     reply.header("set-cookie", clearCookie());
     return reply.code(204).send();
   });

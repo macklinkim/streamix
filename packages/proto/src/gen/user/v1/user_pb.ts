@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
 export const file_user_v1_user: GenFile =
   /*@__PURE__*/
   fileDesc(
-    "ChJ1c2VyL3YxL3VzZXIucHJvdG8SB3VzZXIudjEiYQoEVXNlchIKCgJpZBgBIAEoCRINCgVlbWFpbBgCIAEoCRIUCgxkaXNwbGF5X25hbWUYAyABKAkSKAoKY3JlYXRlZF9hdBgEIAEoCzIULmNvbW1vbi52MS5UaW1lc3RhbXAiSAoPUmVnaXN0ZXJSZXF1ZXN0Eg0KBWVtYWlsGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCSIvChBSZWdpc3RlclJlc3BvbnNlEhsKBHVzZXIYASABKAsyDS51c2VyLnYxLlVzZXIiLwoMTG9naW5SZXF1ZXN0Eg0KBWVtYWlsGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIlkKDUxvZ2luUmVzcG9uc2USFAoMYWNjZXNzX3Rva2VuGAEgASgJEhUKDXJlZnJlc2hfdG9rZW4YAiABKAkSGwoEdXNlchgDIAEoCzINLnVzZXIudjEuVXNlciInCg5SZWZyZXNoUmVxdWVzdBIVCg1yZWZyZXNoX3Rva2VuGAEgASgJIj4KD1JlZnJlc2hSZXNwb25zZRIUCgxhY2Nlc3NfdG9rZW4YASABKAkSFQoNcmVmcmVzaF90b2tlbhgCIAEoCSILCglNZVJlcXVlc3QiKQoKTWVSZXNwb25zZRIbCgR1c2VyGAEgASgLMg0udXNlci52MS5Vc2VyIlIKFlVwc2VydE9hdXRoVXNlclJlcXVlc3QSEwoLcHJvdmlkZXJfaWQYASABKAkSDQoFZW1haWwYAiABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJIjYKF1Vwc2VydE9hdXRoVXNlclJlc3BvbnNlEhsKBHVzZXIYASABKAsyDS51c2VyLnYxLlVzZXIyyQIKC0F1dGhTZXJ2aWNlEj8KCFJlZ2lzdGVyEhgudXNlci52MS5SZWdpc3RlclJlcXVlc3QaGS51c2VyLnYxLlJlZ2lzdGVyUmVzcG9uc2USNgoFTG9naW4SFS51c2VyLnYxLkxvZ2luUmVxdWVzdBoWLnVzZXIudjEuTG9naW5SZXNwb25zZRI8CgdSZWZyZXNoEhcudXNlci52MS5SZWZyZXNoUmVxdWVzdBoYLnVzZXIudjEuUmVmcmVzaFJlc3BvbnNlEi0KAk1lEhIudXNlci52MS5NZVJlcXVlc3QaEy51c2VyLnYxLk1lUmVzcG9uc2USVAoPVXBzZXJ0T2F1dGhVc2VyEh8udXNlci52MS5VcHNlcnRPYXV0aFVzZXJSZXF1ZXN0GiAudXNlci52MS5VcHNlcnRPYXV0aFVzZXJSZXNwb25zZWIGcHJvdG8z",
+    "ChJ1c2VyL3YxL3VzZXIucHJvdG8SB3VzZXIudjEiYQoEVXNlchIKCgJpZBgBIAEoCRINCgVlbWFpbBgCIAEoCRIUCgxkaXNwbGF5X25hbWUYAyABKAkSKAoKY3JlYXRlZF9hdBgEIAEoCzIULmNvbW1vbi52MS5UaW1lc3RhbXAiSAoPUmVnaXN0ZXJSZXF1ZXN0Eg0KBWVtYWlsGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCSIvChBSZWdpc3RlclJlc3BvbnNlEhsKBHVzZXIYASABKAsyDS51c2VyLnYxLlVzZXIiLwoMTG9naW5SZXF1ZXN0Eg0KBWVtYWlsGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIlkKDUxvZ2luUmVzcG9uc2USFAoMYWNjZXNzX3Rva2VuGAEgASgJEhUKDXJlZnJlc2hfdG9rZW4YAiABKAkSGwoEdXNlchgDIAEoCzINLnVzZXIudjEuVXNlciInCg5SZWZyZXNoUmVxdWVzdBIVCg1yZWZyZXNoX3Rva2VuGAEgASgJIj4KD1JlZnJlc2hSZXNwb25zZRIUCgxhY2Nlc3NfdG9rZW4YASABKAkSFQoNcmVmcmVzaF90b2tlbhgCIAEoCSILCglNZVJlcXVlc3QiKQoKTWVSZXNwb25zZRIbCgR1c2VyGAEgASgLMg0udXNlci52MS5Vc2VyIkcKFUNoYW5nZVBhc3N3b3JkUmVxdWVzdBIYChBjdXJyZW50X3Bhc3N3b3JkGAEgASgJEhQKDG5ld19wYXNzd29yZBgCIAEoCSIYChZDaGFuZ2VQYXNzd29yZFJlc3BvbnNlIlIKFlVwc2VydE9hdXRoVXNlclJlcXVlc3QSEwoLcHJvdmlkZXJfaWQYASABKAkSDQoFZW1haWwYAiABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJIjYKF1Vwc2VydE9hdXRoVXNlclJlc3BvbnNlEhsKBHVzZXIYASABKAsyDS51c2VyLnYxLlVzZXIynAMKC0F1dGhTZXJ2aWNlEj8KCFJlZ2lzdGVyEhgudXNlci52MS5SZWdpc3RlclJlcXVlc3QaGS51c2VyLnYxLlJlZ2lzdGVyUmVzcG9uc2USNgoFTG9naW4SFS51c2VyLnYxLkxvZ2luUmVxdWVzdBoWLnVzZXIudjEuTG9naW5SZXNwb25zZRI8CgdSZWZyZXNoEhcudXNlci52MS5SZWZyZXNoUmVxdWVzdBoYLnVzZXIudjEuUmVmcmVzaFJlc3BvbnNlEi0KAk1lEhIudXNlci52MS5NZVJlcXVlc3QaEy51c2VyLnYxLk1lUmVzcG9uc2USUQoOQ2hhbmdlUGFzc3dvcmQSHi51c2VyLnYxLkNoYW5nZVBhc3N3b3JkUmVxdWVzdBofLnVzZXIudjEuQ2hhbmdlUGFzc3dvcmRSZXNwb25zZRJUCg9VcHNlcnRPYXV0aFVzZXISHy51c2VyLnYxLlVwc2VydE9hdXRoVXNlclJlcXVlc3QaIC51c2VyLnYxLlVwc2VydE9hdXRoVXNlclJlc3BvbnNlYgZwcm90bzM",
     [file_common_v1_common],
   );
 
@@ -219,6 +219,45 @@ export const MeResponseSchema: GenMessage<MeResponse> =
   messageDesc(file_user_v1_user, 8);
 
 /**
+ * Authenticated password change (x-user-id set by the BFF). Verifies the current
+ * password before setting the new one; the BFF revokes all sessions after.
+ *
+ * @generated from message user.v1.ChangePasswordRequest
+ */
+export type ChangePasswordRequest = Message<"user.v1.ChangePasswordRequest"> & {
+  /**
+   * @generated from field: string current_password = 1;
+   */
+  currentPassword: string;
+
+  /**
+   * @generated from field: string new_password = 2;
+   */
+  newPassword: string;
+};
+
+/**
+ * Describes the message user.v1.ChangePasswordRequest.
+ * Use `create(ChangePasswordRequestSchema)` to create a new message.
+ */
+export const ChangePasswordRequestSchema: GenMessage<ChangePasswordRequest> =
+  /*@__PURE__*/
+  messageDesc(file_user_v1_user, 9);
+
+/**
+ * @generated from message user.v1.ChangePasswordResponse
+ */
+export type ChangePasswordResponse = Message<"user.v1.ChangePasswordResponse"> & {};
+
+/**
+ * Describes the message user.v1.ChangePasswordResponse.
+ * Use `create(ChangePasswordResponseSchema)` to create a new message.
+ */
+export const ChangePasswordResponseSchema: GenMessage<ChangePasswordResponse> =
+  /*@__PURE__*/
+  messageDesc(file_user_v1_user, 10);
+
+/**
  * Internal-only (BFF OAuth callback -> svc-core). Finds a user by provider_id
  * or creates a password-less one. Blocked at the BFF edge like other internal RPCs.
  *
@@ -249,7 +288,7 @@ export type UpsertOauthUserRequest = Message<"user.v1.UpsertOauthUserRequest"> &
  */
 export const UpsertOauthUserRequestSchema: GenMessage<UpsertOauthUserRequest> =
   /*@__PURE__*/
-  messageDesc(file_user_v1_user, 9);
+  messageDesc(file_user_v1_user, 11);
 
 /**
  * @generated from message user.v1.UpsertOauthUserResponse
@@ -267,7 +306,7 @@ export type UpsertOauthUserResponse = Message<"user.v1.UpsertOauthUserResponse">
  */
 export const UpsertOauthUserResponseSchema: GenMessage<UpsertOauthUserResponse> =
   /*@__PURE__*/
-  messageDesc(file_user_v1_user, 10);
+  messageDesc(file_user_v1_user, 12);
 
 /**
  * @generated from service user.v1.AuthService
@@ -304,6 +343,14 @@ export const AuthService: GenService<{
     methodKind: "unary";
     input: typeof MeRequestSchema;
     output: typeof MeResponseSchema;
+  };
+  /**
+   * @generated from rpc user.v1.AuthService.ChangePassword
+   */
+  changePassword: {
+    methodKind: "unary";
+    input: typeof ChangePasswordRequestSchema;
+    output: typeof ChangePasswordResponseSchema;
   };
   /**
    * @generated from rpc user.v1.AuthService.UpsertOauthUser

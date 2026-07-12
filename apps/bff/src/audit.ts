@@ -11,6 +11,7 @@ export type AuditEvent =
   | "login_failure"
   | "register"
   | "logout"
+  | "password_change"
   | "refresh_reuse" // replay of a used refresh sid -> family revoked (theft signal)
   | "refresh_expired";
 

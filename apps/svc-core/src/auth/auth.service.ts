@@ -108,6 +108,23 @@ export const authService: ServiceImpl<typeof AuthService> = {
     return { user: toUserMsg(u) };
   },
 
+  // Authenticated password change (P2-4). Verifies the current password, then
+  // sets the new one; the BFF revokes all sessions afterward.
+  async changePassword(req, ctx) {
+    const userId = requireUserId(ctx);
+    const [u] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!u) throw appError(AppErrorCode.NOT_FOUND, "user not found");
+    // OAuth-only accounts have no password to change.
+    if (!u.passwordHash) throw appError(AppErrorCode.INVALID_CREDENTIALS, "no password set");
+    if (!(await verifyPassword(u.passwordHash, req.currentPassword)))
+      throw appError(AppErrorCode.INVALID_CREDENTIALS, "current password incorrect");
+    if (!passwordSchema.safeParse(req.newPassword).success)
+      throw appError(AppErrorCode.VALIDATION, "new password must be 12-200 characters");
+    const passwordHash = await hashPassword(req.newPassword);
+    await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
+    return {};
+  },
+
   // Internal-only: called by the BFF after a Twitch OAuth exchange. Matches on
   // provider_id (stable across logins) and creates a password-less account on
   // first sight. Blocked from the browser at the BFF edge.

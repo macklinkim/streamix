@@ -49,6 +49,15 @@ message MeResponse {
   User user = 1;
 }
 
+// Authenticated password change (x-user-id set by the BFF). Verifies the current
+// password before setting the new one; the BFF revokes all sessions after.
+message ChangePasswordRequest {
+  string current_password = 1;
+  string new_password = 2;
+}
+
+message ChangePasswordResponse {}
+
 // Internal-only (BFF OAuth callback -> svc-core). Finds a user by provider_id
 // or creates a password-less one. Blocked at the BFF edge like other internal RPCs.
 message UpsertOauthUserRequest {
@@ -66,5 +75,6 @@ service AuthService {
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc Refresh(RefreshRequest) returns (RefreshResponse);
   rpc Me(MeRequest) returns (MeResponse);
+  rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
   rpc UpsertOauthUser(UpsertOauthUserRequest) returns (UpsertOauthUserResponse);
 }

@@ -1086,3 +1086,41 @@ total{event}` 3종 metric 노출 확인.
   P2-1 후속(mTLS/service JWT), V4-4 enforce 전환, V8-4 compose digest,
   web refresh single-flight
 - prod 배포: bff 재배포 — INTERNAL_TOKEN 유지
+
+---
+
+# 23차 반복 (2026-07-12) — 인증된 비밀번호 변경 + 전 세션 폐기 (P2-4)
+
+review.md 신규 갱신 없음. 검증자 지시 "비밀번호 변경 시 revokeUser와 access token
+폐기 함께 실행". revokeUser는 session.ts에 있었으나 미연결 → 연결.
+
+## 완료
+
+### 비밀번호 변경 endpoint — 완료
+
+- proto `AuthService.ChangePassword(current_password, new_password)` 추가(additive).
+- `apps/svc-core/auth.service.ts`: current 비밀번호 gated argon2 verify → 신규
+  비밀번호 schema(min12) 검증 → hash 갱신. OAuth-only 계정(passwordHash 없음)은
+  거부.
+- `apps/bff/services/auth.proxy.ts`: Connect surface에서 ChangePassword 차단
+  (세션 폐기+쿠키는 Connect가 못함 → REST 사용).
+- `apps/bff/routes/auth.ts`: `POST /auth/change-password` — access token→userId,
+  CSRF, core.changePassword(x-user-id) 성공 시 **revokeUser(userId)로 전 refresh
+  family 폐기 + 현재 access jti denylist + 쿠키 clear + audit(password_change)**.
+  변경 후 전 기기 재인증 강제(탈취 세션이 피해자 비밀번호 변경 후 생존 불가).
+- `audit.ts`: password_change 이벤트 추가.
+
+## 검증 결과 (23차)
+
+- proto:gen/lint, typecheck·lint·build: core/bff 통과
+- **실검증**(rate limit 상향, 로컬 풀스택): register 201 → login 200 →
+  change 204 → **변경 후 old refresh 401(family 폐기)** → 신규 비밀번호 login 200.
+  추가: wrong current password 401, short new password 400, old access token
+  revoked 401.
+
+## 남은 항목
+
+- P2-4 잔여: 이메일 인증·password reset·MFA/WebAuthn(이메일 provider 필요),
+  web 비밀번호 변경 UI(endpoint는 완료)
+- V2-5 bit_ token 1회 소비, P2-1 후속(mTLS), V4-4 enforce 전환, V8-4 compose digest
+- prod 배포: proto 변경 → core+bff 재배포(INTERNAL_TOKEN 유지)

@@ -30,6 +30,9 @@ export const authProxy: ServiceImpl<typeof AuthService> = {
     const userId = await requireUser(ctx);
     return coreAuth.me(req, { headers: { "x-user-id": userId } });
   },
+  // Changing the password revokes all sessions + clears the cookie, which the
+  // Connect surface can't do — browsers use REST /auth/change-password (P2-4).
+  changePassword: browserAuthOnly,
   // Internal-only (BFF OAuth callback -> core). Never from the browser.
   upsertOauthUser() {
     throw new ConnectError("internal RPC, not exposed to browser", Code.PermissionDenied);
