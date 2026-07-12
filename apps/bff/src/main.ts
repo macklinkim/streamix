@@ -12,7 +12,20 @@ import { handleChatWs } from "./ws/chat.js";
 import { rateLimitInterceptor } from "./rate-limit.js";
 import { env, corsOrigins } from "./env.js";
 
-const app = Fastify({ logger: true });
+const app = Fastify({
+  // Trust exactly one proxy hop (Fly's edge proxy) so req.ip is the address
+  // Fly appended, not an attacker-controlled x-forwarded-for value that would
+  // let rate limits be dodged (inbox/review.md P1-5).
+  trustProxy: 1,
+  logger: {
+    // Credentials must never land in request logs (inbox/review.md P1-3):
+    // Authorization bearer tokens, refresh cookies, and set-cookie values.
+    redact: {
+      paths: ["req.headers.authorization", "req.headers.cookie", 'res.headers["set-cookie"]'],
+      censor: "[redacted]",
+    },
+  },
+});
 
 await app.register(cors, {
   origin: corsOrigins,

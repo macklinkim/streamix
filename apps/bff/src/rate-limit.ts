@@ -62,7 +62,9 @@ export const rateLimitInterceptor: Interceptor = (next) => async (req) => {
     }
   }
 
-  const ip = req.header.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+  // Rightmost x-forwarded-for entry: the one Fly's proxy appended. The leftmost
+  // is client-supplied and spoofable (inbox/review.md P1-5).
+  const ip = req.header.get("x-forwarded-for")?.split(",").pop()?.trim() || "local";
   if (await overLimit(`rl:rpc:${ip}`, env.RATE_LIMIT_RPC_MAX, env.RATE_LIMIT_RPC_WINDOW)) {
     throw new ConnectError("rate limit exceeded", Code.ResourceExhausted);
   }

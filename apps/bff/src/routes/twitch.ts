@@ -96,8 +96,8 @@ export async function twitchRoutes(app: FastifyInstance): Promise<void> {
       });
       // The refresh session is the credential; the browser mints an access token
       // via the silent /auth/refresh right after it lands back on the web app.
-      const sid = await createSession(user!.id);
-      if (sid) reply.header("set-cookie", refreshCookie(sid));
+      const session = await createSession(user!.id);
+      if (session) reply.header("set-cookie", refreshCookie(session.sid));
       return reply.redirect(env.WEB_URL);
     } catch {
       return reply.redirect(`${env.WEB_URL}/?oauth=failed`);

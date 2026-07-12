@@ -80,9 +80,12 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     try {
       const res = await coreAuth.login({ email, password: body.password ?? "" });
       const userId = res.user!.id;
-      const { token } = await mintAccess(userId);
-      const sid = await createSession(userId);
-      if (sid) reply.header("set-cookie", refreshCookie(sid));
+      const session = await createSession(userId);
+      // fam claim ties this access token to the refresh family so revoking the
+      // family (logout / reuse) kills it too (P1-1). No session on a Redis
+      // outage -> token has no fam and simply expires naturally.
+      const { token } = await mintAccess(userId, session?.family);
+      if (session) reply.header("set-cookie", refreshCookie(session.sid));
       return reply.code(200).send({ accessToken: token, user: toSessionUser(res.user) });
     } catch (e) {
       return sendConnectError(reply, e);
@@ -99,7 +102,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       reply.header("set-cookie", clearCookie());
       return reply.code(401).send({ error: r.status }); // invalid | reuse | expired
     }
-    const { token } = await mintAccess(r.userId);
+    const { token } = await mintAccess(r.userId, r.family);
     reply.header("set-cookie", refreshCookie(r.sid));
     return reply.code(200).send({ accessToken: token });
   });

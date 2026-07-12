@@ -1,6 +1,6 @@
 import { jwtVerify } from "jose";
 import { env } from "./env.js";
-import { isDenied } from "./token.js";
+import { isDenied, isFamilyDenied } from "./token.js";
 
 const secret = new TextEncoder().encode(env.JWT_SECRET);
 
@@ -14,6 +14,9 @@ export async function verifyAccessToken(token: string | undefined | null): Promi
     // denylist, so they are rejected outright (inbox/review.md P0-1).
     if (typeof payload.jti !== "string") return null;
     if (await isDenied(payload.jti)) return null;
+    // Family-wide revocation (P1-1): if the refresh family this token was
+    // minted under has been revoked (logout / reuse detection), reject it too.
+    if (typeof payload.fam === "string" && (await isFamilyDenied(payload.fam))) return null;
     return payload.sub;
   } catch {
     return null;

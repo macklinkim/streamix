@@ -1,5 +1,6 @@
 import { redis } from "./redis.js";
 import { env } from "./env.js";
+import { accessTtlSec } from "./token.js";
 
 // Server-side rotating refresh sessions (§ auth hardening).
 //
@@ -23,14 +24,16 @@ const rk = (sid: string) => `refresh:${sid}`;
 const fk = (family: string) => `fam:${family}`;
 const uk = (userId: string) => `usess:${userId}`;
 
+export type Session = { sid: string; family: string };
+
 export type RotateResult =
-  | { status: "ok"; userId: string; sid: string }
+  | { status: "ok"; userId: string; sid: string; family: string }
   | { status: "invalid" }
   | { status: "reuse" }
   | { status: "expired" };
 
-/** Create a fresh session family. Returns the sid to put in the cookie, or null on outage. */
-export async function createSession(userId: string): Promise<string | null> {
+/** Create a fresh session family. Returns the cookie sid + family id, or null on outage. */
+export async function createSession(userId: string): Promise<Session | null> {
   const family = crypto.randomUUID();
   const sid = crypto.randomUUID();
   const ttl = slidingSec();
@@ -44,7 +47,7 @@ export async function createSession(userId: string): Promise<string | null> {
       .sadd(uk(userId), family)
       .expire(uk(userId), ttl)
       .exec();
-    return sid;
+    return { sid, family };
   } catch {
     return null; // Redis down: login still succeeds, session limited to access TTL.
   }
@@ -55,6 +58,9 @@ async function revokeFamily(family: string, userId: string): Promise<void> {
   const pipe = redis.multi();
   for (const s of sids) pipe.del(rk(s));
   pipe.del(fk(family)).srem(uk(userId), family);
+  // Family-wide access-token kill (inbox/review.md P1-1): tokens minted under
+  // this family carry a fam claim checked in verifyAccessToken.
+  pipe.set(`deny:fam:${family}`, "1", "EX", accessTtlSec());
   await pipe.exec();
 }
 
@@ -86,13 +92,15 @@ local function revokeFamily()
   redis.call('DEL', famKey)
   redis.call('SREM', 'usess:' .. userId, family)
   redis.call('DEL', sidKey)
+  -- Family-wide access-token kill marker (P1-1), TTL = access token TTL.
+  redis.call('SET', 'deny:fam:' .. family, '1', 'EX', ARGV[6])
 end
 
 if h['used'] == '1' then
   local next = h['next']
   if next and (now - tonumber(h['usedAt'] or '0')) <= graceMs
      and redis.call('EXISTS', 'refresh:' .. next) == 1 then
-    return {'ok', userId, next}
+    return {'ok', userId, next, family}
   end
   revokeFamily()
   return {'reuse'}
@@ -111,7 +119,7 @@ local famKey = 'fam:' .. family
 redis.call('SADD', famKey, newSid)
 redis.call('EXPIRE', famKey, ttl)
 redis.call('EXPIRE', 'usess:' .. userId, ttl)
-return {'ok', userId, newSid}
+return {'ok', userId, newSid, family}
 `;
 
 /** Validate + rotate a refresh sid. Detects replay of an already-rotated token. */
@@ -127,11 +135,12 @@ export async function rotateSession(sid: string): Promise<RotateResult> {
       absMaxMs().toString(),
       slidingSec().toString(),
       crypto.randomUUID(),
+      accessTtlSec().toString(),
     )) as string[];
   } catch {
     return { status: "invalid" }; // outage: cannot validate, force re-login.
   }
-  if (res[0] === "ok") return { status: "ok", userId: res[1]!, sid: res[2]! };
+  if (res[0] === "ok") return { status: "ok", userId: res[1]!, sid: res[2]!, family: res[3]! };
   if (res[0] === "reuse") return { status: "reuse" };
   if (res[0] === "expired") return { status: "expired" };
   return { status: "invalid" };

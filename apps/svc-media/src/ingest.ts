@@ -60,10 +60,27 @@ function codecArgs(codec: string): string[] {
 // which closes the old socket before opening a new one — reconnects cleanly.
 const activeChannels = new Set<string>();
 
+// Pre-auth flood guards (inbox/review.md P1-4): before key validation returns,
+// chunks are only buffered — an attacker opening many bogus connections and
+// blasting large frames could exhaust the heap. Cap the per-connection pre-auth
+// buffer, single frame size, and total concurrent ingest connections.
+const PRE_AUTH_BUFFER_LIMIT = 8 * 1024 * 1024; // MediaRecorder chunks are ~100KB-1MB
+const MAX_PAYLOAD = 16 * 1024 * 1024;
+const MAX_CONNECTIONS = 32; // well above legit concurrent browser encoders
+let liveConnections = 0;
+
 export function attachIngest(server: Server): void {
-  const wss = new WebSocketServer({ server, path: "/ingest" });
+  const wss = new WebSocketServer({ server, path: "/ingest", maxPayload: MAX_PAYLOAD });
 
   wss.on("connection", (ws: WebSocket, req) => {
+    if (liveConnections >= MAX_CONNECTIONS) {
+      ws.close(1013, "ingest at capacity"); // Try Again Later
+      return;
+    }
+    liveConnections += 1;
+    ws.once("close", () => {
+      liveConnections -= 1;
+    });
     const url = new URL(req.url ?? "/", "http://localhost");
     const streamKey = url.searchParams.get("key") ?? "";
     const codec = url.searchParams.get("codec") ?? "";
@@ -72,6 +89,7 @@ export function attachIngest(server: Server): void {
     // the first chunk carries the webm EBML header, and dropping it during the
     // key-validation await leaves ffmpeg with an unparseable stream.
     const pending: Buffer[] = [];
+    let pendingBytes = 0;
     let sink: Writable | null = null;
     let closed = false;
     let guardedChannel = ""; // set once we hold the dup-ingest guard for a channel
@@ -87,6 +105,13 @@ export function attachIngest(server: Server): void {
           ws.close(4009, "ingest backpressure");
         }
       } else {
+        // Not yet authenticated: bound the buffer so a flood of unvalidated
+        // connections can't grow the heap while core validation is pending (P1-4).
+        pendingBytes += chunk.length;
+        if (pendingBytes > PRE_AUTH_BUFFER_LIMIT) {
+          ws.close(4009, "pre-auth buffer exceeded");
+          return;
+        }
         pending.push(chunk);
       }
     });

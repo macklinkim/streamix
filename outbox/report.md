@@ -54,12 +54,55 @@
 - `pnpm --filter @streamix/bff|svc-core|svc-media lint`: 통과
 - P0-2 Redis smoke test: 4/4 통과 (위 상세)
 
+---
+
+# 2차 반복 (2026-07-12) — P1 항목 대응
+
+## 완료
+
+### P1-1. family 단위 access token 폐기 — 완료
+
+- `apps/bff/src/token.ts`: `mintAccess`가 refresh family id를 `fam` claim으로 포함.
+  `deny:fam:{family}` marker + `isFamilyDenied` 추가 (TTL = access TTL).
+- `apps/bff/src/session.ts`: family revoke(JS `revokeFamily` + Lua reuse/expired 경로)
+  시 `deny:fam` marker 설정. `createSession`이 `{sid, family}` 반환,
+  `rotateSession` ok 결과에 family 포함.
+- `apps/bff/src/auth.ts` `verifyAccessToken`: `fam` claim 있으면 family 폐기 여부 검증.
+- `routes/auth.ts`(login/refresh), `routes/twitch.ts` 호출부 갱신.
+  Redis 장애로 세션 없이 발급된 token은 `fam` 없이 자연 만료 (기존 degradation 유지).
+
+검증 (Redis smoke, 실행 후 삭제): family revoke 후 같은 family에서 발급된 access
+token이 즉시 `null` (이전엔 최대 15분 유효). 동시 rotation 회귀 20/1 유지.
+no-fam token 정상 동작.
+
+### P1-4. ingest pre-auth 자원 제한 — 완료
+
+- `apps/svc-media/src/ingest.ts`: 인증 전 pending buffer 8MB 상한 (초과 시 4009 종료),
+  `WebSocketServer maxPayload` 16MB, 전체 동시 ingest 연결 32개 상한 (초과 시 1013).
+
+### P1-5. trusted proxy — 완료
+
+- `apps/bff/src/main.ts`: Fastify `trustProxy: 1` (Fly proxy 1 hop만 신뢰).
+- `apps/bff/src/rate-limit.ts`: Connect interceptor의 IP key를 XFF 첫 값(spoofable)
+  대신 마지막 값(proxy가 append한 실제 client)으로 변경.
+
+### P1-3 (부분). log redaction — 완료
+
+- `apps/bff/src/main.ts`: Fastify logger에서 `authorization`, `cookie`, `set-cookie`
+  redaction.
+
+## 검증 결과 (2차)
+
+- `pnpm --filter @streamix/bff|svc-media typecheck` + lint: 통과
+- Redis smoke 5/5: 동시 rotation 1 successor, family revoke → access 즉시 무효,
+  post-revoke rotate invalid, no-fam token 유효
+
 ## 남은 항목 (다음 반복 대상)
 
-- P1-1: family 단위 access token 폐기 (access token에 sid/family claim 추가)
-- P1-3: chat WS·ingest·HLS URL query credential 제거 + log redaction
-- P1-4: ingest pre-auth buffer 상한, `maxPayload`, handshake 제한
-- P1-5: Fastify `trustProxy` 설정, `req.ip` 사용 (Connect interceptor의 XFF 신뢰 문제)
+- P1-3 (잔여): chat WS token을 query 대신 첫 frame/1회용 ticket으로, browser ingest의
+  durable stream key 거부(bit_ 토큰만), HLS query token TTL/Referrer-Policy.
+  URL 자체(query string)는 아직 로그에 남을 수 있음 — 필요 시 serializer 추가.
+- P1-4 (잔여): IP별 handshake rate limit, web origin 검사
 - P2-1 ~ P2-4: 내부 서비스 인증, WS origin/자원 제한, security header·/metrics 보호, 계정 정책
 - P2-5: `drizzle-orm>=0.45.2`, `postcss>=8.5.10` 업데이트 + CI audit
 - 회귀 테스트 suite 부재 — bff에 테스트 프레임워크 없음. review §5의 테스트를
