@@ -1,6 +1,8 @@
 import { z } from "zod";
+import { isWeakPassword } from "./weak-password.js";
 
 export * from "./errors.js";
+export * from "./weak-password.js";
 
 /**
  * Shared boundary-validation schemas (browser forms / external input, §6.2).
@@ -10,8 +12,13 @@ export * from "./errors.js";
 // keys, uniqueness, and lookups all agree on one form.
 export const emailSchema = z.string().trim().toLowerCase().email().max(254);
 // Registration password policy (P2-4): length-first, no composition rules
-// (password managers welcome). 200 cap bounds Argon2 input.
-export const passwordSchema = z.string().min(12).max(200);
+// (password managers welcome). 200 cap bounds Argon2 input. Trivially weak
+// 12+ char passwords (repeats, digit sequences, common phrases) are rejected.
+export const passwordSchema = z
+  .string()
+  .min(12)
+  .max(200)
+  .refine((p) => !isWeakPassword(p), { message: "password is too common or predictable" });
 // Login accepts any non-empty password: accounts created before the 12+ minimum
 // must still be able to sign in.
 export const loginPasswordSchema = z.string().min(1).max(200);
