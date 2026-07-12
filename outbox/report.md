@@ -1313,3 +1313,20 @@ review.md 신규 갱신 없음. 27차 weak-password가 서버(400)에만 있어 
 - 외부 의존: 이메일 인증·password reset(이메일 provider), MFA/TOTP(대형)
 - 데이터 대기: V4-4 enforce 전환
 - 구조/marginal: P2-1 mTLS(1차 완료), V2-5 bit_ 1회 소비
+
+---
+
+# 30차 반복 (2026-07-12) — no-op: 신규 review 없음, 백로그 소진
+
+`inbox/review.md` §15 이후 무변경. review에서 도출한 자체완결·저위험 보안 개선은
+29차례에 걸쳐 전부 구현·배포·검증 완료(28차 prod 20/20 회귀검증 PASS).
+
+이번 주기 신규 코드 변경 없음 — 판단 근거:
+
+- 남은 항목이 전부 (a) 외부 의존(이메일 provider: 이메일 인증·password reset),
+  (b) 대형·lockout 위험(MFA/TOTP를 live prod에), (c) 데이터 대기(V4-4 enforce는
+  CSP 위반 리포트 관찰 필요), (d) marginal(P2-1 mTLS는 공유 시크릿으로 1차 완료).
+- 이들은 사용자 결정(이메일 provider 선택, MFA UX)이나 신규 review가 있어야
+  착수가 적절. 건강한 prod에 speculative 기능 추가는 회귀 위험 대비 가치 낮음.
+
+**대기**: 새 `inbox/review.md` 항목 또는 사용자 지시. 신규 review 감지 시 즉시 대응.
