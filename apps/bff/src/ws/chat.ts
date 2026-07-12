@@ -3,7 +3,7 @@ import type { Redis } from "ioredis";
 import { ConnectError } from "@connectrpc/connect";
 import { WsCloseCode } from "@streamix/schemas";
 import { redis, createSubscriber } from "../redis.js";
-import { chat, coreAuth } from "../clients.js";
+import { chat, coreAuth, coreChannel } from "../clients.js";
 import { verifyAccessToken } from "../auth.js";
 
 // Per-connection flood guard (§8 Phase 2). Independent of channel slowmode.
@@ -21,8 +21,34 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const userSocketCounts = new Map<string, number>();
 let totalSockets = 0;
 
-// Per-user new-room creation window (V4-1): random-UUID room churn is bounded
-// even though channel existence isn't verified here yet (needs a by-id RPC).
+// Channel-existence cache (V4-1/V7-6): a room is only created for channel ids
+// core confirms exist. Positive AND negative results are cached briefly so a
+// hot room doesn't hammer core and a random-UUID flood doesn't either.
+const EXISTS_TTL_MS = 60_000;
+const NOT_EXISTS_TTL_MS = 30_000;
+const existsCache = new Map<string, { exists: boolean; until: number }>();
+
+async function channelExists(channelId: string): Promise<boolean> {
+  const now = Date.now();
+  const hit = existsCache.get(channelId);
+  if (hit && now < hit.until) return hit.exists;
+  if (existsCache.size > 10_000) existsCache.clear(); // bound memory
+  try {
+    const res = await coreChannel.channelExists({ channelId });
+    existsCache.set(channelId, {
+      exists: res.exists,
+      until: now + (res.exists ? EXISTS_TTL_MS : NOT_EXISTS_TTL_MS),
+    });
+    return res.exists;
+  } catch {
+    // Core outage: fail open for JOIN only (room caps still bound resources);
+    // chat.Send would fail anyway. Availability-first degradation (§10).
+    return true;
+  }
+}
+
+// Per-user new-room creation window (V4-1): bounds random-UUID room churn on
+// top of the existence check (covers the core-outage fail-open above).
 const roomCreateWindows = new Map<string, { count: number; resetAt: number }>();
 function roomCreateAllowed(userId: string): boolean {
   const now = Date.now();
@@ -183,11 +209,13 @@ export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
     else userSocketCounts.set(userId, n);
   });
 
-  // Room guards (V4-1): cap instance-wide room count for NEW rooms and bound
-  // per-user room-creation rate.
+  // Room guards (V4-1): cap instance-wide room count for NEW rooms, bound
+  // per-user room-creation rate, and require the channel to actually exist.
   if (!rooms.has(channelId)) {
     if (rooms.size >= MAX_ROOMS) return socket.close(4429, "room capacity");
     if (!roomCreateAllowed(userId)) return socket.close(4429, "room creation rate");
+    if (!(await channelExists(channelId)))
+      return socket.close(WsCloseCode.ROOM_NOT_FOUND, "channel not found");
   }
 
   // Idle reaping: ws core answers pings automatically, so a live client always

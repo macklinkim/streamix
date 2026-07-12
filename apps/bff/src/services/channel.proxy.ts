@@ -39,4 +39,5 @@ export const channelProxy: ServiceImpl<typeof ChannelService> = {
   startStream: internalOnly,
   stopStream: internalOnly,
   heartbeat: internalOnly,
+  channelExists: internalOnly,
 };

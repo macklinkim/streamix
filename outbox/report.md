@@ -537,3 +537,44 @@ review.md 신규 갱신 없음 — 검증자 지정 다음 순위(P2-5) 진행.
   V5-4 stress, V2-5 bit_ token 1회 소비, P2-1 내부 서비스 인증,
   P2-4 잔여 기능들, Fly staging IP/XFF 관측
 - prod 배포 (전 수정 미반영)
+
+---
+
+# 10차 반복 (2026-07-12) — V4-1/V7-6 channel 존재 검증 (P2-2 마감)
+
+review.md 신규 갱신 없음 — 검증자가 반복 지적한 마지막 P2-2 결함 해소.
+
+## 완료
+
+### V4-1/V7-6. chat room의 channel 존재 검증 — 완료
+
+- proto: `ChannelService.ChannelExists(channel_id) -> exists` 추가 (additive,
+  internal-only 주석 명시). buf lint 통과. (`proto:breaking`은 Windows 로컬
+  quoting 이슈로 미실행 — additive 변경이고 CI에서 검증됨.)
+- `apps/svc-core/channel.service.ts`: id 단건 조회 구현.
+- `apps/bff/services/channel.proxy.ts`: public surface에서 `PermissionDenied`
+  차단 (internal-only).
+- `apps/bff/ws/chat.ts`: 신규 room 생성 전 core 존재 확인 — positive cache
+  60s / negative cache 30s (10k 상한). core 장애 시 join만 fail-open
+  (room 총량·생성률 상한이 여전히 bound, §10 가용성 우선과 일관).
+  미존재 channel은 `4004 ROOM_NOT_FOUND` 종료.
+
+## 검증 결과 (10차)
+
+- 실검증: 실존 channel 연결 정상(1000), 미존재 UUID 4004, 반복 연결(negative
+  cache 경로)도 4004. `smoke:session` 회귀 SMOKE OK.
+- typecheck·lint·build: proto/svc-core/bff 통과.
+
+## 검증 중 발견한 프로세스 이슈 (기록)
+
+- 검증 중 이전 반복의 bash 배경 기동 bff(rate-limit 상향본)가 :8080을 계속
+  점유해 새 코드가 반영 안 된 것처럼 보이는 현상 발생 — stale process 종료 후
+  정상 확인. 이후 반복부터 기동 전 포트 점유 확인 절차 추가.
+
+## 남은 항목
+
+- V4-4 nonce CSP(report-only 시작), V5-3 Argon2 gate 단위테스트·metrics,
+  V5-4 rotate/revoke stress, V2-5 bit_ token 1회 소비(web 협조),
+  P2-1 내부 서비스 인증, P2-4 잔여(이메일 인증·reset·MFA·감사),
+  Fly staging IP/XFF 관측, V7-1 deploy run 실검증
+- prod 배포 (전 수정 미반영 — deploy.yml에 migration 포함됨)

@@ -128,6 +128,14 @@ message HeartbeatRequest {
 
 message HeartbeatResponse {}
 
+message ChannelExistsRequest {
+  string channel_id = 1;
+}
+
+message ChannelExistsResponse {
+  bool exists = 1;
+}
+
 service ChannelService {
   rpc CreateChannel(CreateChannelRequest) returns (CreateChannelResponse);
   rpc GetChannel(GetChannelRequest) returns (GetChannelResponse);
@@ -141,4 +149,7 @@ service ChannelService {
   rpc IssueIngestToken(IssueIngestTokenRequest) returns (IssueIngestTokenResponse);
   rpc UpdateChannel(UpdateChannelRequest) returns (UpdateChannelResponse);
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+  // Internal-only (BFF chat room gate): channel existence by id, so arbitrary
+  // valid-format UUIDs can't allocate rooms/Redis subscriptions (V4-1).
+  rpc ChannelExists(ChannelExistsRequest) returns (ChannelExistsResponse);
 }

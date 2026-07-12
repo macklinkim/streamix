@@ -265,6 +265,17 @@ export const channelService: ServiceImpl<typeof ChannelService> = {
     return {};
   },
 
+  // Internal-only (BFF chat room gate, inbox/review.md V4-1): existence by id
+  // so arbitrary valid-format UUIDs can't allocate chat rooms/subscriptions.
+  async channelExists(req) {
+    const [c] = await db
+      .select({ id: channels.id })
+      .from(channels)
+      .where(eq(channels.id, req.channelId))
+      .limit(1);
+    return { exists: Boolean(c) };
+  },
+
   async getPlaybackUrl(req) {
     // Signed short-lived HLS URL (§5.2 data-plane playback authz). svc-media
     // verifies the HMAC before serving; keyed by channelId, not the stream key.
