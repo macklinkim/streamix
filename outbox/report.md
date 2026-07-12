@@ -1249,3 +1249,38 @@ password manager 친화 유지(복잡도 규칙 없음, 길이+취약패턴만).
 - P2-4 잔여: 이메일 인증·password reset·MFA(이메일 provider 또는 TOTP 대형작업)
 - V4-4 enforce 전환(위반 데이터 관찰), P2-1 후속(mTLS), V2-5 bit_ 1회 소비
 - prod 배포: core + web 재배포(schemas 변경)
+
+---
+
+# 28차 반복 (2026-07-12) — prod 보안 표면 회귀 검증
+
+review.md 신규 갱신 없음. 자체완결 저위험 백로그 소진(남은 건 이메일 provider
+필요/대형 MFA·mTLS/데이터 대기 V4-4). live prod에 speculative 기능 추가는 회귀
+위험 → 27차례 배포한 보안 표면 end-to-end 회귀 검증(read-only) 실시.
+
+## 검증 결과 (prod, 20/20 PASS)
+
+**표면/헤더 (8/8)**: bff health 200, web 200, enforced CSP(frame-ancestors),
+report-only nonce CSP, HSTS, `/metrics` prod 404(protected), `/csp-report` 204,
+Connect Login 403(credential RPC 차단).
+
+**인증 라이프사이클 (6/6)**: register 약한 비밀번호 400·강한 201, login
+token+cookie, refresh sid 회전, **grace 경과 후 old sid reuse 401 + family
+폐기 401**(V2-1 원자 회전 prod 동작).
+
+**폐기 (6/6)**: logout 204, logout 후 refresh 401, **access token denylist
+(Me 401)**, password change 204, **변경 후 session 폐기 401**, 신규 비밀번호
+login 200.
+
+내부 인증(P2-1)도 간접 확인: register/login 성공 = bff→core INTERNAL_TOKEN 일치.
+
+## 결론
+
+27차례(P0~~P2, V1~~V9 + 후속 테스트/관측/CI/공급망) 구현·배포한 보안 항목 전부
+prod에서 정상 동작. 드리프트·회귀 없음. 새 코드 변경 없음(검증 전용).
+
+## 남은 항목 (신규 review 또는 사용자 지시 대기)
+
+- 외부 의존: 이메일 인증·password reset(이메일 provider), MFA/TOTP(대형)
+- 데이터 대기: V4-4 enforce 전환(CSP 위반 리포트 관찰 후)
+- 구조/marginal: P2-1 mTLS(공유 시크릿으로 1차 완료됨), V2-5 bit_ 1회 소비
