@@ -1,9 +1,15 @@
 // Session-hardening smoke: exercises the cookie-based /auth/* routes end to end.
 // Requires svc-core :50051, bff :8080, Postgres + Redis running.
 //
-// Covers: HttpOnly refresh cookie + flags, refresh-token rotation, reuse
-// detection (family revoke), logout revocation, access-token denylist by jti,
-// and the CSRF header guard.
+// Covers: HttpOnly refresh cookie + flags, refresh-token rotation, concurrent
+// refresh (single successor via the idempotent grace window), reuse detection
+// past the grace (family revoke incl. access tokens), logout revocation,
+// access-token denylist by jti, the CSRF header guard, and the public Connect
+// credential-RPC block (inbox/review.md P0-1/P0-2/V1-1).
+//
+// The grace window defaults to 3s (REFRESH_GRACE_MS); this script reads the
+// same env var so a shorter test grace keeps the run fast. Run the bff with a
+// matching value if you override it.
 import { createClient, Code, ConnectError } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-node";
 import { AuthService } from "@streamix/proto";
@@ -15,6 +21,8 @@ const auth = createClient(AuthService, transport);
 const stamp = Date.now();
 const email = `sess_${stamp}@example.com`;
 const password = "hunter2pass";
+const GRACE_MS = Number(process.env.REFRESH_GRACE_MS ?? 3000);
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 let failures = 0;
 function ok(label: string, cond: boolean, extra = "") {
@@ -85,23 +93,69 @@ ok("refresh ok", r1.status === 200 && Boolean(r1.json?.accessToken));
 ok("refresh rotates the sid", Boolean(r1.sid) && r1.sid !== sid1, `${sid1} -> ${r1.sid}`);
 const sid2 = r1.sid!;
 
-// --- reuse detection: replaying the old sid revokes the whole family ---
-const reuse = await post("/auth/refresh", { cookie: sid1 });
-ok("reused (old) sid rejected", reuse.status === 401, `status=${reuse.status}`);
-ok("reuse flagged as reuse", reuse.json?.error === "reuse", String(reuse.json?.error));
-// After a detected reuse, even the current sid2 is dead (family revoked).
-const afterReuse = await post("/auth/refresh", { cookie: sid2 });
+// --- grace window: replaying the just-used sid returns the SAME successor ---
+// (concurrent-refresh race protection; must not kill the family)
+const graceReplay = await post("/auth/refresh", { cookie: sid1 });
 ok(
-  "family revoked after reuse (sid2 dead)",
+  "grace replay returns same successor",
+  graceReplay.status === 200 && graceReplay.sid === sid2,
+  `status=${graceReplay.status} sid=${graceReplay.sid}`,
+);
+
+// --- concurrent refresh: 20 parallel rotations land on ONE successor ---
+const burst = await Promise.all(
+  Array.from({ length: 20 }, () => post("/auth/refresh", { cookie: sid2 })),
+);
+const burstOk = burst.filter((b) => b.status === 200);
+const successors = new Set(burstOk.map((b) => b.sid));
+ok(
+  "concurrent refresh: all ok, single successor",
+  burstOk.length === 20 && successors.size === 1,
+  `ok=${burstOk.length} successors=${successors.size}`,
+);
+const sid3 = [...successors][0]!;
+
+// --- reuse detection: replaying an old sid PAST the grace revokes the family ---
+await sleep(GRACE_MS + 500);
+const reuse = await post("/auth/refresh", { cookie: sid2 });
+ok("reused (old) sid rejected past grace", reuse.status === 401, `status=${reuse.status}`);
+ok("reuse flagged as reuse", reuse.json?.error === "reuse", String(reuse.json?.error));
+// After a detected reuse, even the current sid3 is dead (family revoked).
+const afterReuse = await post("/auth/refresh", { cookie: sid3 });
+ok(
+  "family revoked after reuse (sid3 dead)",
   afterReuse.status === 401,
   `status=${afterReuse.status}`,
 );
+// Family revoke also kills access tokens minted under the family (P1-1).
+const meAfterReuse = await auth.me({}, { headers: { authorization: `Bearer ${access1}` } }).then(
+  () => "no-error",
+  (e) => (e as ConnectError).code,
+);
+ok(
+  "access token dead after family revoke",
+  meAfterReuse === Code.Unauthenticated,
+  String(meAfterReuse),
+);
+
+// --- public Connect credential RPCs are blocked (P0-1) ---
+for (const [label, call] of [
+  ["login", () => auth.login({ email, password })],
+  ["register", () => auth.register({ email: `x${email}`, password, displayName: "x" })],
+  ["refresh", () => auth.refresh({ refreshToken: "x" })],
+] as const) {
+  const code = await call().then(
+    () => "no-error",
+    (e) => (e as ConnectError).code,
+  );
+  ok(`connect ${label} blocked`, code === Code.PermissionDenied, String(code));
+}
 
 // --- logout revocation + access denylist ---
 const login2 = await post("/auth/login", { body: { email, password } });
 const access2: string = login2.json.accessToken;
-const sid3 = login2.sid!;
-const logout = await post("/auth/logout", { cookie: sid3, bearer: access2 });
+const sid4 = login2.sid!;
+const logout = await post("/auth/logout", { cookie: sid4, bearer: access2 });
 ok("logout 204", logout.status === 204, `status=${logout.status}`);
 ok(
   "logout clears cookie",
@@ -109,7 +163,7 @@ ok(
   logout.setCookie,
 );
 
-const refreshAfterLogout = await post("/auth/refresh", { cookie: sid3 });
+const refreshAfterLogout = await post("/auth/refresh", { cookie: sid4 });
 ok(
   "refresh after logout rejected",
   refreshAfterLogout.status === 401,

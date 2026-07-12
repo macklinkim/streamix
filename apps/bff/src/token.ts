@@ -4,6 +4,11 @@ import { env } from "./env.js";
 
 const secret = new TextEncoder().encode(env.JWT_SECRET);
 
+// Pinned claims (inbox/review.md V1-4): verification rejects tokens signed for
+// another issuer/audience or with a downgraded algorithm.
+export const JWT_ISSUER = "streamix-bff";
+export const JWT_AUDIENCE = "streamix-web";
+
 // A random jti so a specific access token can be revoked before its 15m expiry
 // (logout / force-terminate). node:crypto.randomUUID is available on Node 22.
 function newJti(): string {
@@ -29,7 +34,9 @@ export function accessTtlSec(): number {
 export async function mintAccess(userId: string, family?: string): Promise<MintedAccess> {
   const jti = newJti();
   const token = await new SignJWT(family ? { typ: "access", fam: family } : { typ: "access" })
-    .setProtectedHeader({ alg: "HS256" })
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setIssuer(JWT_ISSUER)
+    .setAudience(JWT_AUDIENCE)
     .setSubject(userId)
     .setJti(jti)
     .setIssuedAt()

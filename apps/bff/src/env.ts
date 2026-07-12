@@ -16,6 +16,11 @@ const Env = z.object({
   REFRESH_TTL_DAYS: z.coerce.number().default(30),
   // Absolute cap: a session family cannot outlive this regardless of sliding.
   REFRESH_ABS_MAX_DAYS: z.coerce.number().default(90),
+  // Concurrent-refresh grace: replaying a just-used sid within this window
+  // idempotently returns the same successor. Kept at a few seconds — any longer
+  // hands a stolen sid a fresh session (inbox/review.md V1-2). Configurable so
+  // tests can shrink it instead of sleeping 60s.
+  REFRESH_GRACE_MS: z.coerce.number().default(3000),
   // Refresh-cookie policy. Cross-site prod (Vercel<->Fly) REQUIRES SameSite=None
   // + Secure; Strict is only possible under a same-origin deploy. Dev: lax.
   COOKIE_SAMESITE: z.enum(["strict", "lax", "none"]).default("lax"),
@@ -49,9 +54,11 @@ if (process.env.NODE_ENV === "production") {
   else if (env.JWT_SECRET.length < 32) errors.push("JWT_SECRET must be at least 32 characters");
   if (!process.env.REDIS_URL) errors.push("REDIS_URL must be set");
   if (!process.env.CORS_ORIGINS) errors.push("CORS_ORIGINS must be set");
-  if (!process.env.COOKIE_SAMESITE) errors.push("COOKIE_SAMESITE must be set");
-  if (env.COOKIE_SAMESITE === "none" && !env.COOKIE_SECURE)
-    errors.push("COOKIE_SAMESITE=none requires COOKIE_SECURE=true");
+  // Split-origin deployment (Vercel web <-> Fly BFF) requires SameSite=None or
+  // the refresh cookie is silently dropped and logins don't persist — fail fast
+  // instead (inbox/review.md V1-5). Revisit if the BFF ever moves same-origin.
+  if (env.COOKIE_SAMESITE !== "none")
+    errors.push("COOKIE_SAMESITE must be 'none' (split-origin Vercel<->Fly deployment)");
   if (!env.COOKIE_SECURE) errors.push("COOKIE_SECURE must be true in production");
   if (errors.length > 0) {
     console.error(`[bff] fatal production config errors:\n- ${errors.join("\n- ")}`);

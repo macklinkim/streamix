@@ -97,8 +97,76 @@ no-fam token 정상 동작.
 - Redis smoke 5/5: 동시 rotation 1 successor, family revoke → access 즉시 무효,
   post-revoke rotate invalid, no-fam token 유효
 
+---
+
+# 3차 반복 (2026-07-12) — §7 검증 피드백 (V1-1~V1-6) 대응
+
+검증자 참고: V1-3이 지적한 `trustProxy` 부재는 이미 2차 반복 커밋 `eb6d93c`에서
+반영되어 있었음 (`main.ts` `trustProxy: 1` + interceptor XFF 마지막 값 사용 —
+검증 시점의 `b9e3af0`에는 없던 변경).
+
+## 완료
+
+### V1-1. smoke-session.ts를 새 정책으로 갱신 — 완료
+
+`apps/bff/scripts/smoke-session.ts` (21 케이스로 확장, 재실행 가능한 repository test):
+
+- grace 안 old sid 재사용 → 200 + 동일 successor (idempotent)
+- 동시 refresh 20건 → 전부 200, successor 정확히 1개
+- grace 경과 후 old sid 재사용 → 401 `reuse` + family revoke
+- revoke 후 최신 sid → 401, 같은 family의 access token → Unauthenticated (P1-1 검증)
+- public Connect `Login/Register/Refresh` → `PermissionDenied` (V1-4 지시 중 테스트 항목)
+- 60초 대기 대신 `REFRESH_GRACE_MS` env로 grace 설정화 (기본 3s, 테스트에서 단축 가능)
+
+**실행 결과: 21/21 PASS** (로컬 풀스택: postgres+redis+svc-core+bff, UNLINK 반영 후 재실행도 PASS)
+
+### V1-2. grace 60초 → 3초 축소 + 설정화 — 완료
+
+- `apps/bff/src/env.ts`: `REFRESH_GRACE_MS` (기본 3000ms).
+- `apps/bff/src/session.ts`: 하드코딩 60초 제거. 탈취 old sid의 successor 승격 창이
+  60초에서 3초로 축소. successor 재전달 위험은 코드 주석에 명시.
+- 잔여: web client refresh single-flight (grace 완전 제거 전제조건) — 별도 작업.
+  DPoP 계열은 범위 외로 유지.
+
+### V1-3. 전역 concurrency 상한 — 완료 (trustProxy는 2차에서 기완료)
+
+- `apps/bff/src/routes/auth.ts`: register/login에 전역 in-flight 상한 16 (초과 시 503).
+  proxy 판별이 무너져도 Argon2 CPU 사용이 유계.
+- 잔여: production에서 `req.ip`가 실 client IP인지 integration 확인 (Fly 배포 시).
+
+### V1-4. JWT claim 검증 강화 — 완료
+
+- `apps/bff/src/token.ts`: 발급 시 `iss=streamix-bff`, `aud=streamix-web`,
+  protected header `typ: JWT`.
+- `apps/bff/src/auth.ts`: 검증 시 `algorithms: ["HS256"]`, issuer, audience 강제
+  (`verifyAccessToken` + `tokenMeta` 둘 다).
+- Connect 차단 자동 테스트는 smoke에 포함 (위 V1-1).
+- 주의: 배포 시 기존 발급 token(iss/aud 없음)은 즉시 무효 → silent refresh로 재발급됨 (최대 15분 창).
+
+### V1-6 (부분). 대량 revoke 시 Redis 블로킹 완화 — 완료
+
+- `session.ts` JS·Lua 양쪽 family revoke를 `DEL` → `UNLINK` (async reclaim).
+- 잔여: 30일 지속 refresh 시 family당 key 수·memory 측정, Fly/Upstash topology에서
+  Lua multi-key staging 검증, Cluster 대비 hash tag 설계 — 운영 측정 작업으로 보류.
+
+### V1-5. production SameSite 강제 — 완료
+
+- `apps/bff/src/env.ts`: production에서 `COOKIE_SAMESITE=none` 필수로 강화
+  (split-origin Vercel<->Fly 전제, lax/strict면 기동 실패). same-origin 전환 시
+  재검토 주석 명시.
+- 잔여: env validation 자동 테스트 (기동 실패 케이스) — process.exit 검증 하니스 필요.
+
+## 검증 결과 (3차)
+
+- typecheck·lint·build: 통과
+- **smoke-session.ts 21/21 PASS** (신규 grace/동시성/Connect 차단/P1-1 케이스 포함)
+
 ## 남은 항목 (다음 반복 대상)
 
+- V1-2 잔여: web client refresh single-flight 후 grace 제거 검토
+- V1-3 잔여: production `req.ip` integration 확인 (Fly 재배포 시점)
+- V1-5 잔여: env fail-fast 자동 테스트
+- V1-6 잔여: family key 규모·revoke latency 운영 측정, Redis topology 검증
 - P1-3 (잔여): chat WS token을 query 대신 첫 frame/1회용 ticket으로, browser ingest의
   durable stream key 거부(bit_ 토큰만), HLS query token TTL/Referrer-Policy.
   URL 자체(query string)는 아직 로그에 남을 수 있음 — 필요 시 serializer 추가.

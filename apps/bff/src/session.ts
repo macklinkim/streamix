@@ -18,7 +18,9 @@ const slidingSec = () => env.REFRESH_TTL_DAYS * 86400;
 const absMaxMs = () => env.REFRESH_ABS_MAX_DAYS * 86400 * 1000;
 // Within this window, replaying a just-used sid idempotently returns the SAME
 // successor (concurrent refresh race). Outside it, replay = theft => family kill.
-const GRACE_MS = 60_000;
+// Short by design: a longer grace would promote a stolen sid to a live session
+// (inbox/review.md V1-2). Env-tunable for tests.
+const graceMs = () => env.REFRESH_GRACE_MS;
 
 const rk = (sid: string) => `refresh:${sid}`;
 const fk = (family: string) => `fam:${family}`;
@@ -56,8 +58,10 @@ export async function createSession(userId: string): Promise<Session | null> {
 async function revokeFamily(family: string, userId: string): Promise<void> {
   const sids = await redis.smembers(fk(family));
   const pipe = redis.multi();
-  for (const s of sids) pipe.del(rk(s));
-  pipe.del(fk(family)).srem(uk(userId), family);
+  // UNLINK (async reclaim): a long-lived family accumulates one tombstone per
+  // rotation, so a bulk revoke should not block the Redis event loop (V1-6).
+  for (const s of sids) pipe.unlink(rk(s));
+  pipe.unlink(fk(family)).srem(uk(userId), family);
   // Family-wide access-token kill (inbox/review.md P1-1): tokens minted under
   // this family carry a fam claim checked in verifyAccessToken.
   pipe.set(`deny:fam:${family}`, "1", "EX", accessTtlSec());
@@ -88,10 +92,11 @@ local userId, family, born = h['userId'], h['family'], tonumber(h['born'] or '0'
 local function revokeFamily()
   local famKey = 'fam:' .. family
   local sids = redis.call('SMEMBERS', famKey)
-  for _, s in ipairs(sids) do redis.call('DEL', 'refresh:' .. s) end
-  redis.call('DEL', famKey)
+  -- UNLINK: async reclaim so a big family revoke doesn't stall Redis (V1-6).
+  for _, s in ipairs(sids) do redis.call('UNLINK', 'refresh:' .. s) end
+  redis.call('UNLINK', famKey)
   redis.call('SREM', 'usess:' .. userId, family)
-  redis.call('DEL', sidKey)
+  redis.call('UNLINK', sidKey)
   -- Family-wide access-token kill marker (P1-1), TTL = access token TTL.
   redis.call('SET', 'deny:fam:' .. family, '1', 'EX', ARGV[6])
 end
@@ -131,7 +136,7 @@ export async function rotateSession(sid: string): Promise<RotateResult> {
       1,
       rk(sid),
       Date.now().toString(),
-      GRACE_MS.toString(),
+      graceMs().toString(),
       absMaxMs().toString(),
       slidingSec().toString(),
       crypto.randomUUID(),

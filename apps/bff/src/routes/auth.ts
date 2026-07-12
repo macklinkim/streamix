@@ -21,6 +21,12 @@ function csrfOk(req: FastifyRequest): boolean {
   return req.headers["x-sx-web"] === "1";
 }
 
+// Global in-flight ceiling for Argon2-burning endpoints (register/login). Last
+// line of defense if per-IP limits fail (proxy misdetection, botnet): core CPU
+// stays bounded regardless (inbox/review.md V1-3).
+const MAX_INFLIGHT_AUTH = 16;
+let inflightAuth = 0;
+
 // Proto User -> plain JSON. Timestamp fields carry BigInt (unserializable by
 // Fastify) and the browser only needs identity + display name.
 type ProtoUser = { id: string; email: string; displayName: string } | undefined;
@@ -41,7 +47,11 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     ) {
       return reply.code(429).send({ error: "too many attempts" });
     }
+    if (inflightAuth >= MAX_INFLIGHT_AUTH) {
+      return reply.code(503).send({ error: "auth busy, retry" });
+    }
     const body = (req.body ?? {}) as { email?: string; password?: string; displayName?: string };
+    inflightAuth += 1;
     try {
       const res = await coreAuth.register({
         email: body.email ?? "",
@@ -51,6 +61,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.code(201).send({ user: toSessionUser(res.user) });
     } catch (e) {
       return sendConnectError(reply, e);
+    } finally {
+      inflightAuth -= 1;
     }
   });
 
@@ -77,6 +89,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     if (byEmail || byIp) {
       return reply.code(429).send({ error: "too many attempts" });
     }
+    if (inflightAuth >= MAX_INFLIGHT_AUTH) {
+      return reply.code(503).send({ error: "auth busy, retry" });
+    }
+    inflightAuth += 1;
     try {
       const res = await coreAuth.login({ email, password: body.password ?? "" });
       const userId = res.user!.id;
@@ -89,6 +105,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.code(200).send({ accessToken: token, user: toSessionUser(res.user) });
     } catch (e) {
       return sendConnectError(reply, e);
+    } finally {
+      inflightAuth -= 1;
     }
   });
 
