@@ -18,11 +18,11 @@ function ok(label: string, cond: boolean, extra = "") {
   if (!cond) process.exitCode = 1;
 }
 
-const reg = await auth.register({ email, password: "hunter2pass", displayName: "스모크유저" });
+const reg = await auth.register({ email, password: "hunter2password", displayName: "스모크유저" });
 ok("register", Boolean(reg.user?.id), reg.user?.email);
 const userId = reg.user!.id;
 
-const login = await auth.login({ email, password: "hunter2pass" });
+const login = await auth.login({ email, password: "hunter2password" });
 ok("login returns tokens", Boolean(login.accessToken && login.refreshToken));
 
 const badLogin = await auth.login({ email, password: "wrong" }).then(

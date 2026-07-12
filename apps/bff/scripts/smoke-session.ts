@@ -20,7 +20,7 @@ const auth = createClient(AuthService, transport);
 
 const stamp = Date.now();
 const email = `sess_${stamp}@example.com`;
-const password = "hunter2pass";
+const password = "hunter2password";
 const GRACE_MS = Number(process.env.REFRESH_GRACE_MS ?? 3000);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 

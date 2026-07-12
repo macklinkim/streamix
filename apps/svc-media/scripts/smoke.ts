@@ -21,7 +21,7 @@ function ok(label: string, cond: boolean, extra = "") {
 const stamp = Date.now();
 const reg = await auth.register({
   email: `media_${stamp}@example.com`,
-  password: "hunter2pass",
+  password: "hunter2password",
   displayName: "미디어",
 });
 const hdr = { headers: { "x-user-id": reg.user!.id } };

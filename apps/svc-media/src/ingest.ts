@@ -67,14 +67,52 @@ const activeChannels = new Set<string>();
 const PRE_AUTH_BUFFER_LIMIT = 8 * 1024 * 1024; // MediaRecorder chunks are ~100KB-1MB
 const MAX_PAYLOAD = 16 * 1024 * 1024;
 const MAX_CONNECTIONS = 32; // well above legit concurrent browser encoders
+const HANDSHAKES_PER_MIN = 10; // per source IP; a restart loop stays well under
 let liveConnections = 0;
 
+// Per-IP handshake fixed window (V2-5): rejected before the WS upgrade, so a
+// connect flood can't even allocate sockets.
+const handshakeWindows = new Map<string, { count: number; resetAt: number }>();
+function handshakeAllowed(ip: string): boolean {
+  const now = Date.now();
+  const w = handshakeWindows.get(ip);
+  if (!w || now >= w.resetAt) {
+    if (handshakeWindows.size > 10_000) handshakeWindows.clear(); // bound memory
+    handshakeWindows.set(ip, { count: 1, resetAt: now + 60_000 });
+    return true;
+  }
+  w.count += 1;
+  return w.count <= HANDSHAKES_PER_MIN;
+}
+
 export function attachIngest(server: Server): void {
-  const wss = new WebSocketServer({ server, path: "/ingest", maxPayload: MAX_PAYLOAD });
+  const allowedOrigins = env.INGEST_ALLOWED_ORIGINS.split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const wss = new WebSocketServer({
+    server,
+    path: "/ingest",
+    maxPayload: MAX_PAYLOAD,
+    // Reject at the HTTP upgrade, before a WebSocket ever exists (V2-5):
+    // capacity, browser origin allowlist (absent Origin = non-browser encoder,
+    // still key-gated below), and per-IP handshake rate.
+    verifyClient: ({
+      origin,
+      req,
+    }: {
+      origin?: string;
+      req: import("node:http").IncomingMessage;
+    }) => {
+      if (liveConnections >= MAX_CONNECTIONS) return false;
+      if (allowedOrigins.length > 0 && origin && !allowedOrigins.includes(origin)) return false;
+      return handshakeAllowed(req.socket.remoteAddress ?? "?");
+    },
+  });
 
   wss.on("connection", (ws: WebSocket, req) => {
     if (liveConnections >= MAX_CONNECTIONS) {
-      ws.close(1013, "ingest at capacity"); // Try Again Later
+      ws.close(1013, "ingest at capacity"); // Try Again Later (verifyClient race)
       return;
     }
     liveConnections += 1;

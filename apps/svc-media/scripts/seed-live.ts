@@ -13,8 +13,8 @@ const channel = createClient(ChannelService, t);
 
 const stamp = Date.now();
 const email = `demo_${stamp}@example.com`;
-const reg = await auth.register({ email, password: "hunter2pass", displayName: "데모방송" });
-const login = await auth.login({ email, password: "hunter2pass" });
+const reg = await auth.register({ email, password: "hunter2password", displayName: "데모방송" });
+const login = await auth.login({ email, password: "hunter2password" });
 const slug = `demo-${stamp}`;
 const created = await channel.createChannel(
   { title: "데모 라이브 · 테스트 송출", slug, category: "IRL" },

@@ -12,7 +12,7 @@ import { Field, inputCls } from "@/components/field";
 const schema = z.object({
   displayName: z.string().min(2, "2자 이상 입력하세요").max(20),
   email: z.string().email("올바른 이메일을 입력하세요"),
-  password: z.string().min(8, "비밀번호는 8자 이상이어야 합니다"),
+  password: z.string().min(12, "비밀번호는 12자 이상이어야 합니다"),
 });
 type Form = z.infer<typeof schema>;
 

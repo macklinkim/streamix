@@ -16,6 +16,10 @@ const Env = z.object({
   // Max unflushed ingest bytes buffered for a stalled ffmpeg before we drop the
   // connection (4009). Caps svc-media heap growth under backpressure. §1.2 결함 6.
   INGEST_BUFFER_LIMIT_MB: z.coerce.number().default(64),
+  // Comma-separated browser origins allowed to open /ingest WebSockets. Empty =
+  // no origin filtering (dev / non-browser encoders). Prod: the web origin
+  // (inbox/review.md V2-5).
+  INGEST_ALLOWED_ORIGINS: z.string().default(""),
 });
 
 export const env = Env.parse(process.env);

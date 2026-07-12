@@ -258,8 +258,58 @@ limitation) 명시, production fail-fast 섹션 추가, smoke 15/15 → 21/21.
   (postgres+redis+svc-core+bff 실기동). §9에서 검증자가 재현 못한 21/21도
   이번 실행에 포함됨.
 
+---
+
+# 6차 반복 (2026-07-12) — V3-3 CI / V2-5 handshake / P2-4 계정 정책
+
+review.md 신규 갱신 없음 — 잔여 항목 진행.
+
+## 완료
+
+### V3-3. CI session integration job — 완료
+
+- `.github/workflows/ci.yml`에 `session-integration` job 추가: postgres/redis
+  service container 기동 → proto codegen → build → migrate → svc-core+BFF 실행
+  → health 대기 → `smoke:session` 실행. `REFRESH_GRACE_MS=1000`으로 대기 단축.
+- 잔여: `pnpm audit` CI gate는 P2-5 의존성 업데이트 완료 후 추가 (지금 넣으면
+  기존 drizzle-orm high advisory로 즉시 실패).
+
+### V2-5 (부분). ingest handshake 단계 검사 — 완료
+
+- `apps/svc-media/src/ingest.ts`: `verifyClient`로 WS upgrade 이전에 거부 —
+  capacity(32), browser Origin allowlist(신규 `INGEST_ALLOWED_ORIGINS` env,
+  빈 값=미필터), IP별 handshake 10회/분.
+- 보류: bit_ token 원자적 1회 소비 — ADR-14 카메라 전환 재시작이 동일 token으로
+  재연결하는 흐름이라 web의 재발급 협조 필요 (단독 변경 시 카메라 전환 파손).
+  ingest metrics 노출도 보류.
+
+### P2-4. 계정·입력 정책 — 완료
+
+- `packages/schemas`: `emailSchema` trim+lowercase canonicalization(+254 상한),
+  `passwordSchema` min 12 (복잡도 규칙 없음 — 길이 우선), 신규
+  `loginPasswordSchema`(min 1 — 12자 정책 이전 계정 로그인 보존), 신규
+  `displayNameSchema`(trim, 2~50자, 제어문자·행분리자 거부).
+- `apps/svc-core/auth.service.ts`: register가 email canonical form 저장 +
+  displayName server-side 검증. **검증 실패를 `VALIDATION`(→400)으로 매핑**
+  — 기존엔 ZodError가 그대로 새서 502였음 (이번에 발견·수정).
+  login은 canonical 조회 후 legacy(canonicalization 이전 저장) row로 fallback.
+- `apps/web/app/signup/page.tsx`: 비밀번호 min 12 반영.
+- 기존 smoke들의 11자 비밀번호(`hunter2pass`)를 12자+로 일괄 갱신 (5개 파일).
+- 보류 (review 지시 중): 유출 비밀번호 차단, 이메일 인증, password reset,
+  MFA/WebAuthn, 감사 로그 — 기능 단위 별도 작업.
+
+## 검증 결과 (6차)
+
+- typecheck·lint·build: schemas/svc-core/svc-media/bff/web 통과
+- `smoke:session` 24/24 PASS (새 정책 반영 후 재실행)
+- 정책 실검증: 9자 비밀번호 register → 400, 제어문자 displayName → 400,
+  `"  MiXeD@Ex.COM "` 등록 후 `"MIXED@ex.com  "` 로그인 → 200 (canonical 일치)
+
 ## 남은 항목 (다음 반복 대상)
 
+- P2-5: `drizzle-orm>=0.45.2`, `postcss>=8.5.10` 업데이트 + migration 회귀
+  - CI audit gate (업데이트 후)
+- V2-5 잔여: bit_ token 1회 소비 (web 재발급 협조), ingest metrics
 - V2-4: trusted proxy Fly 실환경 증거 (staging 배포 시 req.ip/XFF 확인) —
   P1-5는 "구현 완료, 배포 검증 대기" 상태 유지
 - V2-5: ingest handshake 단계(verifyClient) origin/IP rate/capacity 검사,

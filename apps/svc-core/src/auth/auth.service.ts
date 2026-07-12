@@ -1,7 +1,7 @@
 import type { ServiceImpl, HandlerContext } from "@connectrpc/connect";
 import { eq } from "drizzle-orm";
 import { AuthService } from "@streamix/proto";
-import { AppErrorCode, emailSchema, passwordSchema } from "@streamix/schemas";
+import { AppErrorCode, emailSchema, passwordSchema, displayNameSchema } from "@streamix/schemas";
 import { users } from "@streamix/db";
 import { db } from "../deps.js";
 import { appError, isUniqueViolation } from "../errors.js";
@@ -18,14 +18,19 @@ function requireUserId(ctx: HandlerContext): string {
 
 export const authService: ServiceImpl<typeof AuthService> = {
   async register(req) {
-    const email = emailSchema.parse(req.email);
-    passwordSchema.parse(req.password);
+    // Boundary validation (P2-4): map to invalid_argument so the BFF returns
+    // 400, not a leaked internal error. Email is canonicalized (trim+lowercase).
+    const emailP = emailSchema.safeParse(req.email);
+    if (!emailP.success) throw appError(AppErrorCode.VALIDATION, "invalid email");
+    const email = emailP.data;
+    if (!passwordSchema.safeParse(req.password).success)
+      throw appError(AppErrorCode.VALIDATION, "password must be 12-200 characters");
+    const nameP = displayNameSchema.safeParse(req.displayName);
+    if (!nameP.success) throw appError(AppErrorCode.VALIDATION, "invalid display name");
+    const displayName = nameP.data;
     const passwordHash = await hashPassword(req.password);
     try {
-      const [u] = await db
-        .insert(users)
-        .values({ email, passwordHash, displayName: req.displayName })
-        .returning();
+      const [u] = await db.insert(users).values({ email, passwordHash, displayName }).returning();
       return { user: toUserMsg(u!) };
     } catch (e) {
       if (isUniqueViolation(e)) throw appError(AppErrorCode.EMAIL_ALREADY_EXISTS);
@@ -34,7 +39,14 @@ export const authService: ServiceImpl<typeof AuthService> = {
   },
 
   async login(req) {
-    const [u] = await db.select().from(users).where(eq(users.email, req.email)).limit(1);
+    // Look up by the canonical form first; fall back to the raw value for
+    // accounts stored before email canonicalization (P2-4).
+    const parsed = emailSchema.safeParse(req.email);
+    const canonical = parsed.success ? parsed.data : req.email;
+    let [u] = await db.select().from(users).where(eq(users.email, canonical)).limit(1);
+    if (!u && canonical !== req.email) {
+      [u] = await db.select().from(users).where(eq(users.email, req.email)).limit(1);
+    }
     // OAuth-only accounts have no password hash — password login is unavailable.
     if (!u || !u.passwordHash || !(await verifyPassword(u.passwordHash, req.password))) {
       throw appError(AppErrorCode.INVALID_CREDENTIALS);

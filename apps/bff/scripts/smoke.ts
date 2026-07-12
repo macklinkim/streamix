@@ -20,8 +20,8 @@ function ok(label: string, cond: boolean, extra = "") {
 }
 
 // --- HTTP Connect path (browser -> BFF -> svc-core) ---
-await auth.register({ email, password: "hunter2pass", displayName: "비에프에프" });
-const login = await auth.login({ email, password: "hunter2pass" });
+await auth.register({ email, password: "hunter2password", displayName: "비에프에프" });
+const login = await auth.login({ email, password: "hunter2password" });
 ok("login via BFF", Boolean(login.accessToken));
 const authHdr = { headers: { authorization: `Bearer ${login.accessToken}` } };
 

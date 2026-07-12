@@ -42,3 +42,68 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  # Session-hardening integration test (inbox/review.md V3-3): boots isolated
+  # Postgres/Redis + svc-core + BFF and runs the full auth/session smoke —
+  # rotation atomicity, grace idempotency, reuse detection, family revoke,
+  # logout race, Connect credential-RPC block.
+  session-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: streamix
+          POSTGRES_PASSWORD: streamix
+          POSTGRES_DB: streamix
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U streamix -d streamix"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      # Short grace keeps the smoke's post-grace reuse test fast. Both services
+      # and the smoke script read this same variable.
+      REFRESH_GRACE_MS: "1000"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Proto codegen
+        run: pnpm proto:gen
+
+      - name: Build services
+        run: pnpm --filter @streamix/proto --filter @streamix/schemas --filter @streamix/db --filter @streamix/svc-core --filter @streamix/bff build
+
+      - name: Migrate
+        run: pnpm --filter @streamix/db db:migrate
+
+      - name: Start svc-core + BFF
+        run: |
+          node apps/svc-core/dist/main.js &
+          node apps/bff/dist/main.js &
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:8080/health && exit 0
+            sleep 1
+          done
+          echo "bff did not become healthy" >&2
+          exit 1
+
+      - name: Session smoke
+        run: pnpm --filter @streamix/bff smoke:session
