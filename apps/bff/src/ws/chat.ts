@@ -17,6 +17,7 @@ const MAX_TOTAL_SOCKETS = 2000; // per BFF instance, incl. sockets awaiting auth
 const MAX_ROOMS = 500; // per BFF instance; join-existing stays allowed at the cap (V4-1)
 const ROOM_CREATES_PER_MIN = 5; // per user; separate from the socket ceiling (V4-1)
 const HEARTBEAT_MS = 30_000; // ping interval; a socket missing one pong is dead
+const AUTH_FRAME_TIMEOUT_MS = 5000; // first frame must carry the auth token
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const userSocketCounts = new Map<string, number>();
 let totalSockets = 0;
@@ -173,6 +174,33 @@ async function leaveRoom(channelId: string, socket: WebSocket): Promise<void> {
   }
 }
 
+// Wait for the client's first frame, which must be {type:"auth", token}. The
+// access token is delivered here instead of in the URL query so it can't leak
+// into proxy/access logs or browser history (inbox/review.md P1-3). Resolves
+// null on timeout, malformed frame, or early close.
+function awaitAuthToken(socket: WebSocket): Promise<string | null> {
+  return new Promise((resolve) => {
+    const done = (token: string | null) => {
+      clearTimeout(timer);
+      socket.off("message", onMessage);
+      socket.off("close", onClose);
+      resolve(token);
+    };
+    const timer = setTimeout(() => done(null), AUTH_FRAME_TIMEOUT_MS);
+    const onMessage = (data: Buffer) => {
+      try {
+        const m = JSON.parse(data.toString());
+        done(m?.type === "auth" && typeof m.token === "string" ? m.token : null);
+      } catch {
+        done(null);
+      }
+    };
+    const onClose = () => done(null);
+    socket.on("message", onMessage);
+    socket.on("close", onClose);
+  });
+}
+
 export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
   const channelId = url.searchParams.get("channelId");
   if (!channelId) return socket.close(WsCloseCode.PROTOCOL_ERROR, "channelId required");
@@ -195,7 +223,8 @@ export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
   };
   socket.once("close", releaseTotal);
 
-  const userId = await verifyAccessToken(url.searchParams.get("token"));
+  // Token arrives in the first frame, not the URL (P1-3).
+  const userId = await verifyAccessToken(await awaitAuthToken(socket));
   if (!userId) return socket.close(WsCloseCode.UNAUTHENTICATED, "authentication required");
 
   // Per-user socket ceiling (P2-2). Decrement is registered immediately so any
@@ -250,6 +279,8 @@ export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
     return socket.close(WsCloseCode.SERVER_ERROR, "chat unavailable");
   }
   socket.on("close", () => void leaveRoom(channelId, socket));
+  // Auth + join done: tell the client it may enable input and start sending.
+  if (socket.readyState === 1) socket.send(JSON.stringify({ type: "ready" }));
 
   let sendTimes: number[] = [];
   socket.on("message", async (data: Buffer) => {

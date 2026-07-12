@@ -23,15 +23,18 @@ export function Chat({ channelId }: { channelId: string }) {
     let retry: ReturnType<typeof setTimeout>;
 
     const connect = () => {
-      const ws = new WebSocket(`${wsUrl}/ws?channelId=${channelId}&token=${token}`);
+      // Token is NOT in the URL (leaks into logs); it's sent as the first frame
+      // and the server replies {type:"ready"} once authed (P1-3).
+      const ws = new WebSocket(`${wsUrl}/ws?channelId=${channelId}`);
       wsRef.current = ws;
-      ws.onopen = () => setConnected(true);
+      ws.onopen = () => ws.send(JSON.stringify({ type: "auth", token }));
       ws.onclose = () => {
         setConnected(false);
         if (!closed) retry = setTimeout(connect, 2000); // auto-reconnect (룸 재조인)
       };
       ws.onmessage = (evt) => {
         const m = JSON.parse(evt.data);
+        if (m.type === "ready") return setConnected(true);
         if (m.type === "batch" && Array.isArray(m.items)) {
           const items = m.items.filter((it: ChatMessage) => it.text);
           if (items.length) setMessages((prev) => [...prev, ...items].slice(-200));
