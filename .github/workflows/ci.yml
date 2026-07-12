@@ -43,6 +43,9 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Unit tests
+        run: pnpm test
+
       # Dependency vulnerability gate (inbox/review.md P2-5). High+ blocks the
       # build; moderate advisories are periodic-triage, not a gate.
       - name: Audit production dependencies
@@ -128,6 +131,10 @@ jobs:
 
       - name: Session smoke
         run: pnpm --filter @streamix/bff smoke:session
+
+      # Low-level rotate/revoke stress + direct famrev assertions (V5-4).
+      - name: Session stress
+        run: pnpm --filter @streamix/bff smoke:session-stress
 
       # After the smoke (V7-3): an earlier position would already have run —
       # and been skipped — before a smoke failure could set failure().

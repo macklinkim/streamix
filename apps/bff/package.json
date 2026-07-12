@@ -9,7 +9,8 @@
     "start": "node dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src",
-    "smoke:session": "tsx scripts/smoke-session.ts"
+    "smoke:session": "tsx scripts/smoke-session.ts",
+    "smoke:session-stress": "tsx scripts/smoke-session-stress.ts"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.2.3",
