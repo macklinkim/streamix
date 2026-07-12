@@ -13,6 +13,10 @@ import { accessTtlSec } from "./token.js";
 //   refresh:{sid}   HASH {userId, family, born, used}   EXPIRE = sliding window
 //   fam:{family}    SET  of live sids                   EXPIRE = sliding window
 //   usess:{userId}  SET  of families (admin force-logout) EXPIRE = sliding window
+//   deny:fam:{f}    revoked-family marker for ACCESS tokens, EXPIRE = access TTL
+//   famrev:{f}      durable revoked-family marker for REFRESH, EXPIRE = sliding
+//                   window — blocks a logout/rotate race from resurrecting the
+//                   family after deny:fam expires (inbox/review.md V2-1)
 
 const slidingSec = () => env.REFRESH_TTL_DAYS * 86400;
 const absMaxMs = () => env.REFRESH_ABS_MAX_DAYS * 86400 * 1000;
@@ -55,17 +59,36 @@ export async function createSession(userId: string): Promise<Session | null> {
   }
 }
 
+// Atomic family revoke (inbox/review.md V2-1). Runs as one Lua script so it
+// cannot interleave with a concurrent rotation: either the rotation committed
+// first (its new sid is in the family set and gets deleted here) or this ran
+// first (the rotation sees famrev and refuses to mint). The old SMEMBERS-then-
+// MULTI flow let a racing refresh resurrect a "revoked" family.
+// UNLINK = async reclaim so a big family doesn't stall Redis (V1-6).
+const REVOKE_LUA = `
+local family = ARGV[1]
+local userId = ARGV[2]
+local famKey = 'fam:' .. family
+local sids = redis.call('SMEMBERS', famKey)
+for _, s in ipairs(sids) do redis.call('UNLINK', 'refresh:' .. s) end
+redis.call('UNLINK', famKey)
+redis.call('SREM', 'usess:' .. userId, family)
+-- Access-token kill marker (P1-1), TTL = access TTL.
+redis.call('SET', 'deny:fam:' .. family, '1', 'EX', ARGV[3])
+-- Durable refresh-resurrection guard (V2-1), TTL = sliding window (no live sid
+-- can outlive it).
+redis.call('SET', 'famrev:' .. family, '1', 'EX', ARGV[4])
+`;
+
 async function revokeFamily(family: string, userId: string): Promise<void> {
-  const sids = await redis.smembers(fk(family));
-  const pipe = redis.multi();
-  // UNLINK (async reclaim): a long-lived family accumulates one tombstone per
-  // rotation, so a bulk revoke should not block the Redis event loop (V1-6).
-  for (const s of sids) pipe.unlink(rk(s));
-  pipe.unlink(fk(family)).srem(uk(userId), family);
-  // Family-wide access-token kill (inbox/review.md P1-1): tokens minted under
-  // this family carry a fam claim checked in verifyAccessToken.
-  pipe.set(`deny:fam:${family}`, "1", "EX", accessTtlSec());
-  await pipe.exec();
+  await redis.eval(
+    REVOKE_LUA,
+    0,
+    family,
+    userId,
+    accessTtlSec().toString(),
+    slidingSec().toString(),
+  );
 }
 
 // Atomic validate+rotate (inbox/review.md P0-2). The old read-then-write flow
@@ -89,6 +112,13 @@ local h = {}
 for i = 1, #cur, 2 do h[cur[i]] = cur[i + 1] end
 local userId, family, born = h['userId'], h['family'], tonumber(h['born'] or '0')
 
+-- Revoked family must never mint again (V2-1): without this check a rotation
+-- racing a logout could re-create the family set and a live sid.
+if redis.call('EXISTS', 'famrev:' .. family) == 1 then
+  redis.call('UNLINK', sidKey)
+  return {'invalid'}
+end
+
 local function revokeFamily()
   local famKey = 'fam:' .. family
   local sids = redis.call('SMEMBERS', famKey)
@@ -99,6 +129,8 @@ local function revokeFamily()
   redis.call('UNLINK', sidKey)
   -- Family-wide access-token kill marker (P1-1), TTL = access token TTL.
   redis.call('SET', 'deny:fam:' .. family, '1', 'EX', ARGV[6])
+  -- Durable refresh-resurrection guard (V2-1), TTL = sliding window.
+  redis.call('SET', 'famrev:' .. family, '1', 'EX', ARGV[4])
 end
 
 if h['used'] == '1' then

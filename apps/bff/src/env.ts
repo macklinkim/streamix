@@ -11,7 +11,21 @@ const Env = z.object({
   CORS_ORIGINS: z.string().default("http://localhost:3000"),
   // Session hardening (§ auth). Short-lived access JWT; refresh is an opaque
   // rotating token stored server-side in Redis, delivered only via HttpOnly cookie.
-  ACCESS_TTL: z.string().default("15m"),
+  // Format restricted to what accessTtlSec() parses — a mismatch between the JWT
+  // exp and the family deny-marker TTL would resurrect revoked tokens (V2-2).
+  // Capped at 1h: revocation markers only live this long.
+  ACCESS_TTL: z
+    .string()
+    .regex(/^\d+[smh]$/, "ACCESS_TTL must be <number>[s|m|h]")
+    .refine(
+      (v) => {
+        const n = Number(v.slice(0, -1));
+        const unit = v.slice(-1);
+        return (unit === "h" ? n * 3600 : unit === "m" ? n * 60 : n) <= 3600;
+      },
+      { message: "ACCESS_TTL must be <= 1h" },
+    )
+    .default("15m"),
   // Sliding refresh window: each rotation renews TTL to this many days.
   REFRESH_TTL_DAYS: z.coerce.number().default(30),
   // Absolute cap: a session family cannot outlive this regardless of sliding.
@@ -19,8 +33,9 @@ const Env = z.object({
   // Concurrent-refresh grace: replaying a just-used sid within this window
   // idempotently returns the same successor. Kept at a few seconds — any longer
   // hands a stolen sid a fresh session (inbox/review.md V1-2). Configurable so
-  // tests can shrink it instead of sleeping 60s.
-  REFRESH_GRACE_MS: z.coerce.number().default(3000),
+  // tests can shrink it instead of sleeping 60s. Hard-capped at 5s so a config
+  // mistake can't reopen the stolen-sid promotion window (V3-2).
+  REFRESH_GRACE_MS: z.coerce.number().int().min(0).max(5000).default(3000),
   // Refresh-cookie policy. Cross-site prod (Vercel<->Fly) REQUIRES SameSite=None
   // + Secure; Strict is only possible under a same-origin deploy. Dev: lax.
   COOKIE_SAMESITE: z.enum(["strict", "lax", "none"]).default("lax"),

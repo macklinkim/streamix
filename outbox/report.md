@@ -202,8 +202,71 @@ limitation) 명시, production fail-fast 섹션 추가, smoke 15/15 → 21/21.
   4000 / 위조 token 4001 / dev `/metrics` 200 — 4/4 PASS
 - `smoke-session.ts` 회귀: 21/21 PASS
 
+---
+
+# 5차 반복 (2026-07-12) — §8·§9 검증 피드백 (V2-1~~V2-5, V3-1~~V3-4) 대응
+
+주의: §8(2차 검증)은 4차 반복 시점에 파일에 있었으나 누락 처리됨 — 이번에 §9와 함께 처리.
+검증자 우선순위(V2-1 → V2-2 → V3-1 → CI smoke) 순서로 구현.
+
+## 완료
+
+### V2-1. logout/refresh race로 인한 family 부활 — 완료 (P0)
+
+- `apps/bff/src/session.ts`: JS `revokeFamily`(SMEMBERS 후 별도 MULTI)를 단일
+  Lua script(`REVOKE_LUA`)로 원자화. rotate와 revoke 모두 Lua이므로 Redis
+  single-thread에서 interleaving 자체가 불가능.
+- marker 이원화 (지시 3): `deny:fam:{f}`(access 검증용, TTL=access TTL) +
+  `famrev:{f}`(refresh 부활 방지용, TTL=sliding window — 어떤 sid도 이보다
+  오래 못 삶).
+- rotate Lua 시작부에서 `famrev` 확인 — 존재 시 sid 삭제 후 `invalid` 반환
+  (지시 2). rotate 내부 reuse/expired revoke 경로에도 `famrev` 설정.
+- race 자동 테스트 (지시 5): smoke에 logout‖refresh 동시 실행 3회 추가 —
+  refresh가 이겨 successor를 받아도(200) 이후 refresh는 401.
+  **실측: 3회 모두 refresh=200 이후 401 — 가드 동작 확인.**
+
+### V2-2. ACCESS_TTL parser 불일치 — 완료 (P1)
+
+- `apps/bff/src/env.ts`: `ACCESS_TTL`을 `^\d+[smh]$` 형식으로 제한 + 1h 상한
+  (schema 위반 시 기동 실패).
+- `apps/bff/src/token.ts` `accessTtlSec()`: silent 900s fallback 제거, 미지원
+  형식이면 throw.
+
+### V3-1. Argon2 동시성 제한을 core로 이동 — 완료 (P0)
+
+- `apps/svc-core/src/auth/password.ts`: process-wide semaphore — 동시 2
+  (2×64MiB ≈ 128MiB, 256MiB instance에서 여유 확보), 대기 queue 32 상한,
+  대기 timeout 5s, 초과 시 `RATE_LIMITED`(→`ResourceExhausted`).
+  hash·verify 모두 gate 통과 (지시 1~3).
+- BFF의 in-flight 16 상한은 edge rejection으로 유지 (지시 4).
+- 잔여 (지시 5): 32+ 동시 부하에서 RSS/latency/reject 측정 — 부하 리그 작업.
+
+### V3-2. REFRESH_GRACE_MS 범위 강제 — 완료
+
+- `.int().min(0).max(5000)` schema 제한. 오설정으로 grace 창 재확대 불가.
+
+### V3-3 (부분). smoke 실행 진입점 — 완료 / CI job — 보류
+
+- `apps/bff/package.json`에 `smoke:session` script 추가
+  (`pnpm --filter @streamix/bff smoke:session`).
+- CI integration job(격리 DB/Redis 기동)은 workflow 작업으로 보류.
+
+## 검증 결과 (5차)
+
+- typecheck·lint·build: bff/svc-core 통과
+- **smoke-session 24/24 PASS** (기존 21 + V2-1 race 3) — 로컬 풀스택
+  (postgres+redis+svc-core+bff 실기동). §9에서 검증자가 재현 못한 21/21도
+  이번 실행에 포함됨.
+
 ## 남은 항목 (다음 반복 대상)
 
+- V2-4: trusted proxy Fly 실환경 증거 (staging 배포 시 req.ip/XFF 확인) —
+  P1-5는 "구현 완료, 배포 검증 대기" 상태 유지
+- V2-5: ingest handshake 단계(verifyClient) origin/IP rate/capacity 검사,
+  ingest token 원자적 1회 소비, ingest metrics
+- V3-3 잔여: CI integration job (격리 postgres/redis + smoke 실행)
+- V3-4: access token protected header `at+jwt` (낮은 우선순위)
+- V1-2 잔여: web client refresh single-flight
 - P2-1: 내부 서비스 인증 (mTLS 또는 service JWT — 구조 작업)
 - P2-4: 계정·입력 정책 (비밀번호 12+, email canonicalization, display name 검증)
 - P2-5: `drizzle-orm>=0.45.2`, `postcss>=8.5.10` 업데이트 + CI audit

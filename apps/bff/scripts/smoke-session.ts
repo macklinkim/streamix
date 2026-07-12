@@ -181,5 +181,28 @@ ok(
   String(meAfterLogout),
 );
 
+// --- V2-1: logout/refresh race — a revoked family must stay dead ---
+// Fire refresh + logout on the same sid concurrently. Whatever sid the refresh
+// may have minted must be unable to refresh afterwards (famrev guard). Kept to
+// 3 rounds to stay inside the per-email login rate limit (5/window).
+for (let i = 0; i < 3; i++) {
+  const l = await post("/auth/login", { body: { email, password } });
+  if (l.status !== 200 || !l.sid) {
+    ok(`race ${i}: login`, false, `status=${l.status}`);
+    continue;
+  }
+  const [raceRefresh] = await Promise.all([
+    post("/auth/refresh", { cookie: l.sid }),
+    post("/auth/logout", { cookie: l.sid, bearer: l.json.accessToken }),
+  ]);
+  const survivor = raceRefresh.status === 200 && raceRefresh.sid ? raceRefresh.sid : l.sid;
+  const after = await post("/auth/refresh", { cookie: survivor });
+  ok(
+    `race ${i}: family stays dead after logout||refresh`,
+    after.status === 401,
+    `refresh=${raceRefresh.status} after=${after.status}`,
+  );
+}
+
 console.log(failures ? `\nSMOKE FAILED (${failures})` : "\nSMOKE OK");
 process.exit(failures ? 1 : 0);

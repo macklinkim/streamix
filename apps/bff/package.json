@@ -8,7 +8,8 @@
     "dev": "tsx watch src/main.ts",
     "start": "node dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "smoke:session": "tsx scripts/smoke-session.ts"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.2.3",

@@ -17,10 +17,14 @@ function newJti(): string {
 
 export type MintedAccess = { token: string; jti: string };
 
-/** env.ACCESS_TTL ("15m", "900s", "1h") in seconds; used to bound revocation-marker TTLs. */
+/**
+ * env.ACCESS_TTL ("15m", "900s", "1h") in seconds; bounds revocation-marker
+ * TTLs. The env schema restricts the format, so a mismatch with the jose exp
+ * cannot happen; throwing (not falling back) keeps that invariant loud (V2-2).
+ */
 export function accessTtlSec(): number {
   const m = /^(\d+)([smh])$/.exec(env.ACCESS_TTL);
-  if (!m) return 900;
+  if (!m) throw new Error(`unsupported ACCESS_TTL format: ${env.ACCESS_TTL}`);
   const n = Number(m[1]);
   return m[2] === "h" ? n * 3600 : m[2] === "m" ? n * 60 : n;
 }
