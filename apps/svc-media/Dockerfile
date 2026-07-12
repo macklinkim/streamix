@@ -15,7 +15,7 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json ./
 COPY packages ./packages
 COPY apps/svc-media ./apps/svc-media
 RUN pnpm install --frozen-lockfile --filter @streamix/svc-media...
-RUN pnpm --filter @streamix/proto build \
+RUN pnpm --filter @streamix/proto --filter @streamix/schemas build \
   && pnpm --filter @streamix/svc-media build
 RUN pnpm --filter @streamix/svc-media deploy --prod /out
 
