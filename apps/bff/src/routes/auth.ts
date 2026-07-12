@@ -6,6 +6,7 @@ import { tokenMeta, bearer } from "../auth.js";
 import { createSession, rotateSession, revokeSession } from "../session.js";
 import { refreshCookie, clearCookie, readRefreshCookie } from "../cookies.js";
 import { overLimitAuth } from "../rate-limit.js";
+import { audit, emailFingerprint } from "../audit.js";
 import { env } from "../env.js";
 
 // Cookie-based browser session surface (§ auth hardening). The browser holds
@@ -58,6 +59,11 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         password: body.password ?? "",
         displayName: body.displayName ?? "",
       });
+      audit("register", {
+        ip: req.ip,
+        userId: res.user?.id,
+        emailFp: emailFingerprint(body.email ?? ""),
+      });
       return reply.code(201).send({ user: toSessionUser(res.user) });
     } catch (e) {
       return sendConnectError(reply, e);
@@ -102,8 +108,13 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       // outage -> token has no fam and simply expires naturally.
       const { token } = await mintAccess(userId, session?.family);
       if (session) reply.header("set-cookie", refreshCookie(session.sid));
+      audit("login_success", { ip: req.ip, userId, emailFp: emailFingerprint(email) });
       return reply.code(200).send({ accessToken: token, user: toSessionUser(res.user) });
     } catch (e) {
+      // Invalid credentials (Unauthenticated) is the brute-force signal; other
+      // errors are logged with their code for triage.
+      const reason = e instanceof ConnectError ? String(e.code) : "internal";
+      audit("login_failure", { ip: req.ip, emailFp: emailFingerprint(email), reason });
       return sendConnectError(reply, e);
     } finally {
       inflightAuth -= 1;
@@ -117,6 +128,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     const r = await rotateSession(sid);
     if (r.status !== "ok") {
+      // Reuse of an already-rotated sid means a stolen token was replayed and
+      // the family was revoked — a strong account-takeover signal worth auditing.
+      if (r.status === "reuse") audit("refresh_reuse", { ip: req.ip });
+      else if (r.status === "expired") audit("refresh_expired", { ip: req.ip });
       reply.header("set-cookie", clearCookie());
       return reply.code(401).send({ error: r.status }); // invalid | reuse | expired
     }
@@ -132,6 +147,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     // Also revoke the presented access token immediately (denylist by jti).
     const meta = await tokenMeta(bearer(req.headers.authorization));
     if (meta) await denylistJti(meta.jti, meta.ttl);
+    audit("logout", { ip: req.ip });
     reply.header("set-cookie", clearCookie());
     return reply.code(204).send();
   });
