@@ -1,6 +1,7 @@
 import type { WebSocket } from "ws";
 import type { Redis } from "ioredis";
 import { ConnectError } from "@connectrpc/connect";
+import { Gauge, Counter } from "prom-client";
 import { WsCloseCode } from "@streamix/schemas";
 import { redis, createSubscriber } from "../redis.js";
 import { chat, coreAuth, coreChannel } from "../clients.js";
@@ -84,6 +85,33 @@ type Room = {
   drops: number;
 };
 const rooms = new Map<string, Room>();
+
+// Operational metrics, scraped via the BFF's protected /metrics (P2-3/V5-3).
+// Gauges read the live in-memory maps at scrape time; the counter tags each
+// rejection so capacity/abuse pressure is observable in production.
+new Gauge({
+  name: "streamix_ws_connections",
+  help: "Active chat WebSocket connections on this BFF instance.",
+  collect() {
+    this.set(totalSockets);
+  },
+});
+new Gauge({
+  name: "streamix_ws_rooms",
+  help: "Active chat rooms (Redis subscriptions) on this BFF instance.",
+  collect() {
+    this.set(rooms.size);
+  },
+});
+const wsRejects = new Counter({
+  name: "streamix_ws_rejects_total",
+  help: "Chat WebSocket connections rejected, by reason.",
+  labelNames: ["reason"] as const,
+});
+const reject = (socket: WebSocket, code: number, reason: string): void => {
+  wsRejects.inc({ reason });
+  socket.close(code, reason);
+};
 
 // Fan-out one frame to every live socket, skipping backed-up ones (drop = recency).
 function fanout(room: Room, frame: string): void {
@@ -203,16 +231,16 @@ function awaitAuthToken(socket: WebSocket): Promise<string | null> {
 
 export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
   const channelId = url.searchParams.get("channelId");
-  if (!channelId) return socket.close(WsCloseCode.PROTOCOL_ERROR, "channelId required");
+  if (!channelId) return reject(socket, WsCloseCode.PROTOCOL_ERROR, "channelId required");
   // Channel ids are UUIDs; anything else would still allocate a room + Redis
   // subscription per arbitrary string (P2-2 resource abuse).
   if (!UUID_RE.test(channelId))
-    return socket.close(WsCloseCode.PROTOCOL_ERROR, "invalid channelId");
+    return reject(socket, WsCloseCode.PROTOCOL_ERROR, "invalid channelId");
 
   // Instance ceiling is claimed BEFORE token verification (V4-3): sockets
   // parked in the async JWT/Redis check would otherwise not count, letting a
   // flood of pending connections blow past the cap.
-  if (totalSockets >= MAX_TOTAL_SOCKETS) return socket.close(4429, "server at capacity");
+  if (totalSockets >= MAX_TOTAL_SOCKETS) return reject(socket, 4429, "server at capacity");
   totalSockets += 1;
   let counted = true;
   const releaseTotal = () => {
@@ -225,12 +253,12 @@ export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
 
   // Token arrives in the first frame, not the URL (P1-3).
   const userId = await verifyAccessToken(await awaitAuthToken(socket));
-  if (!userId) return socket.close(WsCloseCode.UNAUTHENTICATED, "authentication required");
+  if (!userId) return reject(socket, WsCloseCode.UNAUTHENTICATED, "authentication required");
 
   // Per-user socket ceiling (P2-2). Decrement is registered immediately so any
   // later rejection path (room caps below) can't leak the count.
   const userCount = userSocketCounts.get(userId) ?? 0;
-  if (userCount >= MAX_SOCKETS_PER_USER) return socket.close(4429, "too many connections");
+  if (userCount >= MAX_SOCKETS_PER_USER) return reject(socket, 4429, "too many connections");
   userSocketCounts.set(userId, userCount + 1);
   socket.once("close", () => {
     const n = (userSocketCounts.get(userId) ?? 1) - 1;
@@ -241,10 +269,10 @@ export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
   // Room guards (V4-1): cap instance-wide room count for NEW rooms, bound
   // per-user room-creation rate, and require the channel to actually exist.
   if (!rooms.has(channelId)) {
-    if (rooms.size >= MAX_ROOMS) return socket.close(4429, "room capacity");
-    if (!roomCreateAllowed(userId)) return socket.close(4429, "room creation rate");
+    if (rooms.size >= MAX_ROOMS) return reject(socket, 4429, "room capacity");
+    if (!roomCreateAllowed(userId)) return reject(socket, 4429, "room creation rate");
     if (!(await channelExists(channelId)))
-      return socket.close(WsCloseCode.ROOM_NOT_FOUND, "channel not found");
+      return reject(socket, WsCloseCode.ROOM_NOT_FOUND, "channel not found");
   }
 
   // Idle reaping: ws core answers pings automatically, so a live client always
