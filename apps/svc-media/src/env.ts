@@ -8,6 +8,9 @@ const Env = z.object({
   MEDIA_ROOT: z.string().default(join(process.cwd(), "hls-tmp")),
   // Playback URL signing (§5.2). MUST match svc-core's PLAYBACK_SECRET.
   PLAYBACK_SECRET: z.string().default("dev-insecure-playback-secret"),
+  // Shared internal token attached to core gRPC calls (§ P2-1). MUST match
+  // svc-core. Dev default; prod injects a Fly secret.
+  INTERNAL_TOKEN: z.string().default("dev-insecure-internal-token"),
   THUMB_INTERVAL_SECONDS: z.coerce.number().default(15),
   // A channel dir with no HLS update for this long is reaped (§ ADR-3 retention).
   RETENTION_TTL_SECONDS: z.coerce.number().default(120),
@@ -55,6 +58,10 @@ if (process.env.NODE_ENV === "production") {
     errors.push("PLAYBACK_SECRET must be set (no dev default)");
   else if (env.PLAYBACK_SECRET.length < 32)
     errors.push("PLAYBACK_SECRET must be at least 32 characters");
+  if (!process.env.INTERNAL_TOKEN || env.INTERNAL_TOKEN === "dev-insecure-internal-token")
+    errors.push("INTERNAL_TOKEN must be set (no dev default)");
+  else if (env.INTERNAL_TOKEN.length < 32)
+    errors.push("INTERNAL_TOKEN must be at least 32 characters");
   // Browser ingest must not accept arbitrary web origins in production (V6-2).
   // Checked on the PARSED list (V7-2: "," would pass a raw-string check) and
   // production origins must be https.

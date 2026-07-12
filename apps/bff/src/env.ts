@@ -15,6 +15,9 @@ const Env = z.object({
   REDIS_URL: z.string().default("redis://localhost:6379"),
   // MUST match svc-core's secret (shared JWT verification). Prod: Fly secret.
   JWT_SECRET: z.string().default("dev-insecure-secret-change-me"),
+  // Shared internal service token attached to core/chat gRPC calls (§ P2-1).
+  // MUST match svc-core + svc-chat. Dev default; prod injects a Fly secret.
+  INTERNAL_TOKEN: z.string().default("dev-insecure-internal-token"),
   // Comma-separated allowed browser origins (Vercel domain in prod, ADR-8/§10).
   CORS_ORIGINS: z.string().default("http://localhost:3000"),
   // Session hardening (§ auth). Short-lived access JWT; refresh is an opaque
@@ -87,6 +90,10 @@ if (process.env.NODE_ENV === "production") {
   else if (env.JWT_SECRET.length < 32) errors.push("JWT_SECRET must be at least 32 characters");
   if (!process.env.REDIS_URL) errors.push("REDIS_URL must be set");
   if (!process.env.CORS_ORIGINS) errors.push("CORS_ORIGINS must be set");
+  if (!process.env.INTERNAL_TOKEN || env.INTERNAL_TOKEN === "dev-insecure-internal-token")
+    errors.push("INTERNAL_TOKEN must be set (no dev default)");
+  else if (env.INTERNAL_TOKEN.length < 32)
+    errors.push("INTERNAL_TOKEN must be at least 32 characters");
   // Split-origin deployment (Vercel web <-> Fly BFF) requires SameSite=None or
   // the refresh cookie is silently dropped and logins don't persist — fail fast
   // instead (inbox/review.md V1-5). Revisit if the BFF ever moves same-origin.

@@ -13,6 +13,9 @@ const Env = z.object({
   // Playback URL signing (§5.2). MUST match svc-media's PLAYBACK_SECRET.
   PLAYBACK_SECRET: z.string().default("dev-insecure-playback-secret"),
   MEDIA_PUBLIC_URL: z.string().default("http://localhost:8090"),
+  // Shared internal service token (§ P2-1). Dev default; prod injects a real
+  // Fly secret shared with BFF + svc-media. Enforced only in production.
+  INTERNAL_TOKEN: z.string().default("dev-insecure-internal-token"),
 });
 
 export const env = Env.parse(process.env);
@@ -30,6 +33,10 @@ if (process.env.NODE_ENV === "production") {
     errors.push("PLAYBACK_SECRET must be at least 32 characters");
   if (!process.env.DATABASE_URL) errors.push("DATABASE_URL must be set");
   if (!process.env.REDIS_URL) errors.push("REDIS_URL must be set");
+  if (!process.env.INTERNAL_TOKEN || env.INTERNAL_TOKEN === "dev-insecure-internal-token")
+    errors.push("INTERNAL_TOKEN must be set (no dev default)");
+  else if (env.INTERNAL_TOKEN.length < 32)
+    errors.push("INTERNAL_TOKEN must be at least 32 characters");
   if (errors.length > 0) {
     console.error(`[svc-core] fatal production config errors:\n- ${errors.join("\n- ")}`);
     process.exit(1);

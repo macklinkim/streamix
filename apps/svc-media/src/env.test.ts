@@ -9,6 +9,7 @@ const envEntry = fileURLToPath(new URL("./env.ts", import.meta.url));
 const VALID_PROD = {
   NODE_ENV: "production",
   PLAYBACK_SECRET: "y".repeat(32),
+  INTERNAL_TOKEN: "i".repeat(32),
   INGEST_ALLOWED_ORIGINS: "https://streamix-web.vercel.app",
 };
 

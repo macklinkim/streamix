@@ -12,6 +12,7 @@ const envEntry = fileURLToPath(new URL("./env.ts", import.meta.url));
 const VALID_PROD = {
   NODE_ENV: "production",
   JWT_SECRET: "x".repeat(32),
+  INTERNAL_TOKEN: "i".repeat(32),
   REDIS_URL: "redis://prod:6379",
   CORS_ORIGINS: "https://streamix-web.vercel.app",
   COOKIE_SAMESITE: "none",
@@ -69,5 +70,9 @@ describe("bff production env fail-fast", () => {
 
   it("rejects a fractional REFRESH_GRACE_MS over the cap", () => {
     expect(runEnv({ ...VALID_PROD, REFRESH_GRACE_MS: "60000" })).toBe(1);
+  });
+
+  it("rejects the dev-default INTERNAL_TOKEN in production (P2-1)", () => {
+    expect(runEnv({ ...VALID_PROD, INTERNAL_TOKEN: "dev-insecure-internal-token" })).toBe(1);
   });
 });

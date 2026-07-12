@@ -205,6 +205,9 @@ importers:
       "@streamix/proto":
         specifier: workspace:*
         version: link:../../packages/proto
+      "@streamix/schemas":
+        specifier: workspace:*
+        version: link:../../packages/schemas
       ffmpeg-static:
         specifier: ^5.2.0
         version: 5.3.0
@@ -364,6 +367,9 @@ importers:
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@edge-runtime/vm@3.2.0)(@types/node@22.20.0)(lightningcss@1.32.0)
 
 packages:
   "@alloc/quick-lru@5.2.0":

@@ -9,11 +9,16 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./internal-auth": {
+      "types": "./dist/internal-auth.d.ts",
+      "default": "./dist/internal-auth.js"
     }
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
     "clean": "rimraf dist"
   },
   "dependencies": {
@@ -21,6 +26,7 @@
   },
   "devDependencies": {
     "typescript": "^5.7.2",
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.0.1",
+    "vitest": "^2.1.8"
   }
 }
