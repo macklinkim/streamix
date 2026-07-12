@@ -4,9 +4,9 @@
 # to rtmp://127.0.0.1, so it cannot live in a separate Fly app).
 # Pinned by digest for reproducible builds (inbox/review.md V8-4); bump via a
 # reviewed PR after checking the changelog.
-FROM bluenviron/mediamtx:latest@sha256:371b6829a0e379ab0f2ed33fcb2f3a4145f854b79e9bf2a3671a5a4b813d580b AS mediamtx
+FROM bluenviron/mediamtx:latest@sha256:f37aaaf1a707c42b0aff49a3ab5d4fa57a3504ebc3f27657434a820e3b16d730 AS mediamtx
 
-FROM node:22-slim@sha256:a149cd71dccd68704a07d4e4ca3e610c27301852b0f556865cfdb6e2856f8bed AS base
+FROM node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf AS base
 RUN corepack enable
 WORKDIR /app
 

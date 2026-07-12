@@ -1,8 +1,10 @@
 name: streamix
 
 services:
+  # Images pinned by digest for reproducible dev environments (inbox/review.md
+  # V8-4); bump via a reviewed change after checking the changelog.
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     environment:
       POSTGRES_USER: streamix
       POSTGRES_PASSWORD: streamix
@@ -18,7 +20,7 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
     ports:
       - "6379:6379"
     healthcheck:
@@ -28,7 +30,7 @@ services:
       retries: 10
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:latest@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
@@ -48,7 +50,7 @@ services:
   # LL-HLS packager (ADR-10). RTMP ingest -> Low-Latency HLS. Ports are distinct
   # from the rest of the stack (1935 RTMP / 8888 HLS / 9997 control API).
   mediamtx:
-    image: bluenviron/mediamtx:latest
+    image: bluenviron/mediamtx:latest@sha256:f37aaaf1a707c42b0aff49a3ab5d4fa57a3504ebc3f27657434a820e3b16d730
     ports:
       # MediaMTX now owns RTMP (it replaced svc-media's NMS listener, M3-4), so it
       # binds the port svc-media's RTMP_PORT defaults to. Stop any old NMS-based
@@ -60,7 +62,7 @@ services:
       - ./mediamtx.yml:/mediamtx.yml:ro
 
   nginx:
-    image: nginx:1.27-alpine
+    image: nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
     ports:
       - "8088:80"
     volumes:

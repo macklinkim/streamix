@@ -1,7 +1,7 @@
 # Build from the REPO ROOT: docker build -f apps/svc-core/Dockerfile -t streamix-svc-core .
 # node:22-slim (glibc) so argon2 uses its prebuilt binary. Generated proto is
 # committed, so no buf step is needed in the image.
-FROM node:22-slim@sha256:a149cd71dccd68704a07d4e4ca3e610c27301852b0f556865cfdb6e2856f8bed AS base
+FROM node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf AS base
 RUN corepack enable
 WORKDIR /app
 

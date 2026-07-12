@@ -1187,3 +1187,34 @@ enforce(connect-src 정확 origin 축소) 전환 가능.
 - P2-4 잔여(이메일 인증·reset·MFA — 이메일 provider), V2-5 bit_ 1회 소비,
   P2-1 후속(mTLS), V8-4 compose digest
 - prod 배포: bff + web 재배포
+
+---
+
+# 26차 반복 (2026-07-12) — 이미지 digest index로 교정 + compose pin (V8-4 완료)
+
+review.md 신규 갱신 없음. V8-4 마무리.
+
+## 완료
+
+### Dockerfile digest 교정 + compose 이미지 pin — 완료
+
+- **교정**: 11차의 Dockerfile node/mediamtx digest가 platform-specific(amd64)
+  digest였음(Fly amd64 빌드엔 동작했으나 multi-arch 미보장). `buildx imagetools
+inspect`로 **index digest** 재조회해 교체 — node `53ada149…`, mediamtx
+  `f37aaaf1…` (5개 Dockerfile).
+- **compose pin**(dev 재현성, V8-4 지시): `infra/docker-compose.yml` postgres/
+  redis/minio/mediamtx/nginx 전부 index digest로 pin.
+
+dev-only compose라 prod 배포 무관. Dockerfile digest 교정은 다음 배포 시 반영
+(현재 running 이미지는 정상 — 재배포 불필요).
+
+## 검증 결과 (26차)
+
+- `docker compose config` valid, digest pin으로 redis pull 성공.
+
+## 남은 항목 (자체 완결 가능한 보안 항목 소진)
+
+- V4-4 enforce 전환: report-only 위반 데이터 관찰 필요(운영 관찰 작업)
+- 외부 의존/대형: 이메일 인증·password reset·MFA(이메일 provider 필요),
+  P2-1 후속(mTLS/service JWT), V2-5 bit_ token 1회 소비(RTMP authz 디커플)
+- prod: Dockerfile digest 교정은 다음 서비스 배포 시 자동 반영
