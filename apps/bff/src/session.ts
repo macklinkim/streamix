@@ -15,7 +15,9 @@ import { env } from "./env.js";
 
 const slidingSec = () => env.REFRESH_TTL_DAYS * 86400;
 const absMaxMs = () => env.REFRESH_ABS_MAX_DAYS * 86400 * 1000;
-const GRACE_SEC = 60; // used-token lingers this long so concurrent refresh races don't trip reuse
+// Within this window, replaying a just-used sid idempotently returns the SAME
+// successor (concurrent refresh race). Outside it, replay = theft => family kill.
+const GRACE_MS = 60_000;
 
 const rk = (sid: string) => `refresh:${sid}`;
 const fk = (family: string) => `fam:${family}`;
@@ -56,41 +58,83 @@ async function revokeFamily(family: string, userId: string): Promise<void> {
   await pipe.exec();
 }
 
+// Atomic validate+rotate (inbox/review.md P0-2). The old read-then-write flow
+// let two concurrent requests both see used=0 and each mint a live successor.
+// One Lua script now does check / used-flip / successor-create / family-update
+// in a single step. The used sid stays as a tombstone for the full sliding
+// window (not 60s) so late replays are still detected as theft; replays inside
+// GRACE_MS idempotently return the already-minted successor instead of killing
+// the family.
+const ROTATE_LUA = `
+local sidKey = KEYS[1]
+local now = tonumber(ARGV[1])
+local graceMs = tonumber(ARGV[2])
+local absMaxMs = tonumber(ARGV[3])
+local ttl = tonumber(ARGV[4])
+local newSid = ARGV[5]
+
+local cur = redis.call('HGETALL', sidKey)
+if #cur == 0 then return {'invalid'} end
+local h = {}
+for i = 1, #cur, 2 do h[cur[i]] = cur[i + 1] end
+local userId, family, born = h['userId'], h['family'], tonumber(h['born'] or '0')
+
+local function revokeFamily()
+  local famKey = 'fam:' .. family
+  local sids = redis.call('SMEMBERS', famKey)
+  for _, s in ipairs(sids) do redis.call('DEL', 'refresh:' .. s) end
+  redis.call('DEL', famKey)
+  redis.call('SREM', 'usess:' .. userId, family)
+  redis.call('DEL', sidKey)
+end
+
+if h['used'] == '1' then
+  local next = h['next']
+  if next and (now - tonumber(h['usedAt'] or '0')) <= graceMs
+     and redis.call('EXISTS', 'refresh:' .. next) == 1 then
+    return {'ok', userId, next}
+  end
+  revokeFamily()
+  return {'reuse'}
+end
+if now - born > absMaxMs then
+  revokeFamily()
+  return {'expired'}
+end
+
+redis.call('HSET', sidKey, 'used', '1', 'usedAt', tostring(now), 'next', newSid)
+redis.call('EXPIRE', sidKey, ttl)
+redis.call('HSET', 'refresh:' .. newSid,
+  'userId', userId, 'family', family, 'born', tostring(born), 'used', '0')
+redis.call('EXPIRE', 'refresh:' .. newSid, ttl)
+local famKey = 'fam:' .. family
+redis.call('SADD', famKey, newSid)
+redis.call('EXPIRE', famKey, ttl)
+redis.call('EXPIRE', 'usess:' .. userId, ttl)
+return {'ok', userId, newSid}
+`;
+
 /** Validate + rotate a refresh sid. Detects replay of an already-rotated token. */
 export async function rotateSession(sid: string): Promise<RotateResult> {
-  let cur: Record<string, string>;
+  let res: string[];
   try {
-    cur = await redis.hgetall(rk(sid));
+    res = (await redis.eval(
+      ROTATE_LUA,
+      1,
+      rk(sid),
+      Date.now().toString(),
+      GRACE_MS.toString(),
+      absMaxMs().toString(),
+      slidingSec().toString(),
+      crypto.randomUUID(),
+    )) as string[];
   } catch {
     return { status: "invalid" }; // outage: cannot validate, force re-login.
   }
-  if (!cur.userId) return { status: "invalid" };
-
-  const userId = cur.userId;
-  const { family = "", born = "0", used = "0" } = cur;
-  if (used === "1") {
-    await revokeFamily(family, userId); // replay of a used token => stolen. Kill family.
-    return { status: "reuse" };
-  }
-  if (Date.now() - Number(born) > absMaxMs()) {
-    await revokeFamily(family, userId);
-    return { status: "expired" };
-  }
-
-  const newSid = crypto.randomUUID();
-  const ttl = slidingSec();
-  await redis
-    .multi()
-    .hset(rk(sid), "used", "1")
-    .expire(rk(sid), GRACE_SEC)
-    .hset(rk(newSid), { userId, family, born, used: "0" })
-    .expire(rk(newSid), ttl)
-    .sadd(fk(family), newSid)
-    .srem(fk(family), sid)
-    .expire(fk(family), ttl)
-    .expire(uk(userId), ttl)
-    .exec();
-  return { status: "ok", userId, sid: newSid };
+  if (res[0] === "ok") return { status: "ok", userId: res[1]!, sid: res[2]! };
+  if (res[0] === "reuse") return { status: "reuse" };
+  if (res[0] === "expired") return { status: "expired" };
+  return { status: "invalid" };
 }
 
 /** Revoke the session family behind this sid (logout). No-op if already gone. */

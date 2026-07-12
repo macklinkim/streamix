@@ -21,6 +21,20 @@ const Env = z.object({
 export const env = Env.parse(process.env);
 export const thumbRoot = join(env.MEDIA_ROOT, "_thumbs");
 
+// Fail fast in production instead of booting on the known dev playback secret,
+// which would let anyone forge signed HLS URLs (inbox/review.md P1-2).
+if (process.env.NODE_ENV === "production") {
+  const errors: string[] = [];
+  if (!process.env.PLAYBACK_SECRET || env.PLAYBACK_SECRET === "dev-insecure-playback-secret")
+    errors.push("PLAYBACK_SECRET must be set (no dev default)");
+  else if (env.PLAYBACK_SECRET.length < 32)
+    errors.push("PLAYBACK_SECRET must be at least 32 characters");
+  if (errors.length > 0) {
+    console.error(`[svc-media] fatal production config errors:\n- ${errors.join("\n- ")}`);
+    process.exit(1);
+  }
+}
+
 // --- ADR-10: MediaMTX LL-HLS plane (appended; see M3 in 작업계획서-개선.md) ---
 // New vars only, kept at file end to avoid churn in the schema above.
 const MtxEnv = z.object({

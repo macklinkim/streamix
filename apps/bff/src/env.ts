@@ -39,3 +39,22 @@ const Env = z.object({
 
 export const env = Env.parse(process.env);
 export const corsOrigins = env.CORS_ORIGINS.split(",").map((s) => s.trim());
+
+// Fail fast in production instead of booting on known dev defaults an attacker
+// could use to forge JWTs or hijack sessions (inbox/review.md P1-2).
+if (process.env.NODE_ENV === "production") {
+  const errors: string[] = [];
+  if (!process.env.JWT_SECRET || env.JWT_SECRET === "dev-insecure-secret-change-me")
+    errors.push("JWT_SECRET must be set (no dev default)");
+  else if (env.JWT_SECRET.length < 32) errors.push("JWT_SECRET must be at least 32 characters");
+  if (!process.env.REDIS_URL) errors.push("REDIS_URL must be set");
+  if (!process.env.CORS_ORIGINS) errors.push("CORS_ORIGINS must be set");
+  if (!process.env.COOKIE_SAMESITE) errors.push("COOKIE_SAMESITE must be set");
+  if (env.COOKIE_SAMESITE === "none" && !env.COOKIE_SECURE)
+    errors.push("COOKIE_SAMESITE=none requires COOKIE_SECURE=true");
+  if (!env.COOKIE_SECURE) errors.push("COOKIE_SECURE must be true in production");
+  if (errors.length > 0) {
+    console.error(`[bff] fatal production config errors:\n- ${errors.join("\n- ")}`);
+    process.exit(1);
+  }
+}

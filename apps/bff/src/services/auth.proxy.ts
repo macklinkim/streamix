@@ -12,10 +12,20 @@ export async function requireUser(ctx: HandlerContext): Promise<string> {
 
 // BFF exposes AuthService to the browser and forwards to svc-core over gRPC,
 // injecting the verified user id on authed methods (docs/bff-service-comm.md).
+//
+// Credential-issuing RPCs (register/login/refresh) are NOT exposed: the Connect
+// Login/Refresh path returns stateless 30d refresh JWTs that bypass the cookie
+// session model entirely (rotation, reuse detection, server-side revocation).
+// Browsers must use the REST /auth/* routes instead (inbox/review.md P0-1).
+const browserAuthOnly = () =>
+  Promise.reject(
+    new ConnectError("use /auth/register, /auth/login, /auth/refresh", Code.PermissionDenied),
+  );
+
 export const authProxy: ServiceImpl<typeof AuthService> = {
-  register: (req) => coreAuth.register(req),
-  login: (req) => coreAuth.login(req),
-  refresh: (req) => coreAuth.refresh(req),
+  register: browserAuthOnly,
+  login: browserAuthOnly,
+  refresh: browserAuthOnly,
   async me(req, ctx) {
     const userId = await requireUser(ctx);
     return coreAuth.me(req, { headers: { "x-user-id": userId } });

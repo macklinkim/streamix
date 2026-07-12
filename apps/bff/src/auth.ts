@@ -10,9 +10,10 @@ export async function verifyAccessToken(token: string | undefined | null): Promi
   try {
     const { payload } = await jwtVerify(token, secret);
     if (payload.typ !== "access" || typeof payload.sub !== "string") return null;
-    // Denylist check: a revoked jti (logout / force-terminate) is rejected before
-    // its natural expiry. Tokens without a jti (legacy) skip this.
-    if (typeof payload.jti === "string" && (await isDenied(payload.jti))) return null;
+    // A jti is mandatory: legacy tokens without one cannot be revoked via the
+    // denylist, so they are rejected outright (inbox/review.md P0-1).
+    if (typeof payload.jti !== "string") return null;
+    if (await isDenied(payload.jti)) return null;
     return payload.sub;
   } catch {
     return null;

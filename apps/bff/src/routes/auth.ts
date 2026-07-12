@@ -5,7 +5,7 @@ import { mintAccess, denylistJti } from "../token.js";
 import { tokenMeta, bearer } from "../auth.js";
 import { createSession, rotateSession, revokeSession } from "../session.js";
 import { refreshCookie, clearCookie, readRefreshCookie } from "../cookies.js";
-import { overLimit } from "../rate-limit.js";
+import { overLimitAuth } from "../rate-limit.js";
 import { env } from "../env.js";
 
 // Cookie-based browser session surface (§ auth hardening). The browser holds
@@ -30,6 +30,17 @@ function toSessionUser(u: ProtoUser) {
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   app.post("/auth/register", async (req, reply) => {
+    // IP-keyed throttle: every register triggers an Argon2 hash in svc-core, so
+    // an unauthenticated flood is a CPU-exhaustion vector (inbox/review.md P0-3).
+    if (
+      await overLimitAuth(
+        `rl:auth:register:ip:${req.ip}`,
+        env.RATE_LIMIT_AUTH_MAX,
+        env.RATE_LIMIT_AUTH_WINDOW,
+      )
+    ) {
+      return reply.code(429).send({ error: "too many attempts" });
+    }
     const body = (req.body ?? {}) as { email?: string; password?: string; displayName?: string };
     try {
       const res = await coreAuth.register({
@@ -46,10 +57,24 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   app.post("/auth/login", async (req, reply) => {
     const body = (req.body ?? {}) as { email?: string; password?: string };
     const email = body.email ?? "";
-    // Per-email brute-force guard (mirrors the Connect interceptor, 5/30s).
-    if (
-      await overLimit(`rl:auth:login:${email}`, env.RATE_LIMIT_AUTH_MAX, env.RATE_LIMIT_AUTH_WINDOW)
-    ) {
+    // Rate-limit key is canonicalized so case/whitespace variants of one email
+    // share a window; the upstream login call keeps the raw value.
+    const emailKey = email.trim().toLowerCase();
+    // Per-email brute-force guard plus an IP-keyed limit so an attacker cannot
+    // dodge throttling by rotating emails (credential stuffing / Argon2 burn).
+    const [byEmail, byIp] = await Promise.all([
+      overLimitAuth(
+        `rl:auth:login:${emailKey}`,
+        env.RATE_LIMIT_AUTH_MAX,
+        env.RATE_LIMIT_AUTH_WINDOW,
+      ),
+      overLimitAuth(
+        `rl:auth:login:ip:${req.ip}`,
+        env.RATE_LIMIT_AUTH_MAX,
+        env.RATE_LIMIT_AUTH_WINDOW,
+      ),
+    ]);
+    if (byEmail || byIp) {
       return reply.code(429).send({ error: "too many attempts" });
     }
     try {

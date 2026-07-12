@@ -15,6 +15,33 @@ export async function overLimit(key: string, limit: number, windowSec: number): 
   }
 }
 
+// Auth endpoints must NOT fail open: register/login burn Argon2 CPU upstream,
+// so a Redis outage would otherwise leave them unthrottled (inbox/review.md
+// P0-3). Falls back to a small process-local fixed window instead.
+const localWindows = new Map<string, { count: number; resetAt: number }>();
+
+export async function overLimitAuth(
+  key: string,
+  limit: number,
+  windowSec: number,
+): Promise<boolean> {
+  try {
+    const n = await redis.incr(key);
+    if (n === 1) await redis.expire(key, windowSec);
+    return n > limit;
+  } catch {
+    const now = Date.now();
+    const w = localWindows.get(key);
+    if (!w || now >= w.resetAt) {
+      if (localWindows.size > 10_000) localWindows.clear(); // bound memory
+      localWindows.set(key, { count: 1, resetAt: now + windowSec * 1000 });
+      return false;
+    }
+    w.count += 1;
+    return w.count > limit;
+  }
+}
+
 // Rate-limits browser->BFF unary RPCs. Login/Register are throttled per email
 // (brute-force guard); everything else per client IP (§8 Phase 2, §10 security).
 export const rateLimitInterceptor: Interceptor = (next) => async (req) => {

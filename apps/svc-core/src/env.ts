@@ -16,3 +16,22 @@ const Env = z.object({
 });
 
 export const env = Env.parse(process.env);
+
+// Fail fast in production instead of booting on known dev defaults an attacker
+// could use to forge JWTs or signed HLS URLs (inbox/review.md P1-2).
+if (process.env.NODE_ENV === "production") {
+  const errors: string[] = [];
+  if (!process.env.JWT_SECRET || env.JWT_SECRET === "dev-insecure-secret-change-me")
+    errors.push("JWT_SECRET must be set (no dev default)");
+  else if (env.JWT_SECRET.length < 32) errors.push("JWT_SECRET must be at least 32 characters");
+  if (!process.env.PLAYBACK_SECRET || env.PLAYBACK_SECRET === "dev-insecure-playback-secret")
+    errors.push("PLAYBACK_SECRET must be set (no dev default)");
+  else if (env.PLAYBACK_SECRET.length < 32)
+    errors.push("PLAYBACK_SECRET must be at least 32 characters");
+  if (!process.env.DATABASE_URL) errors.push("DATABASE_URL must be set");
+  if (!process.env.REDIS_URL) errors.push("REDIS_URL must be set");
+  if (errors.length > 0) {
+    console.error(`[svc-core] fatal production config errors:\n- ${errors.join("\n- ")}`);
+    process.exit(1);
+  }
+}
