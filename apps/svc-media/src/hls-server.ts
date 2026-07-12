@@ -88,6 +88,11 @@ export function startHlsServer(
     // CORS on every response (403/404 included): the player must read failure
     // statuses cross-origin to retry while a stream warms up.
     res.setHeader("Access-Control-Allow-Origin", "*");
+    // The playback token rides in the URL query (player compatibility). Suppress
+    // the Referer so that token-bearing URL never leaks to another origin via a
+    // subsequent request (inbox/review.md P1-3). nosniff for good measure.
+    res.setHeader("Referrer-Policy", "no-referrer");
+    res.setHeader("X-Content-Type-Options", "nosniff");
     const url = new URL(req.url ?? "/", "http://localhost");
 
     // Thumbnails are public (low-sensitivity list-card previews, no token).

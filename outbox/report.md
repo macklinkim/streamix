@@ -888,3 +888,36 @@ review.md 신규 갱신 없음 — P1-3 잔여(browser WS ingest가 durable OBS 
   P2-4 잔여(이메일 인증·reset·MFA·감사), V3-4(`at+jwt`), V4-4 enforce 전환,
   V9-2/V9-5, V8-4 compose digest, Fly staging IP/XFF 관측, web refresh single-flight
 - prod 배포 (전 수정 미반영)
+
+---
+
+# 18차 반복 (2026-07-12) — P1-3 HLS token 로그/Referer 유출 완화
+
+review.md 신규 갱신 없음 — P1-3 마지막 잔여(HLS query token) 처리.
+
+## 완료
+
+### P1-3. HLS 응답에 Referrer-Policy + nosniff — 완료
+
+- `apps/svc-media/src/hls-server.ts`: 모든 HLS 응답(403/404 포함)에
+  `Referrer-Policy: no-referrer` + `X-Content-Type-Options: nosniff` 추가.
+  playback token이 URL query에 있으므로(플레이어 호환상 유지) token-bearing URL이
+  Referer 헤더로 다른 origin에 유출되지 않게 차단.
+- HLS token TTL은 이미 300s(5분)로 짧음 — 더 줄이면 재생 중 만료 위험(playlist가
+  동일 token 재서명하므로 exp 근처 segment fetch가 403 가능). 유지 판단.
+- svc-media hls-server는 per-request URL 로깅 없음(startup 로그만) — 코드 레벨
+  token 로그 유출 없음. 플랫폼(Fly) access log는 코드 밖 범위.
+
+## 검증 결과 (18차)
+
+- typecheck·lint: svc-media 통과
+- **실검증** (하니스): 무토큰 요청 403에도 `Referrer-Policy: no-referrer` +
+  `nosniff` + CORS `*` 존재 확인.
+
+## 남은 항목 (P1-3 전부 완료)
+
+- gate metrics 노출(svc-core observability), V2-5 bit_ token 1회 소비,
+  P2-1 후속(mTLS/service JWT), P2-4 잔여(이메일 인증·reset·MFA·감사),
+  V3-4(`at+jwt`), V4-4 enforce 전환, V9-2/V9-5, V8-4 compose digest,
+  Fly staging IP/XFF 관측, web refresh single-flight
+- prod 배포 (전 수정 미반영)
