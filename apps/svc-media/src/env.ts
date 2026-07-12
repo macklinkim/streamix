@@ -33,6 +33,9 @@ if (process.env.NODE_ENV === "production") {
     errors.push("PLAYBACK_SECRET must be set (no dev default)");
   else if (env.PLAYBACK_SECRET.length < 32)
     errors.push("PLAYBACK_SECRET must be at least 32 characters");
+  // Browser ingest must not accept arbitrary web origins in production (V6-2).
+  if (!env.INGEST_ALLOWED_ORIGINS.trim())
+    errors.push("INGEST_ALLOWED_ORIGINS must list the production web origin(s)");
   if (errors.length > 0) {
     console.error(`[svc-media] fatal production config errors:\n- ${errors.join("\n- ")}`);
     process.exit(1);

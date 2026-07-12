@@ -343,3 +343,92 @@ review.md 신규 갱신 없음 — 잔여 항목 진행.
 - core의 stateless `Login/Refresh` RPC 자체(`apps/svc-core`)는 유지됨 — BFF public
   surface에서만 차단. review 권장 2안(core token 발급 제거)은 proto 변경이 필요한
   구조 변경이라 별도 작업으로 남김.
+
+---
+
+# 7차 반복 (2026-07-12) — §11 V5 + §12 V6 + V4 잔여 대응
+
+## 완료
+
+### V5-1. login timing 계정 열거 방어 — 완료 (V6-5 해소)
+
+- `apps/svc-core/src/auth/auth.service.ts`: 미존재·OAuth-only 계정 login도 기동 시
+  1회 생성한 dummy Argon2 hash를 동일 gate 안에서 verify — latency 분포 평준화.
+- 실측(단일 샘플): wrong-password 76ms vs 미존재 계정 59ms (이전엔 수 ms 즉시 실패).
+  통계적 분포 비교(지시 4)는 부하 리그 작업으로 보류.
+
+### V5-2. session env 범위 검증 — 완료
+
+- `ACCESS_TTL` 60초~1h 범위 강제(0s 차단 — EX 0 오류 방지),
+  `REFRESH_TTL_DAYS` int 1..365, `REFRESH_ABS_MAX_DAYS` int 1..730,
+  `ABS_MAX >= TTL` refine. 위반 시 기동 실패.
+
+### V4-1 (부분). WS room 자원 경계 — 완료 (존재 검증 제외)
+
+- `apps/bff/src/ws/chat.ts`: instance당 room 500 상한(신규 room만 거부, 기존 join 허용),
+  사용자당 신규 room 생성 5회/분. 실측: 6번째 신규 room부터 4429.
+- 보류: channel 존재 확인 — by-id RPC가 proto에 없어 추가 필요 (구조 작업).
+
+### V4-2. Origin 검사 pre-upgrade 이동 — 완료
+
+- `apps/bff/src/main.ts`: `/ws` route `preValidation`에서 HTTP 403으로 upgrade 자체 거부.
+  실측: 적대 Origin이 "Unexpected server response: 403" (socket 미할당).
+
+### V4-3. 인증 대기 socket 계수 — 완료
+
+- `totalSockets`를 token 검증 **이전에** 선점, close에서 1회만 해제.
+  user별 계수도 증가 직후 decrement 등록 (기존: 거부 경로에서 계수 누수 버그 — 수정).
+
+### V4-5. 문서 — 완료
+
+- `docs/auth-session.md`: family revoke 원자성(Lua+famrev)과 race smoke 근거 명시.
+
+### V6-3. email canonicalization migration — 완료 (P0)
+
+- `packages/db/drizzle/0003_email_canonical.sql`: ① canonical 충돌 존재 시
+  RAISE EXCEPTION (자동 병합 금지, 수동 해결 강제) ② 기존 row lowercase backfill
+  ③ `unique index on lower(trim(email))`.
+- 로컬 DB 적용·검증: 기존 계정 case-변형 register가 **409** (index가 squat 차단).
+
+### V6-4. login 경로 validation — 완료
+
+- core login에서 `emailSchema`(형식) + `loginPasswordSchema`(1~200자) 강제,
+  위반 시 400. canonical email은 parse 결과 사용. 실측: malformed email 400,
+  201자 password 400 (Argon2 도달 전 차단).
+
+### V6-2. production ingest origin 필수 — 완료
+
+- `apps/svc-media/src/env.ts`: production에서 `INGEST_ALLOWED_ORIGINS` 빈 값이면 기동 실패.
+
+### V6-1 (부분). ingest client IP — 부분 완료
+
+- handshake IP key를 `Fly-Client-IP` header 우선으로 변경 (Fly edge가 설정).
+- 잔여: staging에서 실제 socket peer/XFF chain 관측 — 배포 검증 대기 (P0 완료 판정 보류 유지).
+
+### V6-6. CI 안정성 — 완료
+
+- core :50051 TCP 대기 후 BFF 기동, `timeout-minutes: 15`, 실패 시 core/bff log 출력
+  (logger redaction 기적용 상태).
+
+## 검증 결과 (7차)
+
+- typecheck·lint·build: bff/svc-core/svc-media 통과
+- migration 0003 로컬 적용 성공, canonical unique index 생성 확인
+- 실검증: squat register 409 / malformed email login 400 / 201자 password 400 /
+  미존재 계정 login latency 동일 자릿수(59ms vs 76ms)
+- WS guard 실검증: 적대 Origin pre-upgrade 403, 신규 room 6번째부터 4429
+- `smoke:session` 회귀: 24/24 PASS
+
+## 남은 항목
+
+- V6-1 잔여: Fly staging에서 client IP/XFF 실관측 (배포 시)
+- V6-3 잔여: **prod DB에 migration 0003 적용 필요** (배포 절차에 포함;
+  충돌 있으면 migration이 스스로 중단됨)
+- V4-1 잔여: channel 존재 확인 by-id RPC (proto 추가)
+- V4-4: nonce 기반 CSP (report-only 시작)
+- V5-3: Argon2 gate 단위 테스트·metrics
+- V5-4: rotate/revoke 수백 회 stress + famrev TTL 직접 검증
+- P2-5: drizzle-orm/postcss 업데이트 + CI audit
+- P2-1: 내부 서비스 인증
+- prod 배포: 전 수정 미배포 (migration 0003 + INGEST_ALLOWED_ORIGINS +
+  METRICS_TOKEN secret 포함)

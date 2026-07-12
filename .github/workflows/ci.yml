@@ -49,6 +49,7 @@ jobs:
   # logout race, Connect credential-RPC block.
   session-integration:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:16-alpine
@@ -96,14 +97,29 @@ jobs:
 
       - name: Start svc-core + BFF
         run: |
-          node apps/svc-core/dist/main.js &
-          node apps/bff/dist/main.js &
+          node apps/svc-core/dist/main.js > core.log 2>&1 &
+          # Wait for core's gRPC port before starting the BFF (V6-6): the BFF
+          # health check alone doesn't prove core readiness, and a slow runner
+          # can race the smoke's first register against core startup.
+          for i in $(seq 1 30); do
+            (exec 3<>/dev/tcp/127.0.0.1/50051) 2>/dev/null && break
+            sleep 1
+          done
+          node apps/bff/dist/main.js > bff.log 2>&1 &
           for i in $(seq 1 30); do
             curl -fsS http://localhost:8080/health && exit 0
             sleep 1
           done
           echo "bff did not become healthy" >&2
           exit 1
+
+      - name: Service logs on failure
+        if: failure()
+        # Request logs already redact authorization/cookie headers; URLs are
+        # dev-local only.
+        run: |
+          echo "=== core.log ==="; cat core.log || true
+          echo "=== bff.log ===";  cat bff.log || true
 
       - name: Session smoke
         run: pnpm --filter @streamix/bff smoke:session

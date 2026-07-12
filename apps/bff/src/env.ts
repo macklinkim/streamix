@@ -21,15 +21,20 @@ const Env = z.object({
       (v) => {
         const n = Number(v.slice(0, -1));
         const unit = v.slice(-1);
-        return (unit === "h" ? n * 3600 : unit === "m" ? n * 60 : n) <= 3600;
+        const sec = unit === "h" ? n * 3600 : unit === "m" ? n * 60 : n;
+        // Lower bound matters too (V5-2): 0s would make revoke markers EX 0
+        // (a Redis error) and break the deny-marker/exp invariant.
+        return sec >= 60 && sec <= 3600;
       },
-      { message: "ACCESS_TTL must be <= 1h" },
+      { message: "ACCESS_TTL must be between 60s and 1h" },
     )
     .default("15m"),
   // Sliding refresh window: each rotation renews TTL to this many days.
-  REFRESH_TTL_DAYS: z.coerce.number().default(30),
+  // Positive integers with sane caps (V5-2): Redis EXPIRE needs positive
+  // integer seconds; 0/negative/fractional values corrupt session keys.
+  REFRESH_TTL_DAYS: z.coerce.number().int().min(1).max(365).default(30),
   // Absolute cap: a session family cannot outlive this regardless of sliding.
-  REFRESH_ABS_MAX_DAYS: z.coerce.number().default(90),
+  REFRESH_ABS_MAX_DAYS: z.coerce.number().int().min(1).max(730).default(90),
   // Concurrent-refresh grace: replaying a just-used sid within this window
   // idempotently returns the same successor. Kept at a few seconds — any longer
   // hands a stolen sid a fresh session (inbox/review.md V1-2). Configurable so
@@ -60,7 +65,9 @@ const Env = z.object({
   RATE_LIMIT_AUTH_WINDOW: z.coerce.number().default(30),
 });
 
-export const env = Env.parse(process.env);
+export const env = Env.refine((v) => v.REFRESH_ABS_MAX_DAYS >= v.REFRESH_TTL_DAYS, {
+  message: "REFRESH_ABS_MAX_DAYS must be >= REFRESH_TTL_DAYS",
+}).parse(process.env);
 export const corsOrigins = env.CORS_ORIGINS.split(",").map((s) => s.trim());
 
 // Fail fast in production instead of booting on known dev defaults an attacker

@@ -13,11 +13,28 @@ const SEND_WINDOW_MS = 3000;
 // Connection resource guards (inbox/review.md P2-2): a valid token must not be
 // enough to exhaust sockets / Redis subscriptions / room maps.
 const MAX_SOCKETS_PER_USER = 10;
-const MAX_TOTAL_SOCKETS = 2000; // per BFF instance
+const MAX_TOTAL_SOCKETS = 2000; // per BFF instance, incl. sockets awaiting auth (V4-3)
+const MAX_ROOMS = 500; // per BFF instance; join-existing stays allowed at the cap (V4-1)
+const ROOM_CREATES_PER_MIN = 5; // per user; separate from the socket ceiling (V4-1)
 const HEARTBEAT_MS = 30_000; // ping interval; a socket missing one pong is dead
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const userSocketCounts = new Map<string, number>();
 let totalSockets = 0;
+
+// Per-user new-room creation window (V4-1): random-UUID room churn is bounded
+// even though channel existence isn't verified here yet (needs a by-id RPC).
+const roomCreateWindows = new Map<string, { count: number; resetAt: number }>();
+function roomCreateAllowed(userId: string): boolean {
+  const now = Date.now();
+  const w = roomCreateWindows.get(userId);
+  if (!w || now >= w.resetAt) {
+    if (roomCreateWindows.size > 10_000) roomCreateWindows.clear(); // bound memory
+    roomCreateWindows.set(userId, { count: 1, resetAt: now + 60_000 });
+    return true;
+  }
+  w.count += 1;
+  return w.count <= ROOM_CREATES_PER_MIN;
+}
 
 // Fan-out backpressure + micro-batching (M4, ADR-11). Chat favors recency over
 // completeness: a socket whose kernel/app buffer is backed up past the limit is
@@ -138,15 +155,40 @@ export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
   if (!UUID_RE.test(channelId))
     return socket.close(WsCloseCode.PROTOCOL_ERROR, "invalid channelId");
 
+  // Instance ceiling is claimed BEFORE token verification (V4-3): sockets
+  // parked in the async JWT/Redis check would otherwise not count, letting a
+  // flood of pending connections blow past the cap.
+  if (totalSockets >= MAX_TOTAL_SOCKETS) return socket.close(4429, "server at capacity");
+  totalSockets += 1;
+  let counted = true;
+  const releaseTotal = () => {
+    if (counted) {
+      counted = false;
+      totalSockets -= 1;
+    }
+  };
+  socket.once("close", releaseTotal);
+
   const userId = await verifyAccessToken(url.searchParams.get("token"));
   if (!userId) return socket.close(WsCloseCode.UNAUTHENTICATED, "authentication required");
 
-  // Per-user and per-instance socket ceilings (P2-2).
-  if (totalSockets >= MAX_TOTAL_SOCKETS) return socket.close(4429, "server at capacity");
+  // Per-user socket ceiling (P2-2). Decrement is registered immediately so any
+  // later rejection path (room caps below) can't leak the count.
   const userCount = userSocketCounts.get(userId) ?? 0;
   if (userCount >= MAX_SOCKETS_PER_USER) return socket.close(4429, "too many connections");
   userSocketCounts.set(userId, userCount + 1);
-  totalSockets += 1;
+  socket.once("close", () => {
+    const n = (userSocketCounts.get(userId) ?? 1) - 1;
+    if (n <= 0) userSocketCounts.delete(userId);
+    else userSocketCounts.set(userId, n);
+  });
+
+  // Room guards (V4-1): cap instance-wide room count for NEW rooms and bound
+  // per-user room-creation rate.
+  if (!rooms.has(channelId)) {
+    if (rooms.size >= MAX_ROOMS) return socket.close(4429, "room capacity");
+    if (!roomCreateAllowed(userId)) return socket.close(4429, "room creation rate");
+  }
 
   // Idle reaping: ws core answers pings automatically, so a live client always
   // pongs; one missed round = dead connection holding a room slot.
@@ -163,10 +205,6 @@ export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
 
   socket.on("close", () => {
     clearInterval(heartbeat);
-    totalSockets -= 1;
-    const n = (userSocketCounts.get(userId) ?? 1) - 1;
-    if (n <= 0) userSocketCounts.delete(userId);
-    else userSocketCounts.set(userId, n);
   });
 
   let displayName = "익명";

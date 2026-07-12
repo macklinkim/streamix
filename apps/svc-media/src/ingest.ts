@@ -106,7 +106,14 @@ export function attachIngest(server: Server): void {
     }) => {
       if (liveConnections >= MAX_CONNECTIONS) return false;
       if (allowedOrigins.length > 0 && origin && !allowedOrigins.includes(origin)) return false;
-      return handshakeAllowed(req.socket.remoteAddress ?? "?");
+      // Behind Fly's proxy the socket peer is the proxy, not the client — every
+      // browser would share one 10/min window (V6-1). Fly-Client-IP is set by
+      // the Fly edge itself. Staging verification of the real header/XFF chain
+      // is still pending; until then this is best-effort client keying.
+      const flyClientIp = req.headers["fly-client-ip"];
+      const ip =
+        (typeof flyClientIp === "string" && flyClientIp) || req.socket.remoteAddress || "?";
+      return handshakeAllowed(ip);
     },
   });
 

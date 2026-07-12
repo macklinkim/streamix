@@ -1,7 +1,13 @@
 import type { ServiceImpl, HandlerContext } from "@connectrpc/connect";
 import { eq } from "drizzle-orm";
 import { AuthService } from "@streamix/proto";
-import { AppErrorCode, emailSchema, passwordSchema, displayNameSchema } from "@streamix/schemas";
+import {
+  AppErrorCode,
+  emailSchema,
+  passwordSchema,
+  loginPasswordSchema,
+  displayNameSchema,
+} from "@streamix/schemas";
 import { users } from "@streamix/db";
 import { db } from "../deps.js";
 import { appError, isUniqueViolation } from "../errors.js";
@@ -15,6 +21,12 @@ function requireUserId(ctx: HandlerContext): string {
   if (!id) throw appError(AppErrorCode.INVALID_CREDENTIALS, "missing authenticated user");
   return id;
 }
+
+// Timing-equalizer hash (inbox/review.md V5-1): logins for unknown or
+// OAuth-only accounts verify against this instead of returning early, so the
+// latency distribution (incl. the Argon2 gate queue) no longer reveals whether
+// an email has a password account. Generated once at boot, through the gate.
+const dummyHashPromise = hashPassword(`dummy-timing-${crypto.randomUUID()}`);
 
 export const authService: ServiceImpl<typeof AuthService> = {
   async register(req) {
@@ -39,16 +51,29 @@ export const authService: ServiceImpl<typeof AuthService> = {
   },
 
   async login(req) {
+    // Boundary validation (V6-4): reject malformed email / out-of-range
+    // password (1-200 chars — pre-12+-policy accounts must still log in)
+    // before any Argon2 cost. Invalid shapes are invalid_argument, not a
+    // credentials probe result.
+    const parsed = emailSchema.safeParse(req.email);
+    if (!parsed.success) throw appError(AppErrorCode.VALIDATION, "invalid email");
+    if (!loginPasswordSchema.safeParse(req.password).success)
+      throw appError(AppErrorCode.VALIDATION, "invalid password");
+    const canonical = parsed.data;
     // Look up by the canonical form first; fall back to the raw value for
     // accounts stored before email canonicalization (P2-4).
-    const parsed = emailSchema.safeParse(req.email);
-    const canonical = parsed.success ? parsed.data : req.email;
     let [u] = await db.select().from(users).where(eq(users.email, canonical)).limit(1);
     if (!u && canonical !== req.email) {
       [u] = await db.select().from(users).where(eq(users.email, req.email)).limit(1);
     }
     // OAuth-only accounts have no password hash — password login is unavailable.
-    if (!u || !u.passwordHash || !(await verifyPassword(u.passwordHash, req.password))) {
+    // Unknown/OAuth-only paths still burn one gated Argon2 verify against the
+    // dummy hash so their latency matches a real wrong-password attempt (V5-1).
+    if (!u || !u.passwordHash) {
+      await verifyPassword(await dummyHashPromise, req.password).catch(() => false);
+      throw appError(AppErrorCode.INVALID_CREDENTIALS);
+    }
+    if (!(await verifyPassword(u.passwordHash, req.password))) {
       throw appError(AppErrorCode.INVALID_CREDENTIALS);
     }
     return {

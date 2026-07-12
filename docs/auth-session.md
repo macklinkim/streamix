@@ -58,6 +58,11 @@ detected. Sliding window: each rotation renews the family TTL to
 `revokeUser(userId)` force-logs-out every family of a user (ready for an
 admin/password-change surface; not yet wired to an RPC).
 
+Family revocation (logout, reuse detection, `revokeUser`) is itself a single
+atomic Lua script, and every rotation first checks a durable `famrev:{family}`
+marker (TTL = sliding window), so a logout racing a concurrent refresh cannot
+resurrect the family — verified by a concurrent logout‖refresh smoke.
+
 Known limitation: within the grace window a stolen sid replayed by an attacker
 receives the same successor as the legitimate client (the window is why it is
 kept at seconds). Removing the grace entirely requires client-side refresh

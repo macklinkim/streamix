@@ -61,18 +61,26 @@ app.get("/metrics", async (req, reply) => {
   return register.metrics();
 });
 
-app.get("/ws", { websocket: true }, (socket, req) => {
-  // Browser connections always send Origin — enforce the CORS allowlist so a
-  // hostile site can't open sockets with a leaked token (inbox/review.md P2-2).
-  // Non-browser callers (smoke scripts) send no Origin and still need a token.
-  const origin = req.headers.origin;
-  if (origin && !corsOrigins.includes(origin)) {
-    socket.close(4403, "origin not allowed");
-    return;
-  }
-  const url = new URL(req.url, `http://${req.headers.host ?? "localhost"}`);
-  void handleChatWs(socket, url);
-});
+app.get(
+  "/ws",
+  {
+    websocket: true,
+    // Origin gate runs BEFORE the WebSocket upgrade (inbox/review.md V4-2):
+    // a hostile cross-origin flood is refused with a plain 403 and never costs
+    // a socket. Non-browser callers (smoke scripts) send no Origin and still
+    // need a valid token inside handleChatWs.
+    preValidation: async (req, reply) => {
+      const origin = req.headers.origin;
+      if (origin && !corsOrigins.includes(origin)) {
+        await reply.code(403).send({ error: "origin not allowed" });
+      }
+    },
+  },
+  (socket, req) => {
+    const url = new URL(req.url, `http://${req.headers.host ?? "localhost"}`);
+    void handleChatWs(socket, url);
+  },
+);
 
 try {
   const address = await app.listen({ port: env.PORT, host: "0.0.0.0" });
