@@ -1012,3 +1012,38 @@ production metric(running/queue/reject 등) 중 BFF 측면 노출.
   P2-4 잔여(이메일 인증·reset·MFA·감사), V4-4 enforce 전환, V8-4 compose digest,
   web refresh single-flight
 - prod 배포: 이번 metrics 변경은 bff만 — 재배포 시 INTERNAL_TOKEN 유지
+
+---
+
+# 21차 반복 (2026-07-12) — svc-core Argon2 gate 메트릭 (V5-3 완료)
+
+review.md 신규 갱신 없음 — V5-3 마지막 잔여(core Argon2 gate 관측성).
+
+## 완료
+
+### svc-core 내부 metrics endpoint + Argon2 gate 메트릭 — 완료
+
+- `apps/svc-core/src/auth/password.ts`: prom-client 메트릭 배선 —
+  `streamix_argon2_gate_running`/`_gate_queued`(gauge, gate.stats() 읽음),
+  `streamix_argon2_ops_total{op=hash|verify}`, `streamix_argon2_rejects_total`
+  (queue full/timeout = gate ResourceExhausted), `streamix_argon2_duration_
+seconds{op}`(histogram, gate queue 대기 제외한 실행 시간). `gated()` 래퍼로
+  hash/verify 공통 계측.
+- `apps/svc-core/src/main.ts`: 내부 전용 metrics HTTP 서버(`METRICS_PORT`
+  기본 9091) — default process metrics + 위 커스텀. **Fly private network에서만
+  도달**(public http_service 없음, 검증자 "protected endpoint" 요건 충족).
+- `env.ts`: `METRICS_PORT` 추가. prom-client 의존성 추가.
+
+## 검증 결과 (21차)
+
+- typecheck·lint·test(gate 5/5)·build: svc-core 통과
+- **실검증**: core+bff 기동 후 register/login → core :9091/metrics scrape —
+  `argon2_ops_total{hash}=2`(register+dummy warmup), `{verify}=1`(login),
+  gate gauge·rejects·duration 전부 노출.
+
+## 남은 항목
+
+- V2-5 bit_ token 1회 소비(web 협조), P2-1 후속(mTLS/service JWT),
+  P2-4 잔여(이메일 인증·reset·MFA·감사), V4-4 enforce 전환, V8-4 compose digest,
+  web refresh single-flight
+- prod 배포: core 재배포(내부 metrics 포트) — INTERNAL_TOKEN 유지

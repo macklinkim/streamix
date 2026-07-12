@@ -16,6 +16,10 @@ const Env = z.object({
   // Shared internal service token (§ P2-1). Dev default; prod injects a real
   // Fly secret shared with BFF + svc-media. Enforced only in production.
   INTERNAL_TOKEN: z.string().default("dev-insecure-internal-token"),
+  // Internal-only Prometheus metrics port (V5-3). Reachable on the Fly private
+  // network (streamix-svc-core.internal) — never exposed via a public
+  // http_service. Distinct from the gRPC PORT.
+  METRICS_PORT: z.coerce.number().default(9091),
 });
 
 export const env = Env.parse(process.env);
