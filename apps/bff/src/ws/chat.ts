@@ -10,6 +10,15 @@ import { verifyAccessToken } from "../auth.js";
 const SEND_BURST = 5;
 const SEND_WINDOW_MS = 3000;
 
+// Connection resource guards (inbox/review.md P2-2): a valid token must not be
+// enough to exhaust sockets / Redis subscriptions / room maps.
+const MAX_SOCKETS_PER_USER = 10;
+const MAX_TOTAL_SOCKETS = 2000; // per BFF instance
+const HEARTBEAT_MS = 30_000; // ping interval; a socket missing one pong is dead
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const userSocketCounts = new Map<string, number>();
+let totalSockets = 0;
+
 // Fan-out backpressure + micro-batching (M4, ADR-11). Chat favors recency over
 // completeness: a socket whose kernel/app buffer is backed up past the limit is
 // skipped (message dropped) rather than blocking the room; the connection stays.
@@ -124,9 +133,41 @@ async function leaveRoom(channelId: string, socket: WebSocket): Promise<void> {
 export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
   const channelId = url.searchParams.get("channelId");
   if (!channelId) return socket.close(WsCloseCode.PROTOCOL_ERROR, "channelId required");
+  // Channel ids are UUIDs; anything else would still allocate a room + Redis
+  // subscription per arbitrary string (P2-2 resource abuse).
+  if (!UUID_RE.test(channelId))
+    return socket.close(WsCloseCode.PROTOCOL_ERROR, "invalid channelId");
 
   const userId = await verifyAccessToken(url.searchParams.get("token"));
   if (!userId) return socket.close(WsCloseCode.UNAUTHENTICATED, "authentication required");
+
+  // Per-user and per-instance socket ceilings (P2-2).
+  if (totalSockets >= MAX_TOTAL_SOCKETS) return socket.close(4429, "server at capacity");
+  const userCount = userSocketCounts.get(userId) ?? 0;
+  if (userCount >= MAX_SOCKETS_PER_USER) return socket.close(4429, "too many connections");
+  userSocketCounts.set(userId, userCount + 1);
+  totalSockets += 1;
+
+  // Idle reaping: ws core answers pings automatically, so a live client always
+  // pongs; one missed round = dead connection holding a room slot.
+  let alive = true;
+  socket.on("pong", () => {
+    alive = true;
+  });
+  const heartbeat = setInterval(() => {
+    if (!alive) return socket.terminate();
+    alive = false;
+    socket.ping();
+  }, HEARTBEAT_MS);
+  heartbeat.unref();
+
+  socket.on("close", () => {
+    clearInterval(heartbeat);
+    totalSockets -= 1;
+    const n = (userSocketCounts.get(userId) ?? 1) - 1;
+    if (n <= 0) userSocketCounts.delete(userId);
+    else userSocketCounts.set(userId, n);
+  });
 
   let displayName = "익명";
   try {

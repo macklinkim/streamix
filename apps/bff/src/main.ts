@@ -45,13 +45,31 @@ await app.register(fastifyConnectPlugin, {
 app.get("/health", async () => ({ status: "ok", service: "bff" }));
 
 // Basic Prometheus metrics (MVP; full Grafana/Loki/OTel deferred, §1.2/§10).
+// Not exposed unauthenticated on the public BFF (inbox/review.md P2-3): when
+// METRICS_TOKEN is set the scraper must present it; without one, the endpoint
+// only exists outside production (local dev convenience).
 collectDefaultMetrics();
-app.get("/metrics", async (_req, reply) => {
+app.get("/metrics", async (req, reply) => {
+  if (env.METRICS_TOKEN) {
+    if (req.headers.authorization !== `Bearer ${env.METRICS_TOKEN}`) {
+      return reply.code(401).send();
+    }
+  } else if (process.env.NODE_ENV === "production") {
+    return reply.code(404).send();
+  }
   reply.header("Content-Type", register.contentType);
   return register.metrics();
 });
 
 app.get("/ws", { websocket: true }, (socket, req) => {
+  // Browser connections always send Origin — enforce the CORS allowlist so a
+  // hostile site can't open sockets with a leaked token (inbox/review.md P2-2).
+  // Non-browser callers (smoke scripts) send no Origin and still need a token.
+  const origin = req.headers.origin;
+  if (origin && !corsOrigins.includes(origin)) {
+    socket.close(4403, "origin not allowed");
+    return;
+  }
   const url = new URL(req.url, `http://${req.headers.host ?? "localhost"}`);
   void handleChatWs(socket, url);
 });

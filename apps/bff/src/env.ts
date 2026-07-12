@@ -35,6 +35,9 @@ const Env = z.object({
   TWITCH_REDIRECT_URI: z.string().default("http://localhost:8080/auth/twitch/callback"),
   // Where to send the browser back after a successful OAuth login.
   WEB_URL: z.string().default("http://localhost:3000"),
+  // Optional bearer token for /metrics scrapes. Unset: metrics are dev-only
+  // (404 in production) — the public BFF must not leak runtime internals (P2-3).
+  METRICS_TOKEN: z.string().default(""),
   // Rate limits (§8 Phase 2). Configurable so the load rig can raise them.
   RATE_LIMIT_RPC_MAX: z.coerce.number().default(300),
   RATE_LIMIT_RPC_WINDOW: z.coerce.number().default(10),

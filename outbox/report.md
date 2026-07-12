@@ -161,8 +161,56 @@ no-fam token 정상 동작.
 - typecheck·lint·build: 통과
 - **smoke-session.ts 21/21 PASS** (신규 grace/동시성/Connect 차단/P1-1 케이스 포함)
 
+---
+
+# 4차 반복 (2026-07-12) — P2-2 / P2-3 / §6 문서 정합성
+
+review.md 신규 갱신 없음 — 잔여 항목 진행.
+
+## 완료
+
+### P2-2. chat WebSocket origin·자원 제한 — 완료
+
+- `apps/bff/src/main.ts`: WS handshake에서 Origin이 CORS allowlist에 없으면 4403
+  종료 (Origin 없는 비브라우저 클라이언트는 통과 — token 검증은 그대로 필요).
+- `apps/bff/src/ws/chat.ts`:
+  - `channelId` UUID 형식 검증 — 임의 문자열마다 room + Redis 구독 생성 차단.
+  - 사용자당 동시 socket 10개, instance당 총 2000개 상한 (초과 4429).
+  - 30초 ping/pong heartbeat — pong 1회 누락 시 terminate (유휴 좀비 정리).
+
+### P2-3. security header + /metrics 보호 — 완료
+
+- `apps/web/next.config.ts`: 전 경로 보안 헤더 — CSP(`frame-ancestors 'none'`,
+  `object-src 'none'`, `base-uri 'self'`), HSTS(2y+subdomains), `nosniff`,
+  `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`,
+  `Permissions-Policy`(camera/mic/display-capture=self — studio 방송 유지).
+  nonce 기반 script-src CSP는 middleware 필요로 보류 명시.
+- `apps/bff/src/main.ts` + `env.ts`: `/metrics`는 `METRICS_TOKEN` 설정 시 Bearer
+  일치 요구(불일치 401), 미설정 시 production에서 404 (dev만 공개).
+
+### §6. docs/auth-session.md 정합성 — 완료
+
+현재 구현에 맞게 갱신: iss/aud/alg 고정·jti 필수·fam claim, Connect credential
+RPC 차단(core stateless RPC 잔존 명시), Lua 원자 회전·3s grace·전 window
+tombstone, family 단위 access token 폐기, grace 창 내 탈취 replay 한계(known
+limitation) 명시, production fail-fast 섹션 추가, smoke 15/15 → 21/21.
+
+## 검증 결과 (4차)
+
+- typecheck·lint: bff/web 통과
+- WS guard smoke (일회성, 실행 후 삭제): 적대 Origin 4403 / 비UUID channelId
+  4000 / 위조 token 4001 / dev `/metrics` 200 — 4/4 PASS
+- `smoke-session.ts` 회귀: 21/21 PASS
+
 ## 남은 항목 (다음 반복 대상)
 
+- P2-1: 내부 서비스 인증 (mTLS 또는 service JWT — 구조 작업)
+- P2-4: 계정·입력 정책 (비밀번호 12+, email canonicalization, display name 검증)
+- P2-5: `drizzle-orm>=0.45.2`, `postcss>=8.5.10` 업데이트 + CI audit
+- P1-3 잔여: chat WS token query 제거(첫 frame/ticket), ingest durable key 거부,
+  HLS token TTL 축소
+- prod 배포·검증: 지금까지의 수정 전부 미배포 (bff/core/media + web 재배포 필요,
+  METRICS_TOKEN Fly secret 결정 필요)
 - V1-2 잔여: web client refresh single-flight 후 grace 제거 검토
 - V1-3 잔여: production `req.ip` integration 확인 (Fly 재배포 시점)
 - V1-5 잔여: env fail-fast 자동 테스트
