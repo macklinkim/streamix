@@ -129,6 +129,16 @@ export function attachIngest(server: Server): void {
     const streamKey = url.searchParams.get("key") ?? "";
     const codec = url.searchParams.get("codec") ?? "";
 
+    // Browser ingest accepts ONLY short-lived one-time-issued ingest tokens
+    // ("bit_"), never the durable OBS stream key (inbox/review.md P1-3). A leaked
+    // durable key must not be usable from a browser WS; OBS uses it over RTMP
+    // (a separate MediaMTX path). Reject before touching core. The close handler
+    // registered above releases the connection slot.
+    if (!streamKey.startsWith("bit_")) {
+      ws.close(4403, "browser ingest requires an ingest token");
+      return;
+    }
+
     // Attach the message handler SYNCHRONOUSLY and buffer until ffmpeg is up:
     // the first chunk carries the webm EBML header, and dropping it during the
     // key-validation await leaves ffmpeg with an unparseable stream.

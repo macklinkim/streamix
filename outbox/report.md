@@ -855,3 +855,36 @@ review.md 신규 갱신 없음 — P1-3 잔여(chat WS bearer token URL 노출) 
   P2-4 잔여(이메일 인증·reset·MFA·감사), V3-4(`at+jwt`), V4-4 enforce 전환,
   V9-2/V9-5, V8-4 compose digest, Fly staging IP/XFF 관측, web refresh single-flight
 - prod 배포 (전 수정 미반영)
+
+---
+
+# 17차 반복 (2026-07-12) — P1-3 browser ingest durable key 거부
+
+review.md 신규 갱신 없음 — P1-3 잔여(browser WS ingest가 durable OBS key 허용) 해소.
+
+## 완료
+
+### P1-3. browser ingest는 bit_ 토큰만 허용 — 완료
+
+- `apps/svc-media/src/ingest.ts`: WS `/ingest` key가 `bit_` prefix 아니면 core
+  검증 전에 즉시 4403 종료. durable OBS stream key는 브라우저 WS에서 사용 불가
+  (유출 시 브라우저 악용 차단). OBS는 RTMP(MediaMTX 별도 경로)로 durable key 사용
+  — 무영향. web broadcast는 이미 issueIngestToken(bit_)만 사용해 정상 동작.
+- `smoke-ingest-token.ts`에 durable key 거부 assertion 추가 (rotate로 실 OBS key
+  획득 → WS 4403 기대).
+
+## 검증 결과 (17차)
+
+- typecheck·lint·build: svc-media 통과
+- **guard 실검증** (경량 하니스, attachIngest를 bare http server에 부착):
+  durable key `live_…` → 4403, 빈 key → 4403 (둘 다 core 이전 거부),
+  `bit_` key는 prefix guard 통과해 core 검증으로 진행(core 없어 1011) — 3/3 PASS.
+
+## 남은 항목
+
+- P1-3 잔여: HLS query token TTL 축소·Referrer-Policy (HLS는 플레이어 호환상 유지,
+  낮은 우선순위)
+- gate metrics 노출, V2-5 bit_ token 1회 소비, P2-1 후속(mTLS/service JWT),
+  P2-4 잔여(이메일 인증·reset·MFA·감사), V3-4(`at+jwt`), V4-4 enforce 전환,
+  V9-2/V9-5, V8-4 compose digest, Fly staging IP/XFF 관측, web refresh single-flight
+- prod 배포 (전 수정 미반영)

@@ -74,6 +74,15 @@ const badClose = await new Promise<number>((resolve) => {
 });
 check("forged token WS rejected", badClose === 4403, `close=${badClose}`);
 
+// A durable (non-"bit_") stream key is rejected at the WS edge — browser ingest
+// must use one-time tokens only (P1-3). Uses the real OBS key from a rotation.
+const durableKey = (await channel.rotateStreamKey({}, userHeader)).streamKey;
+const durableClose = await new Promise<number>((resolve) => {
+  const ws = new WebSocket(`ws://localhost:8090/ingest?key=${encodeURIComponent(durableKey)}`);
+  ws.on("close", (code) => resolve(code));
+});
+check("durable OBS key rejected on browser ingest", durableClose === 4403, `close=${durableClose}`);
+
 // Rotating the OBS key must NOT invalidate the already-issued ingest token.
 await channel.rotateStreamKey({}, userHeader);
 const stillValid = await channel.validateStreamKey({ streamKey: issued.token });
