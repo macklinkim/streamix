@@ -9,6 +9,7 @@
     "start": "node dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src",
+    "test": "vitest run",
     "smoke:session": "tsx scripts/smoke-session.ts",
     "smoke:session-stress": "tsx scripts/smoke-session-stress.ts"
   },
@@ -31,6 +32,7 @@
     "@types/ws": "^8.5.13",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
     "ws": "^8.18.0"
   }
 }

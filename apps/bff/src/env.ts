@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+// z.coerce.boolean() uses JS Boolean(), so the string "false" becomes true —
+// COOKIE_SECURE=false would be silently ignored. Parse booleans by value.
+const boolEnv = (def: boolean) =>
+  z
+    .string()
+    .optional()
+    .transform((v) => (v === undefined ? def : /^(1|true|yes)$/i.test(v.trim())));
+
 const Env = z.object({
   PORT: z.coerce.number().default(8080),
   CORE_URL: z.string().default("http://localhost:50051"),
@@ -44,7 +52,7 @@ const Env = z.object({
   // Refresh-cookie policy. Cross-site prod (Vercel<->Fly) REQUIRES SameSite=None
   // + Secure; Strict is only possible under a same-origin deploy. Dev: lax.
   COOKIE_SAMESITE: z.enum(["strict", "lax", "none"]).default("lax"),
-  COOKIE_SECURE: z.coerce.boolean().default(false),
+  COOKIE_SECURE: boolEnv(false),
   // Optional explicit cookie domain (unset = host-only cookie on the BFF host).
   COOKIE_DOMAIN: z.string().optional(),
   // Twitch OAuth (confidential client). Secret must come from a Fly secret in
