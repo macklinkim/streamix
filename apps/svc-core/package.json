@@ -18,7 +18,7 @@
     "@streamix/proto": "workspace:*",
     "@streamix/schemas": "workspace:*",
     "argon2": "^0.41.1",
-    "drizzle-orm": "^0.38.3",
+    "drizzle-orm": "^0.45.2",
     "ioredis": "^5.4.2",
     "jose": "^5.9.6",
     "zod": "^3.24.1"

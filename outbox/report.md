@@ -432,3 +432,43 @@ review.md 신규 갱신 없음 — 잔여 항목 진행.
 - P2-1: 내부 서비스 인증
 - prod 배포: 전 수정 미배포 (migration 0003 + INGEST_ALLOWED_ORIGINS +
   METRICS_TOKEN secret 포함)
+
+---
+
+# 8차 반복 (2026-07-12) — P2-5 의존성 취약점 해소
+
+review.md 신규 갱신 없음 — 검증자 지정 다음 순위(P2-5) 진행.
+
+## 완료
+
+### P2-5. production 의존성 취약점 2건 + CI audit gate — 완료
+
+- `drizzle-orm` 0.38.4 → **0.45.2** (GHSA-gpj5-g38j-94v9 해소), `drizzle-kit`
+  0.30.6 → 0.31.10. `packages/db`·`apps/svc-core` 버전 통일 (불일치 시 타입
+  충돌 발생해 함께 갱신).
+- `postcss` 8.4.31 → **8.5.16** (GHSA-qx2v-qp2m-jg93 해소). next 15.5.20이
+  8.4.31을 고정하므로 root `pnpm.overrides`(`postcss@<8.5.10: >=8.5.10`) 사용
+  — review 지시대로 임시 조치임을 명시 (next 업데이트 시 제거 검토).
+- `pnpm audit --prod --audit-level=moderate`: **No known vulnerabilities found**.
+- CI build job에 `pnpm audit --prod --audit-level=high` gate 추가 (이제 통과
+  가능 상태이므로 활성화).
+
+## 검증 결과 (8차)
+
+- 전 워크스페이스 build 9/9, typecheck 12/12 통과 (Next production build 포함
+  — postcss override 영향 없음 확인)
+- drizzle-orm 0.45 migrator로 migration 재실행 정상 ("migrations applied")
+- CRUD 회귀: `svc-core scripts/smoke.ts` (register/login/channel/stream/listLive)
+  SMOKE OK, `smoke:session` 24/24 SMOKE OK
+- audit clean
+
+## 남은 항목
+
+(7차와 동일 — 의존성 항목만 제거)
+
+- Fly staging 검증 3건: client IP/XFF 관측(V6-1·V2-4), prod migration 0003
+- channel by-id RPC 존재검증(V4-1), nonce CSP(V4-4), Argon2 gate
+  단위테스트·metrics(V5-3), rotate/revoke stress(V5-4), bit_ token 1회
+  소비(V2-5), P2-1 내부 서비스 인증, P2-4 잔여(이메일 인증·reset·MFA·감사),
+  web refresh single-flight, env fail-fast 자동 테스트
+- prod 배포 (전 수정 미반영)

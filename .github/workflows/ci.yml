@@ -43,6 +43,11 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # Dependency vulnerability gate (inbox/review.md P2-5). High+ blocks the
+      # build; moderate advisories are periodic-triage, not a gate.
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level=high
+
   # Session-hardening integration test (inbox/review.md V3-3): boots isolated
   # Postgres/Redis + svc-core + BFF and runs the full auth/session smoke —
   # rotation atomicity, grace idempotency, reuse detection, family revoke,
