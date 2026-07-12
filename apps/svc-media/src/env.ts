@@ -25,6 +25,28 @@ const Env = z.object({
 export const env = Env.parse(process.env);
 export const thumbRoot = join(env.MEDIA_ROOT, "_thumbs");
 
+// Single parse shared by env validation AND the ingest runtime (V7-2) so a
+// value like "," can't pass the production check yet disable origin filtering.
+// Each entry must be a bare origin: scheme + host(+port), no path/query/hash.
+export const ingestAllowedOrigins = env.INGEST_ALLOWED_ORIGINS.split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+for (const o of ingestAllowedOrigins) {
+  let u: URL;
+  try {
+    u = new URL(o);
+  } catch {
+    console.error(`[svc-media] INGEST_ALLOWED_ORIGINS entry is not a valid URL: ${o}`);
+    process.exit(1);
+  }
+  if (u.origin !== o || (u.protocol !== "https:" && u.protocol !== "http:")) {
+    console.error(
+      `[svc-media] INGEST_ALLOWED_ORIGINS entry must be a bare http(s) origin (no path/query/trailing slash): ${o}`,
+    );
+    process.exit(1);
+  }
+}
+
 // Fail fast in production instead of booting on the known dev playback secret,
 // which would let anyone forge signed HLS URLs (inbox/review.md P1-2).
 if (process.env.NODE_ENV === "production") {
@@ -34,8 +56,12 @@ if (process.env.NODE_ENV === "production") {
   else if (env.PLAYBACK_SECRET.length < 32)
     errors.push("PLAYBACK_SECRET must be at least 32 characters");
   // Browser ingest must not accept arbitrary web origins in production (V6-2).
-  if (!env.INGEST_ALLOWED_ORIGINS.trim())
-    errors.push("INGEST_ALLOWED_ORIGINS must list the production web origin(s)");
+  // Checked on the PARSED list (V7-2: "," would pass a raw-string check) and
+  // production origins must be https.
+  if (ingestAllowedOrigins.length === 0)
+    errors.push("INGEST_ALLOWED_ORIGINS must list at least one production web origin");
+  if (ingestAllowedOrigins.some((o) => !o.startsWith("https://")))
+    errors.push("INGEST_ALLOWED_ORIGINS must be https origins in production");
   if (errors.length > 0) {
     console.error(`[svc-media] fatal production config errors:\n- ${errors.join("\n- ")}`);
     process.exit(1);

@@ -28,6 +28,14 @@ function requireUserId(ctx: HandlerContext): string {
 // an email has a password account. Generated once at boot, through the gate.
 const dummyHashPromise = hashPassword(`dummy-timing-${crypto.randomUUID()}`);
 
+/**
+ * Awaited by the server bootstrap (V7-5): a failed Argon2 init must be a clear
+ * fatal startup error, not an unhandled rejection at first login.
+ */
+export async function ensureAuthReady(): Promise<void> {
+  await dummyHashPromise;
+}
+
 export const authService: ServiceImpl<typeof AuthService> = {
   async register(req) {
     // Boundary validation (P2-4): map to invalid_argument so the BFF returns

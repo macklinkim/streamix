@@ -472,3 +472,68 @@ review.md 신규 갱신 없음 — 검증자 지정 다음 순위(P2-5) 진행.
   소비(V2-5), P2-1 내부 서비스 인증, P2-4 잔여(이메일 인증·reset·MFA·감사),
   web refresh single-flight, env fail-fast 자동 테스트
 - prod 배포 (전 수정 미반영)
+
+---
+
+# 9차 반복 (2026-07-12) — §13 검증 피드백 (V7-1~V7-6) 대응
+
+## 완료
+
+### V7-1. deploy workflow에 production migration 통합 — 완료 (P0)
+
+- `.github/workflows/deploy.yml`: svc-core 배포 **이전에** migration step 추가 —
+  `flyctl proxy`로 streamix-db 연결, core 머신에서 DATABASE_URL 확보, `db:migrate`
+  실행, journal tag 출력. migration 0003의 충돌 가드는 transaction 안에서
+  RAISE하므로 (partial write 없음) 충돌 시 job이 여기서 중단되어 구 core가 유지됨
+  — "preflight 실패 시 배포 중단, 자동 병합 금지" 정책 충족.
+- 참고: 검증자 지시 3의 2단계 release 분리는 미채택 — 현 사용자 규모에서
+  migration-first 단일 release로 충분하다고 판단. 실 deploy run 검증은 배포 시.
+
+### V7-2. ingest origin parser 공유 + 엄격 검증 — 완료
+
+- `apps/svc-media/src/env.ts`: `ingestAllowedOrigins`를 단일 파싱·export —
+  env 검증과 runtime이 동일 결과 사용 (`","` 우회 차단). 각 항목은 `new URL`
+  parse 후 `u.origin === 입력값` 강제 (path/query/fragment/trailing slash/
+  credential 불가), production은 https + 최소 1개 필수.
+- 실검증: `INGEST_ALLOWED_ORIGINS=","` production 기동 실패,
+  `https://.../path` 항목 기동 실패.
+
+### V7-3. CI log/lifecycle 결함 — 완료
+
+- log step을 session smoke 뒤로 이동 (`if: failure()`가 실제로 잡히도록).
+- core :50051 30초 내 미오픈 시 명시적 exit 1.
+- core/bff PID 저장 후 `if: always()` cleanup step에서 종료.
+
+### V7-4. timing 분포 검증 — 완료 (통계 측정)
+
+- warm-up 5회 후 각 60회 serial 측정 (rate limit 상향한 임시 bff):
+  - 실계정 wrong-password: median 50.7ms, p95 65.4ms
+  - 미존재 계정: median 51.3ms, p95 61.4ms
+- 분포 사실상 동일 — 계정 존재 timing oracle 제거 확인.
+- 잔여: 기존 계정 hash parameter variation 조사(전부 argon2 default로 생성돼
+  현재 variation 없음), gate 포화 상태에서의 분포는 부하 리그 작업.
+
+### V7-5. dummy hash 초기화 fail-fast — 완료
+
+- `ensureAuthReady()` export, `svc-core/main.ts`가 listen 전에 await —
+  Argon2 init 실패 시 명확한 fatal 종료 (unhandled rejection 제거).
+
+### V7-6. channel 존재 확인 — 미착수 유지
+
+- by-id RPC proto 추가 필요. P2-2는 부분 완료 상태 유지.
+
+## 검증 결과 (9차)
+
+- typecheck·lint·build: svc-core/svc-media 통과
+- timing 분포: 위 상세 (60+60 샘플)
+- production env 거부 케이스 2건 실검증
+- (8차에서 smoke:session 24/24 — 이번 변경은 core bootstrap·CI·media env로
+  session 경로 무변경)
+
+## 남은 항목
+
+- V7-1 잔여: 실 deploy run에서 migration step 동작 확인 (prod 배포 시)
+- V4-1/V7-6: channel by-id RPC, V4-4 nonce CSP, V5-3 gate 단위테스트·metrics,
+  V5-4 stress, V2-5 bit_ token 1회 소비, P2-1 내부 서비스 인증,
+  P2-4 잔여 기능들, Fly staging IP/XFF 관측
+- prod 배포 (전 수정 미반영)

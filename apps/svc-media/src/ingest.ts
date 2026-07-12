@@ -3,7 +3,7 @@ import type { Server } from "node:http";
 import type { Writable } from "node:stream";
 import { WebSocketServer, type WebSocket } from "ws";
 import ffmpegStatic from "ffmpeg-static";
-import { env } from "./env.js";
+import { env, ingestAllowedOrigins } from "./env.js";
 import { core } from "./core-client.js";
 
 const ffmpeg = ffmpegStatic as unknown as string;
@@ -86,9 +86,8 @@ function handshakeAllowed(ip: string): boolean {
 }
 
 export function attachIngest(server: Server): void {
-  const allowedOrigins = env.INGEST_ALLOWED_ORIGINS.split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  // Parsed + validated once in env.ts (V7-2) so env checks and runtime agree.
+  const allowedOrigins = ingestAllowedOrigins;
 
   const wss = new WebSocketServer({
     server,

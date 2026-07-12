@@ -23,6 +23,32 @@ jobs:
           fetch-depth: 0
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install (db package)
+        run: pnpm install --frozen-lockfile
+
+      # DB migration BEFORE svc-core deploy (inbox/review.md V7-1): the new core
+      # assumes the canonical-email constraint exists. Migration 0003 refuses to
+      # run (raises, transactional — no partial writes) if existing rows collide
+      # on lower(trim(email)); that failure stops this job here, so the old core
+      # keeps running and collisions get resolved manually.
+      - name: Migrate production DB
+        run: |
+          flyctl proxy 15432:5432 -a streamix-db &
+          PROXY_PID=$!
+          sleep 5
+          RAW_URL=$(flyctl ssh console -a streamix-svc-core -C "printenv DATABASE_URL" | tr -d '\r' | grep '^postgres')
+          export DATABASE_URL=$(echo "$RAW_URL" | sed -E 's#@[^/]+/#@localhost:15432/#')"?sslmode=disable"
+          pnpm --filter @streamix/db db:migrate
+          echo "schema journal:" && tail -3 packages/db/drizzle/meta/_journal.json
+          kill $PROXY_PID || true
+
       # svc-core first: the others reach it over private networking.
       - name: Deploy svc-core
         run: flyctl deploy --config apps/svc-core/fly.toml --dockerfile apps/svc-core/Dockerfile --remote-only
