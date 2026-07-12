@@ -921,3 +921,58 @@ review.md 신규 갱신 없음 — P1-3 마지막 잔여(HLS query token) 처리
   V3-4(`at+jwt`), V4-4 enforce 전환, V9-2/V9-5, V8-4 compose digest,
   Fly staging IP/XFF 관측, web refresh single-flight
 - prod 배포 (전 수정 미반영)
+
+---
+
+# 19차 반복 (2026-07-12) — PROD 배포 완료
+
+사용자 요청("prod 배포까지 작업 계속"). flyctl(kopserf@gmail.com)·vercel(kopserf-3872)
+로컬 인증 확인 후 실배포.
+
+## 배포 순서 (내부 토큰 rollout 안전 순서)
+
+내부 토큰 강제는 production 신규 이미지에서만 활성 → attacher 먼저, enforcer 나중.
+이메일 canonical은 신규 core가 양쪽 형식 처리 → core 배포 후 migration.
+
+1. **시크릿 staged** (`--stage`, old 이미지 재시작 방지): 4개 앱에 동일
+   `INTERNAL_TOKEN`(48 hex random), svc-media에 `INGEST_ALLOWED_ORIGINS=
+https://streamix-web.vercel.app`.
+2. **Fly 배포**: svc-media → bff → svc-chat → svc-core (attacher→enforcer 순).
+   각 health good 확인.
+   - 부수 수정: svc-media Dockerfile이 `@streamix/schemas` 빌드 누락(신규
+     internal-auth 의존) → build 단계에 추가 (커밋 `fc32b5d`).
+3. **prod DB migration 0003**: flyctl proxy + rewrite-url(Node URL 파서) +
+   db:migrate + db:verify-schema. **canonical email unique index 생성 확인**.
+4. **web Vercel prod 배포**: CSP middleware + WS 첫-frame 인증 + 비밀번호 min12
+   반영. READY.
+
+## prod 실검증
+
+- 4개 Fly 서비스 배포·health good, 내부 토큰 인증 활성.
+- **bff→core 내부 인증 정상**: prod register 201 + login 200 (토큰 일치, 불일치면
+  실패했을 것).
+- **email canonical 동작**: `"  DEPLOYTEST2_…@Example.com "` 로그인 → 200 (저장된
+  lowercase row 매칭, V6-3).
+- migration 0003 적용 + `users_email_canonical_unique` index 존재 확인.
+- web 200, **보안 헤더 전부 방출**: enforced CSP(frame-ancestors) +
+  Content-Security-Policy-Report-Only(nonce script-src, 요청별 갱신) +
+  Referrer-Policy + HSTS + X-Frame-Options.
+- bff `/health` 200.
+
+## 배포된 보안 개선 (1~18차 전부)
+
+P0-1~~3, P1-1~~5, P2-1~~5, V1~~V9 전 항목 + 후속 테스트/CI 하드닝. 상세는 위 각 반복.
+
+## prod 엔드포인트
+
+- web: https://streamix-web.vercel.app
+- API: https://streamix-bff.fly.dev
+- Fly(nrt): streamix-{svc-core,svc-chat,svc-media,bff}, streamix-db, redis-app
+
+## 남은 항목 (비배포 블로커 아님)
+
+- gate metrics 노출, V2-5 bit_ token 1회 소비, P2-1 후속(mTLS/service JWT),
+  P2-4 잔여(이메일 인증·reset·MFA·감사), V4-4 enforce 전환(report 수집 후),
+  V8-4 compose digest, web refresh single-flight
+- GitHub Actions CD 토큰(FLY_API_TOKEN/VERCEL_TOKEN) 미설정 — 현재 수동 배포.
+  push 시 deploy.yml은 토큰 없어 no-op/실패.
