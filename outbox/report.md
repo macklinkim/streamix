@@ -1152,3 +1152,38 @@ newPassword})` — Bearer + CSRF 헤더, 실패 시 AuthError.
 - P2-4 잔여: 이메일 인증·password reset·MFA/WebAuthn(이메일 provider 필요)
 - V2-5 bit_ token 1회 소비, P2-1 후속(mTLS), V4-4 enforce 전환, V8-4 compose digest
 - prod: web Vercel 재배포
+
+---
+
+# 25차 반복 (2026-07-12) — CSP 위반 리포트 수집 (V4-4 진행)
+
+review.md 신규 갱신 없음. V4-4 report-only→enforce 전환에 필요한 위반 데이터
+수집 단계 (검증자 지시 "위반 수집 후 enforce").
+
+## 완료
+
+### CSP 위반 리포트 수집 endpoint — 완료
+
+- `apps/bff/src/routes/csp.ts`: `POST /csp-report` — `application/csp-report`·
+  `application/reports+json` content-type 파서 추가(기본 JSON 파서가 거부),
+  effective/violated-directive별 `streamix_csp_violations_total` counter,
+  분당 50개 상한 bounded 로그(악성 페이지 로그 flooding 방지), 항상 204.
+- `apps/web/middleware.ts`: report-only CSP에 `report-uri ${BFF}/csp-report`
+  추가(report-uri는 connect-src 미적용 = 브라우저 beacon). BFF URL 없으면 생략.
+
+이제 report-only 정책 위반이 BFF로 모여 metric+로그로 관측됨 → 데이터 확보 후
+enforce(connect-src 정확 origin 축소) 전환 가능.
+
+## 검증 결과 (25차)
+
+- typecheck·lint·build: bff/web 통과
+- **실검증**: `application/csp-report` POST → 204, `streamix_csp_violations_total
+{directive="script-src"}=1` metric 노출.
+
+## 남은 항목
+
+- V4-4 잔여: 수집 데이터 관찰 후 enforce 전환(connect-src를 BFF/WS/media 정확
+  origin으로 축소, report-only→enforce)
+- P2-4 잔여(이메일 인증·reset·MFA — 이메일 provider), V2-5 bit_ 1회 소비,
+  P2-1 후속(mTLS), V8-4 compose digest
+- prod 배포: bff + web 재배포

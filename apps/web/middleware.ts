@@ -9,9 +9,11 @@ import { NextResponse, type NextRequest } from "next/server";
 // connect-src is deliberately broad (https/wss) because the BFF, chat WS, and
 // media origins are runtime env values not known at build time; tighten to the
 // exact origins when enforcing.
+const BFF = process.env.NEXT_PUBLIC_BFF_URL ?? "";
+
 export function middleware(req: NextRequest) {
   const nonce = btoa(crypto.randomUUID());
-  const csp = [
+  const directives = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
     "style-src 'self' 'unsafe-inline'",
@@ -22,7 +24,11 @@ export function middleware(req: NextRequest) {
     "object-src 'none'",
     "base-uri 'self'",
     "frame-ancestors 'none'",
-  ].join("; ");
+  ];
+  // Collect violations at the BFF so the policy can be tuned before enforcing
+  // (V4-4). report-uri isn't subject to connect-src (it's a browser beacon).
+  if (BFF) directives.push(`report-uri ${BFF}/csp-report`);
+  const csp = directives.join("; ");
 
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-nonce", nonce);
