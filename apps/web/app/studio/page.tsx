@@ -13,6 +13,7 @@ import { channelClient } from "@/lib/connect";
 import { useAuth } from "@/lib/auth-store";
 import { Field, inputCls } from "@/components/field";
 import { BroadcastPanel } from "@/components/broadcast";
+import { PasswordChangeForm } from "@/components/password-change";
 
 const schema = z.object({
   title: z.string().min(1, "제목을 입력하세요").max(140),
@@ -256,6 +257,13 @@ export default function StudioPage() {
           <h1 className="mb-6 text-2xl font-bold tracking-tight">방송 설정</h1>
           <CreateChannelForm token={token!} onCreated={setCreatedKey} />
         </>
+      )}
+
+      {ready && token && (
+        <section className="mt-10 rounded-lg border border-zinc-800 bg-zinc-900/50 p-5">
+          <h2 className="mb-4 text-sm font-semibold text-zinc-200">비밀번호 변경</h2>
+          <PasswordChangeForm />
+        </section>
       )}
     </div>
   );

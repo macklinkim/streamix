@@ -1124,3 +1124,31 @@ review.md 신규 갱신 없음. 검증자 지시 "비밀번호 변경 시 revoke
   web 비밀번호 변경 UI(endpoint는 완료)
 - V2-5 bit_ token 1회 소비, P2-1 후속(mTLS), V4-4 enforce 전환, V8-4 compose digest
 - prod 배포: proto 변경 → core+bff 재배포(INTERNAL_TOKEN 유지)
+
+---
+
+# 24차 반복 (2026-07-12) — web 비밀번호 변경 UI (P2-4 완성)
+
+review.md 신규 갱신 없음. 23차의 change-password endpoint에 UI 없어 완성.
+
+## 완료
+
+### 비밀번호 변경 폼 — 완료
+
+- `apps/web/lib/session.ts`: `apiChangePassword(token, {currentPassword,
+newPassword})` — Bearer + CSRF 헤더, 실패 시 AuthError.
+- `apps/web/components/password-change.tsx`: RHF+zod 폼(현재/새/확인, 새 비번
+  min12 + 일치 검증). 성공 시 서버가 전 세션 폐기하므로 로컬 auth clear +
+  1.5s 후 /login 리다이렉트. 401→현재 비번 오류, 400→정책 오류 표시.
+- `apps/web/app/studio/page.tsx`: 로그인 상태에서 "비밀번호 변경" 섹션 렌더.
+
+## 검증 결과 (24차)
+
+- typecheck·build: web 통과 (9/9 static pages)
+- endpoint 자체는 23차에서 prod 실검증 완료(change 204→old refresh 401→신규 login 200) — UI는 그 endpoint를 호출.
+
+## 남은 항목
+
+- P2-4 잔여: 이메일 인증·password reset·MFA/WebAuthn(이메일 provider 필요)
+- V2-5 bit_ token 1회 소비, P2-1 후속(mTLS), V4-4 enforce 전환, V8-4 compose digest
+- prod: web Vercel 재배포

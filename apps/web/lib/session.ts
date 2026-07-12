@@ -73,3 +73,20 @@ export async function apiLogout(token: string | null): Promise<void> {
     headers: { ...csrfHeaders, ...(token ? { authorization: `Bearer ${token}` } : {}) },
   }).catch(() => {});
 }
+
+/**
+ * Change the password. The server revokes ALL sessions on success, so the caller
+ * must drop local auth state and send the user back to login (P2-4).
+ */
+export async function apiChangePassword(
+  token: string | null,
+  input: { currentPassword: string; newPassword: string },
+): Promise<void> {
+  const res = await fetch(`${bffUrl}/auth/change-password`, {
+    method: "POST",
+    credentials: "include",
+    headers: { ...headers, ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new AuthError(res.status, await errorOf(res));
+}
