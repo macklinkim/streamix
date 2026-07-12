@@ -251,6 +251,9 @@ importers:
       "@streamix/proto":
         specifier: workspace:*
         version: link:../../packages/proto
+      "@streamix/schemas":
+        specifier: workspace:*
+        version: link:../../packages/schemas
       "@tanstack/react-query":
         specifier: ^5.62.11
         version: 5.101.2(react@19.2.7)

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
+import { isWeakPassword } from "@streamix/schemas";
 import { apiLogin, apiRegister, AuthError } from "@/lib/session";
 import { useAuth } from "@/lib/auth-store";
 import { Field, inputCls } from "@/components/field";
@@ -12,7 +13,11 @@ import { Field, inputCls } from "@/components/field";
 const schema = z.object({
   displayName: z.string().min(2, "2자 이상 입력하세요").max(20),
   email: z.string().email("올바른 이메일을 입력하세요"),
-  password: z.string().min(12, "비밀번호는 12자 이상이어야 합니다"),
+  password: z
+    .string()
+    .min(12, "비밀번호는 12자 이상이어야 합니다")
+    // Immediate client-side feedback; the server enforces the same rule (P2-4).
+    .refine((p) => !isWeakPassword(p), "너무 흔하거나 예측하기 쉬운 비밀번호입니다"),
 });
 type Form = z.infer<typeof schema>;
 

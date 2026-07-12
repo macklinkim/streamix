@@ -1284,3 +1284,32 @@ prod에서 정상 동작. 드리프트·회귀 없음. 새 코드 변경 없음(
 - 외부 의존: 이메일 인증·password reset(이메일 provider), MFA/TOTP(대형)
 - 데이터 대기: V4-4 enforce 전환(CSP 위반 리포트 관찰 후)
 - 구조/marginal: P2-1 mTLS(공유 시크릿으로 1차 완료됨), V2-5 bit_ 1회 소비
+
+---
+
+# 29차 반복 (2026-07-12) — web 폼 취약 비밀번호 클라이언트 검증 (P2-4 UX)
+
+review.md 신규 갱신 없음. 27차 weak-password가 서버(400)에만 있어 폼 즉시 피드백
+없던 것 보완.
+
+## 완료
+
+### signup/change-password 폼에 isWeakPassword 클라이언트 검증 — 완료
+
+- `apps/web/app/signup/page.tsx`, `apps/web/components/password-change.tsx`:
+  zod 스키마에 배포된 `@streamix/schemas`의 `isWeakPassword` refine 추가 —
+  약한 비밀번호 즉시 "너무 흔하거나 예측하기 쉬운 비밀번호입니다" 표시(서버
+  round-trip 400 전에). 서버가 여전히 최종 강제.
+- web에 `@streamix/schemas` 의존성 추가. weak-password는 순수 JS(node:crypto
+  없음), internal-auth는 subpath라 브라우저 번들 안전.
+
+## 검증 결과 (29차)
+
+- web typecheck·build 통과(번들에 node:crypto 미포함 확인).
+- 서버 강제는 27차에서 prod 실검증 완료 — 이번은 클라이언트 UX 계층.
+
+## 남은 항목 (신규 review/사용자 지시 대기)
+
+- 외부 의존: 이메일 인증·password reset(이메일 provider), MFA/TOTP(대형)
+- 데이터 대기: V4-4 enforce 전환
+- 구조/marginal: P2-1 mTLS(1차 완료), V2-5 bit_ 1회 소비

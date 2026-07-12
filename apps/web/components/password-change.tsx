@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { isWeakPassword } from "@streamix/schemas";
 import { apiChangePassword, AuthError } from "@/lib/session";
 import { useAuth } from "@/lib/auth-store";
 import { Field, inputCls } from "@/components/field";
@@ -12,7 +13,10 @@ import { Field, inputCls } from "@/components/field";
 const schema = z
   .object({
     currentPassword: z.string().min(1, "현재 비밀번호를 입력하세요"),
-    newPassword: z.string().min(12, "비밀번호는 12자 이상이어야 합니다"),
+    newPassword: z
+      .string()
+      .min(12, "비밀번호는 12자 이상이어야 합니다")
+      .refine((p) => !isWeakPassword(p), "너무 흔하거나 예측하기 쉬운 비밀번호입니다"),
     confirm: z.string(),
   })
   .refine((v) => v.newPassword === v.confirm, {
