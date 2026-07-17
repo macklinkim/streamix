@@ -33,15 +33,28 @@ async function rpc<T>(service: string, method: string, body: unknown, token?: st
   return json;
 }
 
-// Register (idempotent) + login through the BFF edge.
-await rpc("user.v1.AuthService", "Register", {
+// Register (idempotent) + login through the BFF edge. Auth is REST-only there —
+// the Connect AuthService is blocked at the edge (P1-3 hardening).
+async function auth<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${BFF}/auth/${path}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const json = (await res.json()) as T & { error?: string };
+  if (!res.ok) throw new Error(`${path}: ${res.status} ${json.error ?? ""}`);
+  return json;
+}
+
+// Register is best-effort: the account usually exists already, and re-registering
+// it currently surfaces as 502 rather than 409 (svc-media/scripts note: core maps
+// the duplicate-email constraint to an internal error). Login below is the gate.
+await auth("register", {
   email: EMAIL,
   password: PASSWORD,
   displayName: "프로드 인제스트 스모크",
-}).catch((e: Error) => {
-  if (!/already_exists|6/.test(e.message)) throw e;
-});
-const login = await rpc<{ accessToken: string }>("user.v1.AuthService", "Login", {
+}).catch(() => {});
+const login = await auth<{ accessToken: string }>("login", {
   email: EMAIL,
   password: PASSWORD,
 });
@@ -83,6 +96,24 @@ const badClose = await new Promise<number>((resolve) => {
 });
 check("bad key rejected over wss", badClose === 4403, `close=${badClose}`);
 
+// A valid durable key must ALSO be refused here: browser ingest takes a token,
+// and the durable key belongs to RTMP encoders only (P1-3).
+const durableClose = await new Promise<number>((resolve) => {
+  const ws = new WebSocket(`${MEDIA_WS}/ingest?key=${streamKey}`);
+  ws.on("close", (code) => resolve(code));
+  ws.on("error", () => resolve(-1));
+});
+check("durable key rejected on browser ws", durableClose === 4403, `close=${durableClose}`);
+
+// Browser ingest credential (ADR-13): short-lived bit_ token, as the studio does.
+const { token: ingestToken } = await rpc<{ token: string }>(
+  "channel.v1.ChannelService",
+  "IssueIngestToken",
+  {},
+  login.accessToken,
+);
+check("issueIngestToken via bff", ingestToken.startsWith("bit_"));
+
 // Live webm producer -> WSS ingest (MediaRecorder stand-in).
 const producer = spawn(ff, [
   "-re",
@@ -110,7 +141,7 @@ const producer = spawn(ff, [
   "webm",
   "pipe:1",
 ]);
-const ws = new WebSocket(`${MEDIA_WS}/ingest?key=${streamKey}`);
+const ws = new WebSocket(`${MEDIA_WS}/ingest?key=${ingestToken}&codec=webm-vp8`);
 await new Promise<void>((resolve, reject) => {
   ws.on("open", () => resolve());
   ws.on("error", reject);
