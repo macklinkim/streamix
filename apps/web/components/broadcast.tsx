@@ -55,6 +55,8 @@ function errorMessage(e: unknown): string {
   if (name === "NotFoundError") return "사용할 수 있는 카메라·마이크를 찾지 못했습니다.";
   if (name === "NotReadableError")
     return "카메라·마이크를 다른 앱이 사용 중입니다. 해당 앱을 닫고 다시 시도해 주세요.";
+  if (name === "OverconstrainedError")
+    return "선택한 장치를 사용할 수 없습니다. 분리되었을 수 있어요. 다른 카메라를 선택해 주세요.";
   return "장치를 열지 못했습니다. 다시 시도해 주세요.";
 }
 
@@ -72,9 +74,19 @@ export function BroadcastPanel({ token }: { token: string }) {
   const [facing, setFacing] = useState<Facing>("user");
   const [backgrounded, setBackgrounded] = useState(false);
   const [title, setTitle] = useState("");
+  const [moreCameras, setMoreCameras] = useState(false);
+  // Screen capture gating (ADR-15). Assume supported until mount decides, so SSR
+  // markup matches; the effect below flips it on browsers without the API.
+  const [screenBlocked, setScreenBlocked] = useState(false);
   const mobile = isMobile();
 
   useEffect(() => () => cleanupRef.current(), []);
+
+  // (1) Existence detection. No mobile browser ships getDisplayMedia; when it is
+  // missing the screen source is offered as an RTMP fallback instead of failing.
+  useEffect(() => {
+    if (typeof navigator.mediaDevices?.getDisplayMedia !== "function") setScreenBlocked(true);
+  }, []);
 
   // Populate device selects. Labels are hidden until the site has been granted
   // permission once, so re-run enumeration after every successful capture.
@@ -93,7 +105,7 @@ export function BroadcastPanel({ token }: { token: string }) {
     void refreshDevices();
   }, []);
 
-  async function acquireStream(effFacing: Facing): Promise<MediaStream> {
+  async function acquireStream(effFacing: Facing, effCameraId: string): Promise<MediaStream> {
     if (source === "screen") {
       return navigator.mediaDevices.getDisplayMedia({
         video: { width: 1280, height: 720, frameRate: 30 },
@@ -102,14 +114,18 @@ export function BroadcastPanel({ token }: { token: string }) {
     }
     return navigator.mediaDevices.getUserMedia({
       // Mobile: let the device pick its native (portrait) resolution and select
-      // the camera by facingMode. Desktop: fixed 720p landscape + deviceId.
+      // the camera by facingMode — unless a specific device was picked from the
+      // detailed list (multi-lens phones, iPad UVC), which overrides facingMode
+      // (ADR-17). Desktop: fixed 720p landscape + deviceId.
       video: mobile
-        ? { facingMode: effFacing, frameRate: 30 }
+        ? effCameraId
+          ? { deviceId: { exact: effCameraId }, frameRate: 30 }
+          : { facingMode: effFacing, frameRate: 30 }
         : {
             width: 1280,
             height: 720,
             frameRate: 30,
-            ...(cameraId ? { deviceId: { exact: cameraId } } : {}),
+            ...(effCameraId ? { deviceId: { exact: effCameraId } } : {}),
           },
       audio: {
         echoCancellation: true,
@@ -119,17 +135,25 @@ export function BroadcastPanel({ token }: { token: string }) {
     });
   }
 
-  async function start(effFacing: Facing = facing) {
+  async function start(effFacing: Facing = facing, effCameraId: string = cameraId) {
     setPhase("starting");
     setMessage("");
 
     let stream: MediaStream;
     try {
-      stream = await acquireStream(effFacing);
+      stream = await acquireStream(effFacing, effCameraId);
     } catch (e) {
       // Screen picker cancel (NotAllowedError from getDisplayMedia) is not an
       // error state; a denied camera permission is.
       if (source === "screen" && e instanceof DOMException && e.name === "NotAllowedError") {
+        // (2) Call-failure detection (ADR-15): some mobile browsers expose
+        // getDisplayMedia but always reject it, which existence detection alone
+        // can't catch. On mobile there is no picker to cancel, so a rejection
+        // means "unsupported" — fall back to RTMP rather than silently idling.
+        if (mobile) {
+          setScreenBlocked(true);
+          setSource("camera");
+        }
         setPhase("idle");
         return;
       }
@@ -265,8 +289,9 @@ export function BroadcastPanel({ token }: { token: string }) {
   async function switchCamera() {
     const next: Facing = facing === "user" ? "environment" : "user";
     setFacing(next);
+    setCameraId(""); // the live switch is facingMode-based; drop any detailed pick
     cleanupRef.current();
-    await start(next);
+    await start(next, "");
   }
 
   const busy = phase === "starting" || phase === "live";
@@ -315,8 +340,9 @@ export function BroadcastPanel({ token }: { token: string }) {
               <button
                 key={s}
                 type="button"
+                disabled={s === "screen" && screenBlocked}
                 onClick={() => setSource(s)}
-                className={`flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border text-sm transition-colors ${
+                className={`flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                   source === s
                     ? "border-accent bg-accent/10 text-zinc-100"
                     : "border-zinc-800 text-zinc-400 hover:border-zinc-700"
@@ -327,15 +353,27 @@ export function BroadcastPanel({ token }: { token: string }) {
               </button>
             ))}
           </div>
+          {screenBlocked && (
+            <p className="rounded-md bg-zinc-800/50 px-2 py-1.5 text-xs text-zinc-400">
+              이 브라우저는 화면 송출을 지원하지 않습니다. RTMP를 지원하는 화면 송출 앱에서{" "}
+              <a href="#rtmp" className="text-accent hover:underline">
+                아래 장비 방송(RTMP) 주소
+              </a>
+              를 입력해 방송하세요. (권장 720p / 2.5Mbps)
+            </p>
+          )}
           {source === "camera" && mobile && (
             <div className="flex gap-2">
               {(["user", "environment"] as const).map((f) => (
                 <button
                   key={f}
                   type="button"
-                  onClick={() => setFacing(f)}
+                  onClick={() => {
+                    setFacing(f);
+                    setCameraId(""); // preset overrides a detailed pick
+                  }}
                   className={`h-9 flex-1 rounded-md border text-sm transition-colors ${
-                    facing === f
+                    facing === f && !cameraId
                       ? "border-accent bg-accent/10 text-zinc-100"
                       : "border-zinc-800 text-zinc-400 hover:border-zinc-700"
                   }`}
@@ -343,6 +381,32 @@ export function BroadcastPanel({ token }: { token: string }) {
                   {f === "user" ? "전면" : "후면"}
                 </button>
               ))}
+            </div>
+          )}
+          {source === "camera" && mobile && (
+            <div>
+              <button
+                type="button"
+                onClick={() => setMoreCameras((v) => !v)}
+                className="text-xs text-zinc-400 hover:text-zinc-200"
+              >
+                {moreCameras ? "카메라 접기" : "카메라 더 보기"}
+              </button>
+              {moreCameras && (
+                <select
+                  value={cameraId}
+                  onChange={(e) => setCameraId(e.target.value)}
+                  className="mt-2 h-9 w-full rounded-md border border-zinc-800 bg-zinc-950 px-2 text-sm text-zinc-200"
+                  aria-label="카메라"
+                >
+                  <option value="">전/후면 프리셋 사용</option>
+                  {devices.cameras.map((d, i) => (
+                    <option key={d.deviceId} value={d.deviceId}>
+                      {d.label || `카메라 ${i + 1}`}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           )}
           {source === "camera" && !mobile && (

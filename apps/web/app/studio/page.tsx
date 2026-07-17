@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Code, ConnectError } from "@connectrpc/connect";
-import { Copy, ArrowsClockwise, Check } from "@phosphor-icons/react";
+import { Copy, ArrowsClockwise, Check, Eye, EyeSlash } from "@phosphor-icons/react";
 import type { Channel } from "@streamix/proto";
 import { channelClient } from "@/lib/connect";
 import { useAuth } from "@/lib/auth-store";
@@ -116,6 +116,7 @@ function ChannelPanel({
 }) {
   // The key is only shown in plaintext at create/rotate time; otherwise masked.
   const [streamKey, setStreamKey] = useState(initialKey);
+  const [revealed, setRevealed] = useState(false);
   const [rotating, setRotating] = useState(false);
   const [rotateError, setRotateError] = useState("");
   const queryClient = useQueryClient();
@@ -157,10 +158,13 @@ function ChannelPanel({
 
       <BroadcastPanel token={token} />
 
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-        <h2 className="text-sm font-semibold text-zinc-100">OBS로 송출 (전용 스트림 키)</h2>
+      <div id="rtmp" className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+        <h2 className="text-sm font-semibold text-zinc-100">
+          장비로 방송 — OBS · GoPro 등 (전용 스트림 키)
+        </h2>
         <p className="mt-0.5 text-xs text-zinc-500">
-          아래 키는 OBS 등 외부 인코더 전용입니다. 브라우저 방송은 위 방송시작 버튼만 누르면 됩니다.
+          아래 키는 OBS·GoPro·화면 송출 앱 등 외부 RTMP 인코더 전용입니다. 브라우저 방송은 위
+          방송시작 버튼만 누르면 됩니다. 장비로 방송 중에는 브라우저 방송 시작이 거부됩니다.
         </p>
         <dl className="mt-3 space-y-3 font-mono text-sm">
           <div>
@@ -174,7 +178,17 @@ function ChannelPanel({
             <dt className="text-xs uppercase text-zinc-500">스트림 키</dt>
             {streamKey ? (
               <dd className="flex items-center gap-1">
-                <span className="break-all text-accent">{streamKey}</span>
+                <span className="break-all text-accent">
+                  {revealed ? streamKey : "•".repeat(Math.min(streamKey.length, 32))}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setRevealed((v) => !v)}
+                  className="shrink-0 rounded p-1.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+                  aria-label={revealed ? "키 가리기" : "키 표시"}
+                >
+                  {revealed ? <EyeSlash size={16} /> : <Eye size={16} />}
+                </button>
                 <CopyButton value={streamKey} />
               </dd>
             ) : keyPrefix ? (
@@ -194,7 +208,38 @@ function ChannelPanel({
               </dd>
             )}
           </div>
+          {/* GoPro and many phone apps take the server and key as one line. */}
+          {streamKey && (
+            <div>
+              <dt className="text-xs uppercase text-zinc-500">전체 URL (한 줄 입력 장비용)</dt>
+              <dd className="flex items-center gap-1">
+                <span className="break-all text-zinc-100">
+                  {revealed ? `${rtmpBase}/${streamKey}` : `${rtmpBase}/••••••••`}
+                </span>
+                <CopyButton value={`${rtmpBase}/${streamKey}`} />
+              </dd>
+            </div>
+          )}
         </dl>
+        {streamKey && (
+          <p className="mt-2 text-xs text-zinc-500">
+            복사한 키는 클립보드 동기화(다른 기기와 공유되는 클라우드 클립보드)로 새어 나갈 수
+            있습니다. 화면 공유·스크린샷도 주의하세요.
+          </p>
+        )}
+        <details className="mt-3">
+          <summary className="cursor-pointer text-xs text-zinc-400 hover:text-zinc-200">
+            GoPro 연결 방법
+          </summary>
+          <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-zinc-500">
+            <li>HERO7 Black 이상에서 지원됩니다. Quik 앱으로 최초 페어링이 필요합니다.</li>
+            <li>HERO12·HERO13은 라이브 설정 전에 auto-upload를 한 번 활성화해야 합니다.</li>
+            <li>
+              Quik의 라이브 스트리밍 → RTMP를 선택하고 위 <b>전체 URL</b>을 붙여 넣으세요. RTMPS는
+              일부 기기에서 실패하니 rtmp:// 주소를 그대로 사용하세요.
+            </li>
+          </ul>
+        </details>
         <button
           onClick={() => void rotate()}
           disabled={rotating}
@@ -223,6 +268,9 @@ export default function StudioPage() {
     queryFn: () =>
       channelClient.getMyChannel({}, { headers: { authorization: `Bearer ${token}` } }),
     enabled: ready && !!token,
+    // Poll so the LIVE badge also reflects RTMP device ingest, which the studio
+    // never initiates and so would otherwise never learn about.
+    refetchInterval: 5000,
   });
 
   if (ready && !token) {

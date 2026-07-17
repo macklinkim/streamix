@@ -2,10 +2,12 @@
 // 방송시작 (fake camera capture) -> 송출 중 -> watch page playback advances ->
 // 방송 종료. Local full-stack target by default; override WEB/creds/slug via env.
 // Screen-source regression: run with SOURCE=screen.
+// D1 (detailed camera pick): run with MOBILE=1 DEVICE_ID=<n> to open "카메라 더
+// 보기" and broadcast from the n-th enumerated camera.
 //
 // Run (from apps/svc-media or repo root):
 //   pnpm exec tsx apps/web/e2e/camera-broadcast.mts
-// Env: WEB, EMAIL, PASSWORD, SLUG, SOURCE(camera|screen), MOBILE(1)
+// Env: WEB, EMAIL, PASSWORD, SLUG, SOURCE(camera|screen), MOBILE(1), DEVICE_ID(index)
 import { chromium, devices as playwrightDevices } from "@playwright/test";
 
 const WEB = process.env.WEB ?? "http://localhost:3000";
@@ -14,12 +16,16 @@ const PASSWORD = process.env.PASSWORD ?? "e2epassword123";
 const SLUG = process.env.SLUG ?? "e2e-live";
 const SOURCE = (process.env.SOURCE ?? "camera") as "camera" | "screen";
 const MOBILE = process.env.MOBILE === "1";
+// Index into the detailed camera list; empty = front/back preset (default).
+const DEVICE_ID = process.env.DEVICE_ID ?? "";
 
 // Fake media: --use-fake-device-for-media-stream feeds a synthetic camera/mic;
 // --use-fake-ui-for-media-stream auto-accepts the permission prompt. Screen
 // source additionally needs an auto-selected desktop capture source.
+// device-count=3 makes Chromium's fake factory expose three cameras, so the
+// detailed picker has something to choose between (M0 S1).
 const args = [
-  "--use-fake-device-for-media-stream",
+  DEVICE_ID ? "--use-fake-device-for-media-stream=device-count=3" : "--use-fake-device-for-media-stream",
   "--use-fake-ui-for-media-stream",
   // Opening the viewer tab backgrounds the broadcaster tab; Chromium otherwise
   // throttles MediaRecorder there and the stream stalls after ~1s (R3). Real
@@ -34,6 +40,16 @@ const browser = await chromium.launch({ headless: false, args });
 const context = await browser.newContext(
   MOBILE ? { ...playwrightDevices["Pixel 5"] } : {},
 );
+// Spy on the video constraints the app actually asks for, so D1 can prove the
+// picked deviceId reached getUserMedia (a fake camera looks identical on screen).
+await context.addInitScript(() => {
+  const orig = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+  navigator.mediaDevices.getUserMedia = (c?: MediaStreamConstraints) => {
+    (window as unknown as { __videoConstraint?: unknown }).__videoConstraint = c?.video;
+    return orig(c);
+  };
+});
+
 const page = await context.newPage();
 page.on("websocket", (ws) => {
   if (ws.url().includes("/ingest")) {
@@ -68,6 +84,17 @@ if (SOURCE === "screen") {
   await page.getByRole("button", { name: "화면" }).click();
 }
 
+// D1: expand the detailed camera list and pick the n-th camera (option 0 is the
+// front/back preset, so cameras start at index 1).
+let pickedDeviceId = "";
+if (DEVICE_ID) {
+  await page.getByRole("button", { name: "카메라 더 보기" }).click();
+  const select = page.getByLabel("카메라");
+  await select.selectOption({ index: Number(DEVICE_ID) + 1 });
+  pickedDeviceId = await select.inputValue();
+  console.log(pickedDeviceId ? "PASS detailed camera selected" : "FAIL detailed camera selected");
+}
+
 await page.getByRole("button", { name: "방송시작" }).click();
 try {
   await page.getByText("송출 중").waitFor({ timeout: 20000 });
@@ -77,6 +104,19 @@ try {
   console.log("FAIL broadcasting state; error shown:", err);
   await browser.close();
   process.exit(1);
+}
+
+let constraintOk = true;
+if (DEVICE_ID) {
+  const vc = (await page.evaluate(
+    () => (window as unknown as { __videoConstraint?: unknown }).__videoConstraint,
+  )) as { deviceId?: { exact?: string } } | undefined;
+  constraintOk = vc?.deviceId?.exact === pickedDeviceId;
+  console.log(
+    constraintOk
+      ? "PASS deviceId constraint reached getUserMedia"
+      : `FAIL deviceId constraint; got ${JSON.stringify(vc)}`,
+  );
 }
 
 // Verify playback over HTTP, keeping the broadcaster tab in the foreground — a
@@ -144,4 +184,4 @@ for (let i = 0; i < 20 && !offline; i++) {
 console.log(offline ? "PASS offline transition" : "FAIL offline transition");
 
 await browser.close();
-process.exit(live && served && offline ? 0 : 1);
+process.exit(live && served && offline && constraintOk ? 0 : 1);
