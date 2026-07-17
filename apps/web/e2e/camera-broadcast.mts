@@ -124,7 +124,7 @@ if (DEVICE_ID) {
 // there, stalling the stream (R3). Fetching the signed HLS playlist and its
 // segments is the same measurement smoke-ingest-prod uses and proves the stream
 // is live and playable (segments advancing = currentTime would advance).
-const bff = "https://streamix-bff.fly.dev";
+const bff = process.env.BFF_URL ?? "https://streamix-bff.fly.dev";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // Confirm the channel actually went live server-side (not just the UI).
