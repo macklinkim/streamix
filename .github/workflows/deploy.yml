@@ -28,9 +28,9 @@ jobs:
       # Pinned to flyctl-actions v1.5 (SHA); bump via a reviewed PR (V8-2).
       - uses: superfly/flyctl-actions/setup-flyctl@fc53c09e1bc3be6f54706524e3b82c4f462f77be
 
+      # Version comes from package.json "packageManager" (pnpm@9.15.9); passing a
+      # second `version` input made action-setup fail on a duplicate declaration.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -83,11 +83,23 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: flyctl deploy --config apps/bff/fly.toml --dockerfile apps/bff/Dockerfile --remote-only
 
+      # All four services deployed; record it so post-deploy failure handling can
+      # require a real deploy-success as a precondition (this step is skipped if
+      # any prior deploy step failed, since it has no override condition).
+      - name: Mark deploy success
+        id: deploy_done
+        run: echo "deployed=true" >> "$GITHUB_OUTPUT"
+
       - name: Post-deploy smoke (bff health)
+        id: smoke
         run: curl -fsS https://streamix-bff.fly.dev/health
 
-      - name: Rollback bff on smoke failure
-        if: failure()
+      # Runs ONLY when the deploy actually succeeded AND the post-deploy smoke
+      # failed. A failed checkout / setup / install / migration never sets
+      # deployed=true, so this step is skipped there. This step does NOT roll back
+      # automatically — it lists releases and prints the manual revert command.
+      - name: Report BFF rollback guidance on smoke failure
+        if: ${{ failure() && !cancelled() && steps.deploy_done.outputs.deployed == 'true' && steps.smoke.outcome == 'failure' }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: flyctl releases --app streamix-bff && echo "run 'flyctl deploy --image <previous>' or 'flyctl releases rollback' to revert"
@@ -96,9 +108,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Version comes from package.json "packageManager" (pnpm@9.15.9); passing a
+      # second `version` input made action-setup fail on a duplicate declaration.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22

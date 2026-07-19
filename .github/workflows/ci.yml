@@ -13,9 +13,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Version comes from package.json "packageManager" (pnpm@9.15.9); a second
+      # `version` input made action-setup fail on a duplicate declaration.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - uses: actions/setup-node@v4
         with:
@@ -82,9 +82,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Version comes from package.json "packageManager" (pnpm@9.15.9); a second
+      # `version` input made action-setup fail on a duplicate declaration.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - uses: actions/setup-node@v4
         with:
