@@ -1,8 +1,21 @@
 // Full UI E2E on prod: login -> studio -> rotate key -> click 화면 공유 시작
 // (fake display capture) -> verify 송출 중 -> watch page shows live playback.
+//
+// STALE: the 화면 공유 시작 button no longer exists — the studio was reworked to a
+// single 방송시작 control (2861367). camera-broadcast.mts supersedes this script;
+// see 작업계획서-모바일방송.md §10 before reviving it.
+//
+// Usage: WEB=… EMAIL=… PASSWORD=… pnpm exec tsx apps/web/e2e/broadcast-prod.mts
 import { chromium } from "@playwright/test";
 
-const WEB = "https://streamix-web.vercel.app";
+const WEB = process.env.WEB ?? "https://streamix-web.vercel.app";
+// Credentials come from the environment — never committed.
+const EMAIL = process.env.EMAIL;
+const PASSWORD = process.env.PASSWORD;
+if (!EMAIL || !PASSWORD) {
+  console.error("FAIL (config) missing required env EMAIL/PASSWORD");
+  process.exit(2);
+}
 
 const browser = await chromium.launch({
   headless: false,
@@ -20,8 +33,8 @@ page.on("console", (msg) => {
 });
 
 await page.goto(`${WEB}/login`);
-await page.getByRole("textbox", { name: "이메일" }).fill("ingest-prod@streamix.test");
-await page.getByRole("textbox", { name: "비밀번호" }).fill("ingestprodpass123");
+await page.getByRole("textbox", { name: "이메일" }).fill(EMAIL);
+await page.getByRole("textbox", { name: "비밀번호" }).fill(PASSWORD);
 await page.getByRole("button", { name: "로그인" }).click();
 await page.waitForURL(`${WEB}/`);
 console.log("PASS login");

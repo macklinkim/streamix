@@ -1,6 +1,7 @@
 // Prod smoke for browser-broadcast ingest, hitting the REAL domains through the
 // same edges the browser uses: BFF Connect-JSON RPCs + media WSS /ingest.
-// Usage: pnpm exec tsx scripts/smoke-ingest-prod.ts
+// Usage: EMAIL=… PASSWORD=… SLUG=… pnpm exec tsx scripts/smoke-ingest-prod.ts
+// Required env: EMAIL, PASSWORD, SLUG. Optional: BFF_URL, MEDIA_WS_URL.
 import { spawn } from "node:child_process";
 import ffmpegStatic from "ffmpeg-static";
 import WebSocket from "ws";
@@ -9,9 +10,19 @@ const BFF = process.env.BFF_URL ?? "https://streamix-bff.fly.dev";
 const MEDIA_WS = process.env.MEDIA_WS_URL ?? "wss://streamix-svc-media.fly.dev";
 const ff = ffmpegStatic as unknown as string;
 
-const EMAIL = "ingest-prod@streamix.test";
-const PASSWORD = "ingestprodpass123";
-const SLUG = "ingest-prod-smoke";
+// Credentials come from the environment: a password committed here is a
+// production credential in the repo (and in every log that quotes this file).
+function requiredEnv(name: string): string {
+  const v = process.env[name];
+  if (!v) {
+    console.error(`FAIL (config) missing required env ${name} — see apps/web/e2e/README.md`);
+    process.exit(2);
+  }
+  return v;
+}
+const EMAIL = requiredEnv("EMAIL");
+const PASSWORD = requiredEnv("PASSWORD");
+const SLUG = requiredEnv("SLUG");
 
 let failures = 0;
 function check(name: string, ok: boolean, detail = "") {

@@ -36,50 +36,69 @@ so it passes on Chromium without proprietary H.264) rather than decoded frames.
 drive the studio and then prove a viewer at `/watch/<slug>` actually plays —
 `<video>.currentTime` advancing, from its own browser process (a viewer tab in the
 broadcaster's browser occludes it, and Chromium throttles the broadcaster's
-MediaRecorder). Manifest/segment fetches are secondary assertions only.
+MediaRecorder). Only `smoke-rtmp-device.mts` still fetches the signed manifest,
+and it keeps that as a secondary assertion below the playback gate.
 
 ## Required env — there are no defaults
 
-Credentials differ per target, and a stale default silently 401s and reads like a
-product failure. Every script fails with exit code 2 if any of these is missing:
+Endpoints and credentials differ per target, and a stale default silently 401s (or
+worse, pushes a local key at production). Each script exits `2` if one of **its**
+variables is missing:
 
-| Var                  | Meaning                                                                            |
-| -------------------- | ---------------------------------------------------------------------------------- |
-| `WEB`                | web origin under test (`http://localhost:3000`, `https://streamix-web.vercel.app`) |
-| `EMAIL` / `PASSWORD` | broadcaster fixture account **on that target**                                     |
-| `SLUG`               | that account's channel slug                                                        |
-| `BFF_URL`            | API origin; defaults to prod — **always set it for local runs**                    |
+| Var                                                       | `camera-broadcast` | `screen-fallback` | `smoke-rtmp-device` | `seed-fixture` | `smoke-ingest-prod`         |
+| --------------------------------------------------------- | ------------------ | ----------------- | ------------------- | -------------- | --------------------------- |
+| `WEB` — web origin under test                             | ✔                  | ✔                 | ✔                   | —              | —                           |
+| `BFF_URL` — API origin                                    | ✔                  | —                 | ✔                   | ✔              | optional (defaults to prod) |
+| `RTMP_URL` — ingest origin + app path                     | —                  | —                 | ✔                   | —              | —                           |
+| `EMAIL` / `PASSWORD` — fixture account **on that target** | ✔                  | ✔                 | ✔                   | ✔              | ✔                           |
+| `SLUG` — that account's channel slug                      | ✔                  | —                 | ✔                   | ✔              | ✔                           |
+
+`camera-broadcast.mts` and `smoke-rtmp-device.mts` also refuse to run when their
+endpoints mix localhost with a remote host (exit `2`), so a half-set environment
+cannot aim a locally-issued key at the production ingest.
+
+Never put real passwords in a command that gets pasted into a report or a shell
+history file; export them from your own environment.
 
 Prepare a fixture on a target before the first run:
 
 ```bash
 cd apps/svc-media
-BFF_URL=http://localhost:8080 EMAIL=e2e@streamix.test PASSWORD=e2epassword123 \
+BFF_URL=http://localhost:8080 EMAIL=e2e@streamix.test PASSWORD="$LOCAL_E2E_PASSWORD" \
   SLUG=e2e-live pnpm exec tsx ../web/e2e/seed-fixture.mts
 ```
 
 ## Run (from `apps/svc-media` — it has playwright + tsx)
 
 ```bash
-# local full stack: docker compose up -d; db:migrate; pnpm dev
-export WEB=http://localhost:3000 BFF_URL=http://localhost:8080
-export EMAIL=e2e@streamix.test PASSWORD=e2epassword123 SLUG=e2e-live
+# local full stack: docker compose -f infra/docker-compose.yml up -d
+#                   pnpm --filter @streamix/db db:migrate; pnpm dev
+export WEB=http://localhost:3000
+export BFF_URL=http://localhost:8080
+export RTMP_URL=rtmp://localhost:1935/live
+export EMAIL=e2e@streamix.test PASSWORD="$LOCAL_E2E_PASSWORD" SLUG=e2e-live
 
-pnpm exec tsx ../web/e2e/camera-broadcast.mts                  # desktop camera
-SOURCE=screen pnpm exec tsx ../web/e2e/camera-broadcast.mts    # desktop screen
-MOBILE=1 pnpm exec tsx ../web/e2e/camera-broadcast.mts         # phone, front/back preset
+pnpm exec tsx ../web/e2e/camera-broadcast.mts                       # desktop camera
+SOURCE=screen pnpm exec tsx ../web/e2e/camera-broadcast.mts         # desktop screen
+MOBILE=1 pnpm exec tsx ../web/e2e/camera-broadcast.mts              # phone, front/back preset
 MOBILE=1 DEVICE_ID=1 pnpm exec tsx ../web/e2e/camera-broadcast.mts  # phone, detailed pick
-pnpm exec tsx ../web/e2e/screen-fallback.mts                   # screen gating A/B/C + RTMP card
-pnpm exec tsx scripts/smoke-rtmp-device.mts                    # RTMP device ingest
+pnpm exec tsx ../web/e2e/screen-fallback.mts                        # screen gating A/B/C + RTMP card
+pnpm exec tsx scripts/smoke-rtmp-device.mts                         # RTMP device ingest
 ```
 
+For prod, point every variable at the prod target (`WEB=https://…`,
+`BFF_URL=https://…`, `RTMP_URL=rtmp://<prod-ingest>:1935/live`) and use the prod
+smoke account.
+
 Exit codes: `0` all assertions passed · `1` an assertion failed · `2` misconfigured
-(missing env, bad credentials).
+(missing env, mixed targets, bad credentials).
 
 ## Side effects
 
 `screen-fallback.mts` and `smoke-rtmp-device.mts` **rotate the fixture account's
 durable stream key** (the plaintext key only exists in-session, so the card's
 full-URL row needs a fresh one). Any OBS profile on the old key stops working.
-`smoke-rtmp-device.mts` also takes the channel live for `SECONDS` (default 150).
-Point these at a dedicated smoke account, never a real broadcaster's.
+`smoke-rtmp-device.mts` also takes the channel live: the producer runs for **at
+most `SECONDS`** (default 150) and is killed as soon as the assertions finish, so
+the live window is normally much shorter. Point these at a dedicated smoke
+account, never a real broadcaster's.

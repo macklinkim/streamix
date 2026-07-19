@@ -28,9 +28,18 @@ async function rpc<T>(service: string, method: string, body: unknown, token?: st
   return json;
 }
 
+// Credentials come from the environment — never committed. NOTE: this script is
+// currently STALE regardless (the Connect AuthService below is blocked at the BFF
+// edge since P0-1); see 작업계획서-모바일방송.md §10.
+const email = process.env.EMAIL;
+const password = process.env.PASSWORD;
+if (!email || !password) {
+  console.error("FAIL (config) missing required env EMAIL/PASSWORD");
+  process.exit(2);
+}
 const login = await rpc<{ accessToken: string }>("user.v1.AuthService", "Login", {
-  email: "ingest-prod@streamix.test",
-  password: "ingestprodpass123",
+  email,
+  password,
 });
 const { streamKey } = await rpc<{ streamKey: string }>(
   "channel.v1.ChannelService",
