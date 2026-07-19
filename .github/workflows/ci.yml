@@ -32,7 +32,10 @@ jobs:
         run: pnpm proto:lint
 
       - name: Proto breaking-change check
-        run: pnpm proto:breaking
+        env:
+          BUF_AGAINST_REPO: ${{ github.event.repository.clone_url }}
+          BUF_AGAINST_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: pnpm exec buf breaking --against "${BUF_AGAINST_REPO}#ref=${BUF_AGAINST_REF}"
 
       - name: Typecheck
         run: pnpm typecheck
