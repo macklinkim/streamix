@@ -1,0 +1,143 @@
+name: streamix
+
+services:
+  postgres:
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: streamix
+      POSTGRES_PASSWORD: ${STREAMIX_DB_PASSWORD}
+      POSTGRES_DB: streamix
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U streamix -d streamix"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build:
+      context: ../..
+      dockerfile: apps/svc-core/Dockerfile
+    command: ["node", "node_modules/@streamix/db/dist/migrate.js"]
+    environment:
+      DATABASE_URL: postgres://streamix:${STREAMIX_DB_PASSWORD}@postgres:5432/streamix
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  svc-core:
+    build:
+      context: ../..
+      dockerfile: apps/svc-core/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "50051"
+      DATABASE_URL: postgres://streamix:${STREAMIX_DB_PASSWORD}@postgres:5432/streamix
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${STREAMIX_JWT_SECRET}
+      PLAYBACK_SECRET: ${STREAMIX_PLAYBACK_SECRET}
+      INTERNAL_TOKEN: ${STREAMIX_INTERNAL_TOKEN}
+      MEDIA_PUBLIC_URL: https://${STREAMIX_MEDIA_HOST}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  svc-chat:
+    build:
+      context: ../..
+      dockerfile: apps/svc-chat/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "50052"
+      REDIS_URL: redis://redis:6379
+      INTERNAL_TOKEN: ${STREAMIX_INTERNAL_TOKEN}
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  svc-media:
+    build:
+      context: ../..
+      dockerfile: apps/svc-media/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      RTMP_PORT: "1935"
+      HTTP_PORT: "8090"
+      CORE_URL: http://svc-core:50051
+      PLAYBACK_SECRET: ${STREAMIX_PLAYBACK_SECRET}
+      INTERNAL_TOKEN: ${STREAMIX_INTERNAL_TOKEN}
+      INGEST_ALLOWED_ORIGINS: https://${STREAMIX_WEB_HOST}
+      MEDIAMTX_HLS_ORIGIN: http://127.0.0.1:8888
+      MEDIAMTX_API_ORIGIN: http://127.0.0.1:9997
+      MEDIA_INTERNAL_PORT: "8091"
+    ports:
+      - "1935:1935"
+      - "127.0.0.1:8190:8090"
+    depends_on:
+      svc-core:
+        condition: service_started
+
+  bff:
+    build:
+      context: ../..
+      dockerfile: apps/bff/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "8080"
+      CORE_URL: http://svc-core:50051
+      CHAT_URL: http://svc-chat:50052
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${STREAMIX_JWT_SECRET}
+      INTERNAL_TOKEN: ${STREAMIX_INTERNAL_TOKEN}
+      CORS_ORIGINS: https://${STREAMIX_WEB_HOST}
+      COOKIE_SAMESITE: none
+      COOKIE_SECURE: "true"
+      WEB_URL: https://${STREAMIX_WEB_HOST}
+      TWITCH_REDIRECT_URI: https://${STREAMIX_API_HOST}/auth/twitch/callback
+      METRICS_TOKEN: ${STREAMIX_METRICS_TOKEN}
+    ports:
+      - "127.0.0.1:8180:8080"
+    depends_on:
+      svc-core:
+        condition: service_started
+      svc-chat:
+        condition: service_started
+
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_BFF_URL: https://${STREAMIX_API_HOST}
+        NEXT_PUBLIC_WS_URL: wss://${STREAMIX_API_HOST}
+        NEXT_PUBLIC_RTMP_URL: rtmp://${STREAMIX_MEDIA_HOST}:1935/live
+        NEXT_PUBLIC_MEDIA_INGEST_URL: wss://${STREAMIX_MEDIA_HOST}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_BFF_URL: https://${STREAMIX_API_HOST}
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      bff:
+        condition: service_started
+
+volumes:
+  pgdata:
