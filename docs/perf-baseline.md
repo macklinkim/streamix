@@ -1,6 +1,6 @@
 # 미디어 성능 베이스라인 (M0)
 
-> 개선 작업계획서(`작업계획서-개선.md`) §4 M0 산출물. 이후 게이트 G1(CPU 50%↓)·G2(maxrate ±10%)·G3(g2g <6s)의 "대비" 기준 수치.
+> 이후 게이트 G1(CPU 50%↓)·G2(maxrate ±10%)·G3(g2g <6s)의 "대비" 기준 수치.
 > 측정일: 2026-07-05 · 측정 스크립트: `apps/svc-media/scripts/perf-baseline.ts`, `perf-bitrate.ts`, `perf-g2g.ts` (본 문서와 함께 M0에서 신규 추가, 앱 소스 무수정)
 
 ## 0. 측정 환경

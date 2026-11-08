@@ -43,3 +43,14 @@ playwright-report/
 .vercel
 
 .vercel
+
+# Local project notes and agent instructions
+/[Cc][Ll][Aa][Uu][Dd][Ee].md
+/[Aa][Gg][Ee][Nn][Tt][Ss].md
+/.claude/
+/KICKOFF*.md
+/작업계획서*.md
+/STREAMIX-RESTART.md
+/inbox/
+/outbox/
+/plans/
