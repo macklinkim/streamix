@@ -2,6 +2,32 @@
 
 gRPC 기반 실시간 방송 플랫폼 (Twitch-Clone). 상세 계획은 [`작업계획서.md`](./작업계획서.md).
 
+## 화면 미리보기
+
+### 첫 화면
+
+![Streamix 첫 진입 화면](images/screenshots/streamix-home.jpg)
+
+### 로그인과 회원가입
+
+| 로그인 | 회원가입 |
+| --- | --- |
+| ![로그인](images/screenshots/streamix-login.jpg) | ![회원가입](images/screenshots/streamix-signup.jpg) |
+
+### 라이브 목록
+
+![라이브 목록](images/screenshots/streamix-browse.jpg)
+
+### 방송 스튜디오
+
+아래 세 장은 로컬 테스트에서 캡처했습니다. 송출 중 미리보기에는 테스트 영상이 표시됩니다.
+
+| 방송 설정 | 송출 준비와 채팅 |
+| --- | --- |
+| ![방송 설정](images/screenshots/streamix-studio-settings.png) | ![송출 준비와 채팅](images/screenshots/streamix-studio-ready.png) |
+
+![송출 중 미리보기](images/screenshots/streamix-studio-live.png)
+
 ## 아키텍처 (요약)
 
 - **제어 평면**: 브라우저 → BFF(Connect-Web/WS) → 내부 gRPC(`svc-core`/`svc-chat`)
