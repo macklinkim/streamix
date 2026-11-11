@@ -53,7 +53,11 @@ test("live-list failure has a retry action instead of an empty page", async ({ p
   await expect(page.getByText("방송 목록을 불러오지 못했습니다.")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("button", { name: "다시 시도" })).toBeVisible();
   await expect(page.getByText("지금은 라이브 방송이 없어요")).toHaveCount(0);
-  await expect(page.getByRole("searchbox")).toHaveCount(0);
+  // Search is back as a working feature (benchmark G-01), not a dead input (UX-02).
+  const search = page.getByRole("searchbox", { name: "채널 검색" });
+  await search.fill("게임");
+  await search.press("Enter");
+  await expect(page).toHaveURL(/\/search\?q=%EA%B2%8C%EC%9E%84$/);
 });
 
 test("empty live list gives viewers a next action without broadcaster instructions", async ({

@@ -12,6 +12,9 @@ export function VideoList({ slug }: { slug: string }) {
   const { data, isError, refetch } = useQuery({
     queryKey: ["videos", slug],
     queryFn: async () => (await channelClient.listVideos({ slug })).videos,
+    // A broadcast that just ended becomes a replay once its recording closes;
+    // keep polling so viewers on the page see it without reloading.
+    refetchInterval: 30_000,
   });
 
   if (isError)
