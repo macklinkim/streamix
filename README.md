@@ -25,6 +25,7 @@ Streamix는 브라우저와 OBS에서 송출하고, 시청자가 라이브 영�
 ![라이브 목록](images/screenshots/streamix-browse.jpg)
 
 ### 방송 스튜디오
+<img width="1764" height="834" alt="image" src="https://github.com/user-attachments/assets/bb589076-36d5-4665-8198-be42a9f40adf" />
 
 아래 세 장은 로컬 테스트에서 캡처했습니다. 송출 중 미리보기에는 테스트 영상이 표시됩니다.
 
