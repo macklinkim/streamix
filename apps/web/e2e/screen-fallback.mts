@@ -42,8 +42,8 @@ async function main() {
     if (init) await context.addInitScript(init);
     const page = await context.newPage();
     await loginViaUi(page, WEB, EMAIL, PASSWORD);
-    await page.goto(`${WEB}/studio`);
-    await page.getByRole("button", { name: "방송시작" }).waitFor({ timeout: 20000 });
+    await page.goto(`${WEB}/studio/live`);
+    await page.getByRole("button", { name: "송출 시작" }).waitFor({ timeout: 20000 });
     return page;
   }
 
@@ -72,6 +72,7 @@ async function main() {
       );
 
       // D2-b: the card needs an in-session plaintext key for the full-URL row.
+      await page.goto(`${WEB}/studio#rtmp`);
       // Capture the key the server just issued, so the copied value can be
       // compared for equality instead of merely "looks like an rtmp URL".
       const rotated = page.waitForResponse(
@@ -137,7 +138,7 @@ async function main() {
       const screenBtn = page.getByRole("button", { name: "화면" });
       check("B: screen source initially offered (API present)", await screenBtn.isEnabled());
       await screenBtn.click();
-      await page.getByRole("button", { name: "방송시작" }).click();
+      await page.getByRole("button", { name: "송출 시작" }).click();
 
       // The bug this replaces: a silent return to idle with nothing shown.
       const notice = page.getByText("이 브라우저는 화면 송출을 지원하지 않습니다");
@@ -152,9 +153,9 @@ async function main() {
       check("B: screen source now disabled", await screenBtn.isDisabled());
       check(
         "B: source fell back to camera",
-        (await page.getByRole("button", { name: "카메라", exact: true }).getAttribute("class"))?.includes(
-          "border-accent",
-        ) ?? false,
+        (
+          await page.getByRole("button", { name: "카메라", exact: true }).getAttribute("class")
+        )?.includes("border-accent") ?? false,
       );
       await page.context().close();
     }
@@ -169,7 +170,7 @@ async function main() {
 
       const screenBtn = page.getByRole("button", { name: "화면" });
       await screenBtn.click();
-      await page.getByRole("button", { name: "방송시작" }).click();
+      await page.getByRole("button", { name: "송출 시작" }).click();
       await page.waitForTimeout(3000);
 
       check("C: desktop cancel keeps screen enabled", await screenBtn.isEnabled());

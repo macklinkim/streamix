@@ -86,6 +86,29 @@ const MtxEnv = z.object({
   MEDIA_INTERNAL_PORT: z.coerce.number().default(8091),
 });
 const mtxEnv = MtxEnv.parse(process.env);
+
+// --- benchmark M5: replays (G-15) + quality ladder (G-05) ---
+const boolEnv = (dflt: boolean) =>
+  z
+    .enum(["true", "false", "1", "0"])
+    .default(dflt ? "true" : "false")
+    .transform((v) => v === "true" || v === "1");
+const M5Env = z.object({
+  // Copy-remux recorder per live broadcast (near-zero CPU, disk only).
+  VOD_ENABLED: boolEnv(true),
+  // Persistent volume in deployments; recordings are lost without one.
+  VOD_ROOT: z.string().default(join(env.MEDIA_ROOT, "_vod")),
+  // MUST match svc-core's VOD_RETENTION_DAYS (core lists, media deletes).
+  VOD_RETENTION_DAYS: z.coerce.number().int().min(1).default(7),
+  // Recordings shorter than this are discarded (test pushes, false starts).
+  VOD_MIN_SECONDS: z.coerce.number().int().min(0).default(30),
+  // Extra 480p rendition = one live x264 transcode per stream (~0.5-1 core).
+  // Off by default on the shared host; turn on after measuring CPU headroom.
+  ABR_ENABLED: boolEnv(false),
+  ABR_MAX_TRANSCODES: z.coerce.number().int().min(0).default(2),
+  ABR_VIDEO_BITRATE: z.string().default("800k"),
+});
+export const m5 = M5Env.parse(process.env);
 export const mtx = {
   hlsOrigin: mtxEnv.MEDIAMTX_HLS_ORIGIN,
   apiOrigin: mtxEnv.MEDIAMTX_API_ORIGIN,

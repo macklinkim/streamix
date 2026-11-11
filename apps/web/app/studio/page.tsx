@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,11 +10,12 @@ import { z } from "zod";
 import { Code, ConnectError } from "@connectrpc/connect";
 import { Copy, ArrowsClockwise, Check, Eye, EyeSlash } from "@phosphor-icons/react";
 import type { Channel } from "@streamix/proto";
+import { CHANNEL_CATEGORIES, categorySchema } from "@streamix/schemas";
 import { channelClient } from "@/lib/connect";
 import { useAuth } from "@/lib/auth-store";
 import { Field, inputCls } from "@/components/field";
-import { BroadcastPanel } from "@/components/broadcast";
 import { PasswordChangeForm } from "@/components/password-change";
+import { StreamHistory } from "@/components/stream-history";
 
 const schema = z.object({
   title: z.string().min(1, "제목을 입력하세요").max(140),
@@ -22,7 +24,7 @@ const schema = z.object({
     .min(3, "3자 이상")
     .max(50)
     .regex(/^[a-z0-9-]+$/, "영소문자·숫자·하이픈만 사용하세요"),
-  category: z.string().max(50).optional(),
+  category: z.union([z.literal(""), categorySchema]).optional(),
 });
 type Form = z.infer<typeof schema>;
 
@@ -30,19 +32,33 @@ const rtmpBase = process.env.NEXT_PUBLIC_RTMP_URL ?? "rtmp://localhost:1935/live
 
 function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
+  const [failed, setFailed] = useState(false);
   return (
-    <button
-      type="button"
-      onClick={() => {
-        void navigator.clipboard.writeText(value);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-      }}
-      aria-label="복사"
-      className="shrink-0 rounded p-1.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
-    >
-      {copied ? <Check size={16} className="text-accent" /> : <Copy size={16} />}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(value);
+            setFailed(false);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          } catch {
+            setCopied(false);
+            setFailed(true);
+          }
+        }}
+        aria-label={copied ? "복사됨" : "복사"}
+        className="shrink-0 rounded p-1.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+      >
+        {copied ? <Check size={16} className="text-accent" /> : <Copy size={16} />}
+      </button>
+      {failed && (
+        <span role="alert" className="text-xs text-live">
+          복사 실패. 값을 표시해 직접 복사하세요.
+        </span>
+      )}
+    </>
   );
 }
 
@@ -71,7 +87,7 @@ function CreateChannelForm({
     } catch (e) {
       const taken = e instanceof ConnectError && e.code === Code.AlreadyExists;
       setError("root", {
-        message: taken ? "이미 사용 중인 slug입니다." : "채널 생성에 실패했습니다.",
+        message: taken ? "이미 사용 중인 채널 주소입니다." : "채널 생성에 실패했습니다.",
       });
     }
   });
@@ -81,11 +97,18 @@ function CreateChannelForm({
       <Field label="방송 제목" error={errors.title?.message}>
         <input className={inputCls} placeholder="오늘의 방송" {...register("title")} />
       </Field>
-      <Field label="채널 주소 (slug)" error={errors.slug?.message}>
+      <Field label="채널 주소" error={errors.slug?.message}>
         <input className={inputCls} placeholder="my-channel" {...register("slug")} />
       </Field>
       <Field label="카테고리" error={errors.category?.message}>
-        <input className={inputCls} placeholder="저스트 채팅" {...register("category")} />
+        <select className={inputCls} {...register("category")}>
+          <option value="">선택 안 함</option>
+          {CHANNEL_CATEGORIES.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
       </Field>
       {errors.root && <p className="text-sm text-live">{errors.root.message}</p>}
       <button
@@ -120,8 +143,15 @@ function ChannelPanel({
   const [rotating, setRotating] = useState(false);
   const [rotateError, setRotateError] = useState("");
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   async function rotate() {
+    if (
+      !window.confirm(
+        "기존 스트림 키가 즉시 무효화됩니다. OBS 등 방송 장비에도 새 키를 설정해야 합니다. 재발급할까요?",
+      )
+    )
+      return;
     setRotating(true);
     setRotateError("");
     try {
@@ -130,6 +160,7 @@ function ChannelPanel({
         { headers: { authorization: `Bearer ${token}` } },
       );
       setStreamKey(res.streamKey);
+      setRevealed(true);
       await queryClient.invalidateQueries({ queryKey: ["my-channel"] });
     } catch {
       setRotateError("키 재발급에 실패했습니다.");
@@ -150,13 +181,27 @@ function ChannelPanel({
         </div>
         <Link
           href={`/watch/${channel.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
           className="shrink-0 rounded-md border border-zinc-800 px-3 py-1.5 text-sm text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
         >
-          내 방송 보기
+          내 방송 보기 ↗
         </Link>
       </div>
 
-      <BroadcastPanel token={token} />
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+        <h2 className="text-sm font-semibold">방송 시작하기</h2>
+        <p className="mt-2 text-sm text-zinc-400">
+          전용 방송실에서 카메라·화면을 송출하고 실시간 채팅과 사용자를 관리합니다.
+        </p>
+        <button
+          type="button"
+          onClick={() => router.push("/studio/live")}
+          className="mt-4 h-11 w-full rounded-md bg-accent font-semibold text-white transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          {channel.isLive ? "방송 관리실 입장" : "방송시작"}
+        </button>
+      </div>
 
       <div id="rtmp" className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
         <h2 className="text-sm font-semibold text-zinc-100">
@@ -164,7 +209,8 @@ function ChannelPanel({
         </h2>
         <p className="mt-0.5 text-xs text-zinc-500">
           아래 키는 OBS·GoPro·화면 송출 앱 등 외부 RTMP 인코더 전용입니다. 브라우저 방송은 위
-          방송시작 버튼만 누르면 됩니다. 장비로 방송 중에는 브라우저 방송 시작이 거부됩니다.
+          방송시작 버튼으로 전용 방송실에 입장하세요. 장비로 방송 중에는 브라우저 방송 시작이
+          거부됩니다.
         </p>
         <dl className="mt-3 space-y-3 font-mono text-sm">
           <div>
@@ -250,7 +296,7 @@ function ChannelPanel({
         </button>
         {streamKey && (
           <p className="mt-2 text-xs text-zinc-500">
-            이 키는 지금만 표시됩니다. 재발급하면 이전 키는 즉시 무효화됩니다.
+            새 키를 복사해 방송 장비에 설정하세요. 페이지를 떠나면 전체 키를 다시 볼 수 없습니다.
           </p>
         )}
         {rotateError && <p className="mt-2 text-xs text-live">{rotateError}</p>}
@@ -263,7 +309,7 @@ export default function StudioPage() {
   const { token, ready } = useAuth();
   const [createdKey, setCreatedKey] = useState("");
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["my-channel"],
     queryFn: () =>
       channelClient.getMyChannel({}, { headers: { authorization: `Bearer ${token}` } }),
@@ -285,12 +331,19 @@ export default function StudioPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg py-12">
+    <div className="mx-auto max-w-lg py-6">
       {!ready || isLoading ? (
         <div className="animate-pulse space-y-4">
           <div className="h-8 w-1/2 rounded bg-zinc-900" />
           <div className="h-40 rounded-lg bg-zinc-900" />
           <div className="h-40 rounded-lg bg-zinc-900" />
+        </div>
+      ) : isError && !data ? (
+        <div role="alert" className="space-y-3 text-center text-zinc-300">
+          <p>채널 정보를 불러오지 못했습니다. 새 채널을 만들기 전에 다시 시도하세요.</p>
+          <button onClick={() => void refetch()} className="text-accent hover:underline">
+            다시 시도
+          </button>
         </div>
       ) : data?.channel ? (
         <ChannelPanel
@@ -305,6 +358,12 @@ export default function StudioPage() {
           <h1 className="mb-6 text-2xl font-bold tracking-tight">방송 설정</h1>
           <CreateChannelForm token={token!} onCreated={setCreatedKey} />
         </>
+      )}
+
+      {data?.channel && (
+        <div className="mt-10">
+          <StreamHistory />
+        </div>
       )}
 
       {ready && token && (

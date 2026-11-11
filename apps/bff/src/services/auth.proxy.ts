@@ -37,4 +37,12 @@ export const authProxy: ServiceImpl<typeof AuthService> = {
   upsertOauthUser() {
     throw new ConnectError("internal RPC, not exposed to browser", Code.PermissionDenied);
   },
+  async listPendingUsers(req, ctx) {
+    const userId = await requireUser(ctx);
+    return coreAuth.listPendingUsers(req, { headers: { "x-user-id": userId } });
+  },
+  async approveUser(req, ctx) {
+    const userId = await requireUser(ctx);
+    return coreAuth.approveUser(req, { headers: { "x-user-id": userId } });
+  },
 };

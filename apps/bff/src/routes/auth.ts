@@ -30,9 +30,9 @@ let inflightAuth = 0;
 
 // Proto User -> plain JSON. Timestamp fields carry BigInt (unserializable by
 // Fastify) and the browser only needs identity + display name.
-type ProtoUser = { id: string; email: string; displayName: string } | undefined;
+type ProtoUser = { id: string; email: string; displayName: string; isAdmin: boolean } | undefined;
 function toSessionUser(u: ProtoUser) {
-  return u ? { id: u.id, email: u.email, displayName: u.displayName } : null;
+  return u ? { id: u.id, email: u.email, displayName: u.displayName, isAdmin: u.isAdmin } : null;
 }
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
@@ -73,7 +73,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   });
 
   app.post("/auth/login", async (req, reply) => {
-    const body = (req.body ?? {}) as { email?: string; password?: string };
+    const body = (req.body ?? {}) as { email?: string; password?: string; rememberMe?: boolean };
+    if (body.rememberMe !== undefined && typeof body.rememberMe !== "boolean")
+      return reply.code(400).send({ error: "invalid rememberMe" });
+    const rememberMe = body.rememberMe === true;
     const email = body.email ?? "";
     // Rate-limit key is canonicalized so case/whitespace variants of one email
     // share a window; the upstream login call keeps the raw value.
@@ -102,12 +105,12 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     try {
       const res = await coreAuth.login({ email, password: body.password ?? "" });
       const userId = res.user!.id;
-      const session = await createSession(userId);
+      const session = await createSession(userId, rememberMe);
       // fam claim ties this access token to the refresh family so revoking the
       // family (logout / reuse) kills it too (P1-1). No session on a Redis
       // outage -> token has no fam and simply expires naturally.
       const { token } = await mintAccess(userId, session?.family);
-      if (session) reply.header("set-cookie", refreshCookie(session.sid));
+      if (session) reply.header("set-cookie", refreshCookie(session.sid, rememberMe));
       audit("login_success", { ip: req.ip, userId, emailFp: emailFingerprint(email) });
       return reply.code(200).send({ accessToken: token, user: toSessionUser(res.user) });
     } catch (e) {
@@ -136,7 +139,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.code(401).send({ error: r.status }); // invalid | reuse | expired
     }
     const { token } = await mintAccess(r.userId, r.family);
-    reply.header("set-cookie", refreshCookie(r.sid));
+    reply.header("set-cookie", refreshCookie(r.sid, r.rememberMe));
     return reply.code(200).send({ accessToken: token });
   });
 
@@ -188,6 +191,10 @@ function sendConnectError(reply: FastifyReply, e: unknown): FastifyReply {
         return reply.code(409).send({ error: "email already exists" });
       case Code.InvalidArgument:
         return reply.code(400).send({ error: e.rawMessage });
+      case Code.PermissionDenied:
+        return reply
+          .code(403)
+          .send({ error: e.rawMessage === "approval pending" ? "approval pending" : "forbidden" });
       case Code.ResourceExhausted:
         return reply.code(429).send({ error: "rate limited" });
       default:

@@ -27,7 +27,7 @@ export function setup() {
   const h = { "Content-Type": "application/json" };
   const login = http.post(
     `${BFF}/user.v1.AuthService/Login`,
-    JSON.stringify({ email: "e2e@streamix.test", password: "e2epassword123" }),
+    JSON.stringify({ email: "e2e@streamix.test", password: "e2ePassword!123" }),
     { headers: h },
   );
   const token = JSON.parse(login.body).accessToken;

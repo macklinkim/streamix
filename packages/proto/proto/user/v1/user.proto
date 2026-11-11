@@ -11,6 +11,8 @@ message User {
   string email = 2;
   string display_name = 3;
   common.v1.Timestamp created_at = 4;
+  bool approved = 5;
+  bool is_admin = 6;
 }
 
 message RegisterRequest {
@@ -70,6 +72,15 @@ message UpsertOauthUserResponse {
   User user = 1;
 }
 
+message ListPendingUsersRequest {}
+message ListPendingUsersResponse {
+  repeated User users = 1;
+}
+message ApproveUserRequest {
+  string user_id = 1;
+}
+message ApproveUserResponse {}
+
 service AuthService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
@@ -77,4 +88,6 @@ service AuthService {
   rpc Me(MeRequest) returns (MeResponse);
   rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
   rpc UpsertOauthUser(UpsertOauthUserRequest) returns (UpsertOauthUserResponse);
+  rpc ListPendingUsers(ListPendingUsersRequest) returns (ListPendingUsersResponse);
+  rpc ApproveUser(ApproveUserRequest) returns (ApproveUserResponse);
 }

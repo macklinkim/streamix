@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
 export const file_user_v1_user: GenFile =
   /*@__PURE__*/
   fileDesc(
-    "ChJ1c2VyL3YxL3VzZXIucHJvdG8SB3VzZXIudjEiYQoEVXNlchIKCgJpZBgBIAEoCRINCgVlbWFpbBgCIAEoCRIUCgxkaXNwbGF5X25hbWUYAyABKAkSKAoKY3JlYXRlZF9hdBgEIAEoCzIULmNvbW1vbi52MS5UaW1lc3RhbXAiSAoPUmVnaXN0ZXJSZXF1ZXN0Eg0KBWVtYWlsGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCSIvChBSZWdpc3RlclJlc3BvbnNlEhsKBHVzZXIYASABKAsyDS51c2VyLnYxLlVzZXIiLwoMTG9naW5SZXF1ZXN0Eg0KBWVtYWlsGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIlkKDUxvZ2luUmVzcG9uc2USFAoMYWNjZXNzX3Rva2VuGAEgASgJEhUKDXJlZnJlc2hfdG9rZW4YAiABKAkSGwoEdXNlchgDIAEoCzINLnVzZXIudjEuVXNlciInCg5SZWZyZXNoUmVxdWVzdBIVCg1yZWZyZXNoX3Rva2VuGAEgASgJIj4KD1JlZnJlc2hSZXNwb25zZRIUCgxhY2Nlc3NfdG9rZW4YASABKAkSFQoNcmVmcmVzaF90b2tlbhgCIAEoCSILCglNZVJlcXVlc3QiKQoKTWVSZXNwb25zZRIbCgR1c2VyGAEgASgLMg0udXNlci52MS5Vc2VyIkcKFUNoYW5nZVBhc3N3b3JkUmVxdWVzdBIYChBjdXJyZW50X3Bhc3N3b3JkGAEgASgJEhQKDG5ld19wYXNzd29yZBgCIAEoCSIYChZDaGFuZ2VQYXNzd29yZFJlc3BvbnNlIlIKFlVwc2VydE9hdXRoVXNlclJlcXVlc3QSEwoLcHJvdmlkZXJfaWQYASABKAkSDQoFZW1haWwYAiABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJIjYKF1Vwc2VydE9hdXRoVXNlclJlc3BvbnNlEhsKBHVzZXIYASABKAsyDS51c2VyLnYxLlVzZXIynAMKC0F1dGhTZXJ2aWNlEj8KCFJlZ2lzdGVyEhgudXNlci52MS5SZWdpc3RlclJlcXVlc3QaGS51c2VyLnYxLlJlZ2lzdGVyUmVzcG9uc2USNgoFTG9naW4SFS51c2VyLnYxLkxvZ2luUmVxdWVzdBoWLnVzZXIudjEuTG9naW5SZXNwb25zZRI8CgdSZWZyZXNoEhcudXNlci52MS5SZWZyZXNoUmVxdWVzdBoYLnVzZXIudjEuUmVmcmVzaFJlc3BvbnNlEi0KAk1lEhIudXNlci52MS5NZVJlcXVlc3QaEy51c2VyLnYxLk1lUmVzcG9uc2USUQoOQ2hhbmdlUGFzc3dvcmQSHi51c2VyLnYxLkNoYW5nZVBhc3N3b3JkUmVxdWVzdBofLnVzZXIudjEuQ2hhbmdlUGFzc3dvcmRSZXNwb25zZRJUCg9VcHNlcnRPYXV0aFVzZXISHy51c2VyLnYxLlVwc2VydE9hdXRoVXNlclJlcXVlc3QaIC51c2VyLnYxLlVwc2VydE9hdXRoVXNlclJlc3BvbnNlYgZwcm90bzM",
+    "ChJ1c2VyL3YxL3VzZXIucHJvdG8SB3VzZXIudjEihQEKBFVzZXISCgoCaWQYASABKAkSDQoFZW1haWwYAiABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJEigKCmNyZWF0ZWRfYXQYBCABKAsyFC5jb21tb24udjEuVGltZXN0YW1wEhAKCGFwcHJvdmVkGAUgASgIEhAKCGlzX2FkbWluGAYgASgIIkgKD1JlZ2lzdGVyUmVxdWVzdBINCgVlbWFpbBgBIAEoCRIQCghwYXNzd29yZBgCIAEoCRIUCgxkaXNwbGF5X25hbWUYAyABKAkiLwoQUmVnaXN0ZXJSZXNwb25zZRIbCgR1c2VyGAEgASgLMg0udXNlci52MS5Vc2VyIi8KDExvZ2luUmVxdWVzdBINCgVlbWFpbBgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSJZCg1Mb2dpblJlc3BvbnNlEhQKDGFjY2Vzc190b2tlbhgBIAEoCRIVCg1yZWZyZXNoX3Rva2VuGAIgASgJEhsKBHVzZXIYAyABKAsyDS51c2VyLnYxLlVzZXIiJwoOUmVmcmVzaFJlcXVlc3QSFQoNcmVmcmVzaF90b2tlbhgBIAEoCSI+Cg9SZWZyZXNoUmVzcG9uc2USFAoMYWNjZXNzX3Rva2VuGAEgASgJEhUKDXJlZnJlc2hfdG9rZW4YAiABKAkiCwoJTWVSZXF1ZXN0IikKCk1lUmVzcG9uc2USGwoEdXNlchgBIAEoCzINLnVzZXIudjEuVXNlciJHChVDaGFuZ2VQYXNzd29yZFJlcXVlc3QSGAoQY3VycmVudF9wYXNzd29yZBgBIAEoCRIUCgxuZXdfcGFzc3dvcmQYAiABKAkiGAoWQ2hhbmdlUGFzc3dvcmRSZXNwb25zZSJSChZVcHNlcnRPYXV0aFVzZXJSZXF1ZXN0EhMKC3Byb3ZpZGVyX2lkGAEgASgJEg0KBWVtYWlsGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCSI2ChdVcHNlcnRPYXV0aFVzZXJSZXNwb25zZRIbCgR1c2VyGAEgASgLMg0udXNlci52MS5Vc2VyIhkKF0xpc3RQZW5kaW5nVXNlcnNSZXF1ZXN0IjgKGExpc3RQZW5kaW5nVXNlcnNSZXNwb25zZRIcCgV1c2VycxgBIAMoCzINLnVzZXIudjEuVXNlciIlChJBcHByb3ZlVXNlclJlcXVlc3QSDwoHdXNlcl9pZBgBIAEoCSIVChNBcHByb3ZlVXNlclJlc3BvbnNlMr8ECgtBdXRoU2VydmljZRI/CghSZWdpc3RlchIYLnVzZXIudjEuUmVnaXN0ZXJSZXF1ZXN0GhkudXNlci52MS5SZWdpc3RlclJlc3BvbnNlEjYKBUxvZ2luEhUudXNlci52MS5Mb2dpblJlcXVlc3QaFi51c2VyLnYxLkxvZ2luUmVzcG9uc2USPAoHUmVmcmVzaBIXLnVzZXIudjEuUmVmcmVzaFJlcXVlc3QaGC51c2VyLnYxLlJlZnJlc2hSZXNwb25zZRItCgJNZRISLnVzZXIudjEuTWVSZXF1ZXN0GhMudXNlci52MS5NZVJlc3BvbnNlElEKDkNoYW5nZVBhc3N3b3JkEh4udXNlci52MS5DaGFuZ2VQYXNzd29yZFJlcXVlc3QaHy51c2VyLnYxLkNoYW5nZVBhc3N3b3JkUmVzcG9uc2USVAoPVXBzZXJ0T2F1dGhVc2VyEh8udXNlci52MS5VcHNlcnRPYXV0aFVzZXJSZXF1ZXN0GiAudXNlci52MS5VcHNlcnRPYXV0aFVzZXJSZXNwb25zZRJXChBMaXN0UGVuZGluZ1VzZXJzEiAudXNlci52MS5MaXN0UGVuZGluZ1VzZXJzUmVxdWVzdBohLnVzZXIudjEuTGlzdFBlbmRpbmdVc2Vyc1Jlc3BvbnNlEkgKC0FwcHJvdmVVc2VyEhsudXNlci52MS5BcHByb3ZlVXNlclJlcXVlc3QaHC51c2VyLnYxLkFwcHJvdmVVc2VyUmVzcG9uc2ViBnByb3RvMw",
     [file_common_v1_common],
   );
 
@@ -41,6 +41,16 @@ export type User = Message<"user.v1.User"> & {
    * @generated from field: common.v1.Timestamp created_at = 4;
    */
   createdAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: bool approved = 5;
+   */
+  approved: boolean;
+
+  /**
+   * @generated from field: bool is_admin = 6;
+   */
+  isAdmin: boolean;
 };
 
 /**
@@ -309,6 +319,68 @@ export const UpsertOauthUserResponseSchema: GenMessage<UpsertOauthUserResponse> 
   messageDesc(file_user_v1_user, 12);
 
 /**
+ * @generated from message user.v1.ListPendingUsersRequest
+ */
+export type ListPendingUsersRequest = Message<"user.v1.ListPendingUsersRequest"> & {};
+
+/**
+ * Describes the message user.v1.ListPendingUsersRequest.
+ * Use `create(ListPendingUsersRequestSchema)` to create a new message.
+ */
+export const ListPendingUsersRequestSchema: GenMessage<ListPendingUsersRequest> =
+  /*@__PURE__*/
+  messageDesc(file_user_v1_user, 13);
+
+/**
+ * @generated from message user.v1.ListPendingUsersResponse
+ */
+export type ListPendingUsersResponse = Message<"user.v1.ListPendingUsersResponse"> & {
+  /**
+   * @generated from field: repeated user.v1.User users = 1;
+   */
+  users: User[];
+};
+
+/**
+ * Describes the message user.v1.ListPendingUsersResponse.
+ * Use `create(ListPendingUsersResponseSchema)` to create a new message.
+ */
+export const ListPendingUsersResponseSchema: GenMessage<ListPendingUsersResponse> =
+  /*@__PURE__*/
+  messageDesc(file_user_v1_user, 14);
+
+/**
+ * @generated from message user.v1.ApproveUserRequest
+ */
+export type ApproveUserRequest = Message<"user.v1.ApproveUserRequest"> & {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message user.v1.ApproveUserRequest.
+ * Use `create(ApproveUserRequestSchema)` to create a new message.
+ */
+export const ApproveUserRequestSchema: GenMessage<ApproveUserRequest> =
+  /*@__PURE__*/
+  messageDesc(file_user_v1_user, 15);
+
+/**
+ * @generated from message user.v1.ApproveUserResponse
+ */
+export type ApproveUserResponse = Message<"user.v1.ApproveUserResponse"> & {};
+
+/**
+ * Describes the message user.v1.ApproveUserResponse.
+ * Use `create(ApproveUserResponseSchema)` to create a new message.
+ */
+export const ApproveUserResponseSchema: GenMessage<ApproveUserResponse> =
+  /*@__PURE__*/
+  messageDesc(file_user_v1_user, 16);
+
+/**
  * @generated from service user.v1.AuthService
  */
 export const AuthService: GenService<{
@@ -359,5 +431,21 @@ export const AuthService: GenService<{
     methodKind: "unary";
     input: typeof UpsertOauthUserRequestSchema;
     output: typeof UpsertOauthUserResponseSchema;
+  };
+  /**
+   * @generated from rpc user.v1.AuthService.ListPendingUsers
+   */
+  listPendingUsers: {
+    methodKind: "unary";
+    input: typeof ListPendingUsersRequestSchema;
+    output: typeof ListPendingUsersResponseSchema;
+  };
+  /**
+   * @generated from rpc user.v1.AuthService.ApproveUser
+   */
+  approveUser: {
+    methodKind: "unary";
+    input: typeof ApproveUserRequestSchema;
+    output: typeof ApproveUserResponseSchema;
   };
 }> = /*@__PURE__*/ serviceDesc(file_user_v1_user, 0);

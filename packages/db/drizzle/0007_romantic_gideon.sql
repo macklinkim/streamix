@@ -1,0 +1,1 @@
+ALTER TABLE "streams" ADD COLUMN "vod_ready_at" timestamp with time zone;

@@ -2,8 +2,9 @@ import type { WebSocket } from "ws";
 import type { Redis } from "ioredis";
 import { ConnectError } from "@connectrpc/connect";
 import { Gauge, Counter } from "prom-client";
-import { WsCloseCode } from "@streamix/schemas";
-import { redis, createSubscriber } from "../redis.js";
+import { AppErrorCode, WsCloseCode } from "@streamix/schemas";
+import { ChatRole } from "@streamix/proto";
+import { createSubscriber } from "../redis.js";
 import { chat, coreAuth, coreChannel } from "../clients.js";
 import { verifyAccessToken } from "../auth.js";
 
@@ -20,6 +21,49 @@ const ROOM_CREATES_PER_MIN = 5; // per user; separate from the socket ceiling (V
 const HEARTBEAT_MS = 30_000; // ping interval; a socket missing one pong is dead
 const AUTH_FRAME_TIMEOUT_MS = 5000; // first frame must carry the auth token
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Role/follow status is re-read from core at most this often per socket, so a
+// new follow or a moderator change applies within a minute without reconnecting.
+const ROLE_TTL_MS = 60_000;
+const APP_CODES = new Set<string>(Object.values(AppErrorCode));
+
+type ChatAccess = { role: ChatRole; following: boolean; at: number };
+const roleName = (r: ChatRole) =>
+  r === ChatRole.BROADCASTER ? "broadcaster" : r === ChatRole.MODERATOR ? "moderator" : "viewer";
+
+async function loadAccess(channelId: string, userId: string): Promise<ChatAccess> {
+  try {
+    const r = await coreChannel.getChatRole({ channelId, userId });
+    return { role: r.role, following: r.following, at: Date.now() };
+  } catch {
+    // Core outage: least privilege. Short-lived so it is retried soon.
+    return { role: ChatRole.VIEWER, following: false, at: Date.now() - ROLE_TTL_MS + 5000 };
+  }
+}
+
+// Initial room policy for one socket; blocked terms only for moderators.
+async function sendRoomState(socket: WebSocket, channelId: string, access: ChatAccess) {
+  try {
+    const { state } = await chat.getRoomState({ channelId });
+    if (!state || socket.readyState !== 1) return;
+    const privileged = access.role !== ChatRole.VIEWER;
+    const p = state.pinned;
+    socket.send(
+      JSON.stringify({
+        type: "state",
+        state: {
+          slowSeconds: state.slowSeconds,
+          followersOnly: state.followersOnly,
+          pinned: p
+            ? { id: p.id, userId: p.userId, displayName: p.displayName, text: p.text }
+            : null,
+          ...(privileged && { blockedTerms: state.blockedTerms }),
+        },
+      }),
+    );
+  } catch {
+    /* state is advisory; chat still works without it */
+  }
+}
 const userSocketCounts = new Map<string, number>();
 let totalSockets = 0;
 
@@ -72,13 +116,14 @@ const BATCH_WINDOW_MS = 50; // coalescing window for bursty inbound
 const DROP_LOG_INTERVAL_MS = 60_000;
 
 const chatChannel = (id: string) => `chat:${id}`;
-const viewersKey = (id: string) => `viewers:${id}`;
 
 // One Redis subscription per room per BFF instance (ADR-4 refcount), shared by
 // all sockets watching that room. Publish path is svc-chat.
 // queue/timer implement per-room micro-batching; drops counts backpressure skips.
 type Room = {
   sub: Redis;
+  ready: Promise<void>;
+  pending: number;
   sockets: Set<WebSocket>;
   queue: string[];
   timer: ReturnType<typeof setTimeout> | null;
@@ -163,11 +208,21 @@ setInterval(() => {
   }
 }, DROP_LOG_INTERVAL_MS).unref();
 
-async function joinRoom(channelId: string, socket: WebSocket): Promise<void> {
+async function closeEmptyRoom(channelId: string, room: Room): Promise<void> {
+  if (room.pending || room.sockets.size || rooms.get(channelId) !== room) return;
+  rooms.delete(channelId);
+  if (room.timer) clearTimeout(room.timer);
+  await room.sub.unsubscribe().catch(() => {});
+  room.sub.disconnect();
+}
+
+async function joinRoom(channelId: string, socket: WebSocket): Promise<boolean> {
   let room = rooms.get(channelId);
   if (!room) {
     const created: Room = {
       sub: createSubscriber(),
+      ready: Promise.resolve(),
+      pending: 0,
       sockets: new Set(),
       queue: [],
       timer: null,
@@ -175,31 +230,26 @@ async function joinRoom(channelId: string, socket: WebSocket): Promise<void> {
     };
     rooms.set(channelId, created);
     created.sub.on("message", (_ch, payload) => enqueue(created, payload));
-    try {
-      await created.sub.subscribe(chatChannel(channelId));
-    } catch (e) {
-      // Redis down: don't leave a broken room behind; caller marks unavailable.
-      rooms.delete(channelId);
-      created.sub.disconnect();
-      throw e;
-    }
+    created.ready = created.sub.subscribe(chatChannel(channelId)).then(() => {});
     room = created;
   }
-  room.sockets.add(socket);
-  await redis.incr(viewersKey(channelId)).catch(() => {}); // viewer count is best-effort
+  room.pending += 1;
+  try {
+    await room.ready;
+    if (socket.readyState !== 1) return false;
+    room.sockets.add(socket);
+    return true;
+  } finally {
+    room.pending -= 1;
+    await closeEmptyRoom(channelId, room);
+  }
 }
 
 async function leaveRoom(channelId: string, socket: WebSocket): Promise<void> {
   const room = rooms.get(channelId);
   if (!room) return;
-  room.sockets.delete(socket);
-  await redis.decr(viewersKey(channelId)).catch(() => {});
-  if (room.sockets.size === 0) {
-    if (room.timer) clearTimeout(room.timer);
-    await room.sub.unsubscribe().catch(() => {});
-    room.sub.disconnect();
-    rooms.delete(channelId);
-  }
+  if (!room.sockets.delete(socket)) return;
+  await closeEmptyRoom(channelId, room);
 }
 
 // Wait for the client's first frame, which must be {type:"auth", token}. The
@@ -250,10 +300,17 @@ export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
     }
   };
   socket.once("close", releaseTotal);
+  let closed = false;
+  let joined = false;
+  socket.once("close", () => {
+    closed = true;
+    if (joined) void leaveRoom(channelId, socket);
+  });
 
   // Token arrives in the first frame, not the URL (P1-3).
   const userId = await verifyAccessToken(await awaitAuthToken(socket));
   if (!userId) return reject(socket, WsCloseCode.UNAUTHENTICATED, "authentication required");
+  if (closed || socket.readyState !== 1) return;
 
   // Per-user socket ceiling (P2-2). Decrement is registered immediately so any
   // later rejection path (room caps below) can't leak the count.
@@ -274,6 +331,7 @@ export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
     if (!(await channelExists(channelId)))
       return reject(socket, WsCloseCode.ROOM_NOT_FOUND, "channel not found");
   }
+  if (closed || socket.readyState !== 1) return;
 
   // Idle reaping: ws core answers pings automatically, so a live client always
   // pongs; one missed round = dead connection holding a room slot.
@@ -301,22 +359,47 @@ export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
   }
 
   try {
-    await joinRoom(channelId, socket);
+    if (closed || socket.readyState !== 1) return;
+    if (!(await joinRoom(channelId, socket))) return;
   } catch {
     // Chat depends on Redis pub/sub; on outage close cleanly (unavailable), no crash.
-    return socket.close(WsCloseCode.SERVER_ERROR, "chat unavailable");
+    if (!closed) socket.close(WsCloseCode.SERVER_ERROR, "chat unavailable");
+    return;
   }
-  socket.on("close", () => void leaveRoom(channelId, socket));
+  joined = true;
+  if (closed || socket.readyState !== 1) {
+    void leaveRoom(channelId, socket);
+    return;
+  }
+  let access = await loadAccess(channelId, userId);
   // Auth + join done: tell the client it may enable input and start sending.
-  if (socket.readyState === 1) socket.send(JSON.stringify({ type: "ready" }));
+  if (socket.readyState === 1)
+    socket.send(JSON.stringify({ type: "ready", role: roleName(access.role) }));
+  await sendRoomState(socket, channelId, access);
+
+  const sendOnce = (text: string, replyToId: string) =>
+    chat.send(
+      { channelId, text, replyToId },
+      {
+        headers: {
+          "x-user-id": userId,
+          "x-display-name": encodeURIComponent(displayName),
+          "x-chat-badges": access.role === ChatRole.VIEWER ? "" : roleName(access.role),
+          "x-chat-follower": access.following ? "1" : "0",
+        },
+      },
+    );
 
   let sendTimes: number[] = [];
   socket.on("message", async (data: Buffer) => {
     let text: string;
+    let replyToId = "";
     try {
       const msg = JSON.parse(data.toString());
       if (msg?.type !== "send" || typeof msg.text !== "string") return;
       text = msg.text;
+      if (typeof msg.replyToId === "string" && UUID_RE.test(msg.replyToId))
+        replyToId = msg.replyToId;
     } catch {
       return;
     }
@@ -330,15 +413,32 @@ export async function handleChatWs(socket: WebSocket, url: URL): Promise<void> {
     }
     sendTimes.push(now);
 
+    if (Date.now() - access.at > ROLE_TTL_MS) {
+      const before = access.role;
+      access = await loadAccess(channelId, userId);
+      // Appointed/removed as moderator mid-session: let the client swap its UI.
+      // ponytail: only noticed on the user's next send (role re-read is lazy);
+      // upgrade = publish a role-change event from core.
+      if (access.role !== before && socket.readyState === 1)
+        socket.send(JSON.stringify({ type: "ready", role: roleName(access.role) }));
+    }
     try {
-      await chat.send(
-        { channelId, text },
-        { headers: { "x-user-id": userId, "x-display-name": encodeURIComponent(displayName) } },
-      );
+      try {
+        await sendOnce(text, replyToId);
+      } catch (e) {
+        // Followed after joining? Re-check once before rejecting.
+        const followersOnly =
+          e instanceof ConnectError && e.rawMessage === AppErrorCode.FOLLOWERS_ONLY;
+        if (!followersOnly || access.following) throw e;
+        access = await loadAccess(channelId, userId);
+        if (!access.following) throw e;
+        await sendOnce(text, replyToId);
+      }
     } catch (e) {
-      const code = e instanceof ConnectError ? e.code : "internal";
-      if (socket.readyState === 1)
-        socket.send(JSON.stringify({ type: "error", code: String(code) }));
+      // svc-chat app errors carry the AppErrorCode as their message.
+      const code =
+        e instanceof ConnectError && APP_CODES.has(e.rawMessage) ? e.rawMessage : "internal";
+      if (socket.readyState === 1) socket.send(JSON.stringify({ type: "error", code }));
     }
   });
 }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { isWeakPassword } from "@streamix/schemas";
+import { passwordSchema, passwordPolicyMessage } from "@streamix/schemas";
 import { apiChangePassword, AuthError } from "@/lib/session";
 import { useAuth } from "@/lib/auth-store";
 import { Field, inputCls } from "@/components/field";
@@ -13,10 +13,7 @@ import { Field, inputCls } from "@/components/field";
 const schema = z
   .object({
     currentPassword: z.string().min(1, "현재 비밀번호를 입력하세요"),
-    newPassword: z
-      .string()
-      .min(12, "비밀번호는 12자 이상이어야 합니다")
-      .refine((p) => !isWeakPassword(p), "너무 흔하거나 예측하기 쉬운 비밀번호입니다"),
+    newPassword: passwordSchema,
     confirm: z.string(),
   })
   .refine((v) => v.newPassword === v.confirm, {
@@ -51,7 +48,7 @@ export function PasswordChangeForm() {
       if (e instanceof AuthError && e.status === 401) {
         setError("currentPassword", { message: "현재 비밀번호가 올바르지 않습니다" });
       } else if (e instanceof AuthError && e.status === 400) {
-        setError("newPassword", { message: "비밀번호 정책을 확인하세요 (12자 이상)" });
+        setError("newPassword", { message: passwordPolicyMessage });
       } else {
         setError("confirm", { message: "변경에 실패했습니다. 다시 시도하세요" });
       }

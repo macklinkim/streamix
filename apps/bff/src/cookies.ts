@@ -10,20 +10,16 @@ const COOKIE_PATH = "/auth";
 const secure = env.COOKIE_SECURE || env.COOKIE_SAMESITE === "none";
 const sameSiteLabel = { strict: "Strict", lax: "Lax", none: "None" }[env.COOKIE_SAMESITE];
 
-function attrs(maxAgeSec: number): string {
-  const parts = [
-    `Path=${COOKIE_PATH}`,
-    "HttpOnly",
-    `SameSite=${sameSiteLabel}`,
-    `Max-Age=${maxAgeSec}`,
-  ];
+function attrs(maxAgeSec?: number): string {
+  const parts = [`Path=${COOKIE_PATH}`, "HttpOnly", `SameSite=${sameSiteLabel}`];
+  if (maxAgeSec !== undefined) parts.push(`Max-Age=${maxAgeSec}`);
   if (secure) parts.push("Secure");
   if (env.COOKIE_DOMAIN) parts.push(`Domain=${env.COOKIE_DOMAIN}`);
   return parts.join("; ");
 }
 
-export function refreshCookie(sid: string): string {
-  return `${REFRESH_COOKIE}=${sid}; ${attrs(env.REFRESH_TTL_DAYS * 86400)}`;
+export function refreshCookie(sid: string, rememberMe = true): string {
+  return `${REFRESH_COOKIE}=${sid}; ${attrs(rememberMe ? env.REFRESH_TTL_DAYS * 86400 : undefined)}`;
 }
 
 /** A Set-Cookie value that immediately expires the refresh cookie (logout). */

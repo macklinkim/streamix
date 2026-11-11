@@ -1,7 +1,7 @@
 import { createClient, Code, ConnectError } from "@connectrpc/connect";
 import type { Interceptor } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
-import { AuthService, ChannelService } from "@streamix/proto";
+import { AuthService, ChannelService, ChatService } from "@streamix/proto";
 import { bffUrl, wsUrl } from "./api-base";
 import { apiRefresh } from "./session";
 import { useAuth } from "./auth-store";
@@ -32,3 +32,4 @@ const refreshInterceptor: Interceptor = (next) => async (req) => {
 const transport = createConnectTransport({ baseUrl: bffUrl, interceptors: [refreshInterceptor] });
 export const authClient = createClient(AuthService, transport);
 export const channelClient = createClient(ChannelService, transport);
+export const chatClient = createClient(ChatService, transport);

@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 // Deterministic fixture created by apps/svc-media/scripts/e2e-seed.ts.
 const EMAIL = "e2e@streamix.test";
-const PASSWORD = "e2epassword123";
+const PASSWORD = "e2ePassword!123";
 const SLUG = "e2e-live";
 
 test("happy path: login -> live list -> watch -> chat", async ({ page }) => {

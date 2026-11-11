@@ -83,6 +83,34 @@ ok(
   ok("refresh blocked after access-deny marker gone", after.status !== "ok", after.status);
 }
 
+// 4. Cookie persistence must survive rotations and their concurrent grace path.
+for (const rememberMe of [false, true]) {
+  const s = await createSession(`persistence-user-${crypto.randomUUID()}`, rememberMe);
+  if (!s) throw new Error("redis unavailable");
+  const first = await rotateSession(s.sid);
+  const concurrent = await rotateSession(s.sid);
+  ok(
+    `rememberMe=${rememberMe} survives rotation`,
+    first.status === "ok" && first.rememberMe === rememberMe,
+  );
+  ok(
+    `rememberMe=${rememberMe} survives grace replay`,
+    concurrent.status === "ok" && concurrent.rememberMe === rememberMe,
+  );
+  if (first.status === "ok") {
+    ok(
+      `rememberMe=${rememberMe} stored on successor`,
+      (await redis.hget(`refresh:${first.sid}`, "rememberMe")) === (rememberMe ? "1" : "0"),
+    );
+    const next = await rotateSession(first.sid);
+    ok(
+      `rememberMe=${rememberMe} survives another rotation`,
+      next.status === "ok" && next.rememberMe === rememberMe,
+    );
+  }
+  await revokeSession(s.sid);
+}
+
 await redis.quit();
 console.log(failures ? `\nSTRESS FAILED (${failures})` : "\nSTRESS OK");
 process.exit(failures ? 1 : 0);

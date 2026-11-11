@@ -14,6 +14,13 @@ message ChatMessage {
   string display_name = 4;
   string text = 5;
   common.v1.Timestamp sent_at = 6;
+  // Sender role badges at send time: "broadcaster" | "moderator".
+  repeated string badges = 7;
+  // Reply context, resolved server-side from the parent message (never trusted
+  // from the client). Empty when the message is not a reply.
+  string reply_to_id = 8;
+  string reply_to_name = 9;
+  string reply_to_text = 10;
 }
 
 message JoinRequest {
@@ -27,6 +34,8 @@ message JoinResponse {
 message SendRequest {
   string channel_id = 1;
   string text = 2;
+  // Optional parent message id; ignored if the parent expired from recent history.
+  string reply_to_id = 3;
 }
 
 message SendResponse {
@@ -38,6 +47,13 @@ enum ModerationAction {
   MODERATION_ACTION_BAN = 1;
   MODERATION_ACTION_UNBAN = 2;
   MODERATION_ACTION_SLOWMODE = 3;
+  // message_id required.
+  MODERATION_ACTION_DELETE_MESSAGE = 4;
+  // message_id required.
+  MODERATION_ACTION_PIN = 5;
+  MODERATION_ACTION_UNPIN = 6;
+  // duration_seconds > 0 turns followers-only chat on, 0 turns it off.
+  MODERATION_ACTION_FOLLOWERS_ONLY = 7;
 }
 
 message ModerateRequest {
@@ -45,13 +61,42 @@ message ModerateRequest {
   string target_user_id = 2;
   ModerationAction action = 3;
   int32 duration_seconds = 4;
+  string message_id = 5;
 }
 
 message ModerateResponse {}
+
+message GetRoomStateRequest {
+  string channel_id = 1;
+}
+
+// Current chat room policy, sent to each socket on join and re-broadcast on change.
+message RoomState {
+  int32 slow_seconds = 1;
+  bool followers_only = 2;
+  // Unset when nothing is pinned.
+  ChatMessage pinned = 3;
+  // Lowercased blocked terms. The BFF forwards these to moderators only.
+  repeated string blocked_terms = 4;
+}
+
+message GetRoomStateResponse {
+  RoomState state = 1;
+}
+
+// Replaces the channel blocked-term list (case-insensitive substring match).
+message SetBlockedTermsRequest {
+  string channel_id = 1;
+  repeated string terms = 2;
+}
+
+message SetBlockedTermsResponse {}
 
 service ChatService {
   // Server-streaming example (§6.2): subscribe to a room's message feed.
   rpc Join(JoinRequest) returns (stream JoinResponse);
   rpc Send(SendRequest) returns (SendResponse);
   rpc Moderate(ModerateRequest) returns (ModerateResponse);
+  rpc GetRoomState(GetRoomStateRequest) returns (GetRoomStateResponse);
+  rpc SetBlockedTerms(SetBlockedTermsRequest) returns (SetBlockedTermsResponse);
 }

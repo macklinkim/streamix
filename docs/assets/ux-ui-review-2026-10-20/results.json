@@ -1,0 +1,2073 @@
+{
+  "environment": "localhost:3000, mocked REST/Connect/WebSocket, fake camera",
+  "scans": [
+    {
+      "name": "signup-1920",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scrollWidth": 1920,
+      "scrollHeight": 1080,
+      "version": "4.14.0",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+                      "target": [".px-3\\.5"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+              "target": [".px-3\\.5"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#09090b",
+                    "contrastRatio": 4.12,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<h2 class=\"px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500\">라이브 채널</h2>",
+              "target": ["h2"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<button type=\"submit\" class=\"h-10 rounded-md bg-accent font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.99] disabled:opacity-50\">회원가입</button>",
+                      "target": [".active\\:scale-\\[0\\.99\\]"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"submit\" class=\"h-10 rounded-md bg-accent font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.99] disabled:opacity-50\">회원가입</button>",
+              "target": [".active\\:scale-\\[0\\.99\\]"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "incomplete": []
+    },
+    {
+      "name": "signup-768",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "scrollWidth": 768,
+      "scrollHeight": 1024,
+      "version": "4.14.0",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+                      "target": [".px-3\\.5"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+              "target": [".px-3\\.5"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<button type=\"submit\" class=\"h-10 rounded-md bg-accent font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.99] disabled:opacity-50\">회원가입</button>",
+                      "target": [".active\\:scale-\\[0\\.99\\]"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"submit\" class=\"h-10 rounded-md bg-accent font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.99] disabled:opacity-50\">회원가입</button>",
+              "target": [".active\\:scale-\\[0\\.99\\]"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "incomplete": []
+    },
+    {
+      "name": "signup-375",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "scrollWidth": 375,
+      "scrollHeight": 667,
+      "version": "4.14.0",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+                      "target": [".px-3\\.5"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+              "target": [".px-3\\.5"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<button type=\"submit\" class=\"h-10 rounded-md bg-accent font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.99] disabled:opacity-50\">회원가입</button>",
+                      "target": ["button"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"submit\" class=\"h-10 rounded-md bg-accent font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.99] disabled:opacity-50\">회원가입</button>",
+              "target": ["button"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "incomplete": []
+    },
+    {
+      "name": "signup-320",
+      "viewport": {
+        "width": 320,
+        "height": 667
+      },
+      "scrollWidth": 320,
+      "scrollHeight": 667,
+      "version": "4.14.0",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+                      "target": [".px-3\\.5"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+              "target": [".px-3\\.5"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<button type=\"submit\" class=\"h-10 rounded-md bg-accent font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.99] disabled:opacity-50\">회원가입</button>",
+                      "target": [".active\\:scale-\\[0\\.99\\]"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"submit\" class=\"h-10 rounded-md bg-accent font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.99] disabled:opacity-50\">회원가입</button>",
+              "target": [".active\\:scale-\\[0\\.99\\]"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "incomplete": []
+    },
+    {
+      "name": "landing-375",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "scrollWidth": 375,
+      "scrollHeight": 667,
+      "version": "4.14.0",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#09090b",
+                    "contrastRatio": 4.12,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\" style=\"overflow: hidden;\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<p class=\"mt-1 text-sm text-zinc-500\">새 방송을 15초마다 자동으로 확인합니다.</p>",
+              "target": [".mt-1"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [".mb-2"],
+            ["#landing-title"],
+            [".mt-2.text-zinc-400"],
+            ["label[for=\"landing-email\"]"],
+            ["#landing-email"],
+            ["label[for=\"landing-password\"]"],
+            ["#landing-password"],
+            [".cursor-pointer:nth-child(1)"],
+            [".cursor-pointer:nth-child(2)"],
+            [".bg-\\[\\#9146FF\\]\\/10"],
+            [
+              ".border-\\[\\#9146FF\\]\\/40.text-\\[\\#c9b3ff\\].hover\\:bg-\\[\\#9146FF\\]\\/20:nth-child(4)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "home-empty",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scrollWidth": 1920,
+      "scrollHeight": 1080,
+      "version": "4.14.0",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+                      "target": [".bg-accent"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+              "target": [".bg-accent"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#09090b",
+                    "contrastRatio": 4.12,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<h2 class=\"px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500\">라이브 채널</h2>",
+              "target": ["h2"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#09090b",
+                    "contrastRatio": 4.12,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<span class=\"font-mono text-sm text-zinc-500\">0개 방송 중</span>",
+              "target": ["span"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#09090b",
+                    "contrastRatio": 4.12,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<p class=\"mt-1 text-sm text-zinc-500\">새 방송을 15초마다 자동으로 확인합니다.</p>",
+              "target": [".mt-1"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "incomplete": []
+    },
+    {
+      "name": "login",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scrollWidth": 1920,
+      "scrollHeight": 1080,
+      "version": "4.14.0",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+                      "target": [".px-3\\.5"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+              "target": [".px-3\\.5"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#09090b",
+                    "contrastRatio": 4.12,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<h2 class=\"px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500\">라이브 채널</h2>",
+              "target": ["h2"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<button type=\"submit\" class=\"h-10 rounded-md bg-accent font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.99] disabled:opacity-50\">로그인</button>",
+                      "target": [".active\\:scale-\\[0\\.99\\]"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"submit\" class=\"h-10 rounded-md bg-accent font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.99] disabled:opacity-50\">로그인</button>",
+              "target": [".active\\:scale-\\[0\\.99\\]"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "incomplete": []
+    },
+    {
+      "name": "watch-offline",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scrollWidth": 1920,
+      "scrollHeight": 1080,
+      "version": "4.14.0",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+                      "target": [".px-3\\.5"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+              "target": [".px-3\\.5"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#09090b",
+                    "contrastRatio": 4.12,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<h2 class=\"px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500\">라이브 채널</h2>",
+              "target": [".pb-2"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#52525c",
+                    "bgColor": "#18181b",
+                    "contrastRatio": 2.29,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<div class=\"grid aspect-video w-full place-items-center rounded-lg border border-zinc-800 bg-zinc-900\"><div class=\"text-center\"><p class=\"text-zinc-400\">오프라인 방송입니다</p><p class=\"mt-1 text-xs text-zinc-600\">방송이 시작되면 자동으로 재생됩니다</p></div></div>",
+                      "target": [".aspect-video"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 2.29 (foreground color: #52525c, background color: #18181b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<p class=\"mt-1 text-xs text-zinc-600\">방송이 시작되면 자동으로 재생됩니다</p>",
+              "target": [".mt-1"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.29 (foreground color: #52525c, background color: #18181b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#101013",
+                    "contrastRatio": 3.93,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<div class=\"flex h-full min-h-0 flex-col rounded-lg border border-zinc-800 bg-zinc-900/50\">",
+                      "target": [".bg-zinc-900\\/50"]
+                    },
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<p class=\"text-sm text-zinc-500\">채팅하려면 로그인하세요.</p>",
+              "target": [".space-y-2 > .text-zinc-500"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "incomplete": []
+    },
+    {
+      "name": "admin-guest",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scrollWidth": 1920,
+      "scrollHeight": 1080,
+      "version": "4.14.0",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+                      "target": [".bg-accent"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<a class=\"rounded-md bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98]\" href=\"/signup\">회원가입</a>",
+              "target": [".bg-accent"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#09090b",
+                    "contrastRatio": 4.12,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<h2 class=\"px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500\">라이브 채널</h2>",
+              "target": ["h2"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "incomplete": []
+    },
+    {
+      "name": "admin-pending-375",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "scrollWidth": 375,
+      "scrollHeight": 667,
+      "version": "4.14.0",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<button type=\"button\" class=\"min-h-11 rounded-md bg-accent px-5 text-sm font-semibold text-white hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50\">승인</button>",
+                      "target": [".min-h-11"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" class=\"min-h-11 rounded-md bg-accent px-5 text-sm font-semibold text-white hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50\">승인</button>",
+              "target": [".min-h-11"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "incomplete": []
+    },
+    {
+      "name": "studio-ready",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scrollWidth": 1920,
+      "scrollHeight": 1080,
+      "version": "4.14.0",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#09090b",
+                    "contrastRatio": 4.12,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<h2 class=\"px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500\">라이브 채널</h2>",
+              "target": [".pb-2"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#101013",
+                    "contrastRatio": 3.93,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<div class=\"rounded-lg border border-zinc-800 bg-zinc-900/50 p-4\">",
+                      "target": [".p-4"]
+                    },
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<p class=\"mt-0.5 text-xs text-zinc-500\">카메라나 화면을 OBS 없이 바로 송출합니다. 시청자에게는 몇 초 뒤에 보입니다.</p>",
+              "target": [".mt-0\\.5"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<button class=\"flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98] disabled:opacity-50\">",
+                      "target": [".active\\:scale-\\[0\\.98\\]"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button class=\"flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98] disabled:opacity-50\">",
+              "target": [".active\\:scale-\\[0\\.98\\]"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#101013",
+                    "contrastRatio": 3.93,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<div class=\"flex h-full min-h-0 flex-col rounded-lg border border-zinc-800 bg-zinc-900/50\">",
+                      "target": [".h-full.min-h-0.flex-col"]
+                    },
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<p class=\"text-xs text-zinc-500\">채팅 작성자 이름을 눌러 채팅 금지·해제를 관리하세요.</p>",
+              "target": [".space-y-2.border-b.py-3 > .text-zinc-500"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#7658f3",
+                    "bgColor": "#101013",
+                    "contrastRatio": 4.03,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<div class=\"flex h-full min-h-0 flex-col rounded-lg border border-zinc-800 bg-zinc-900/50\">",
+                      "target": [".h-full.min-h-0.flex-col"]
+                    },
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.03 (foreground color: #7658f3, background color: #101013, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" aria-label=\"시청자 채팅 관리\" class=\"rounded font-semibold text-accent underline decoration-dotted underline-offset-4 focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50\">시청자</button>",
+              "target": [".underline"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.03 (foreground color: #7658f3, background color: #101013, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "incomplete": []
+    },
+    {
+      "name": "studio-live",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scrollWidth": 1920,
+      "scrollHeight": 1080,
+      "version": "4.14.0",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#09090b",
+                    "contrastRatio": 4.12,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<h2 class=\"px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500\">라이브 채널</h2>",
+              "target": [".pb-2"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#101013",
+                    "contrastRatio": 3.93,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<div class=\"rounded-lg border border-zinc-800 bg-zinc-900/50 p-4\">",
+                      "target": [".p-4"]
+                    },
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<p class=\"mt-0.5 text-xs text-zinc-500\">카메라나 화면을 OBS 없이 바로 송출합니다. 시청자에게는 몇 초 뒤에 보입니다.</p>",
+              "target": [".mt-0\\.5"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ff3b5c",
+                    "bgColor": "#4c1b25",
+                    "contrastRatio": 4.04,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<button class=\"flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-live/15 px-3 text-sm font-semibold text-live transition-colors hover:bg-live/25 active:scale-[0.98]\">",
+                      "target": [".bg-live\\/15"]
+                    },
+                    {
+                      "html": "<div class=\"rounded-lg border border-zinc-800 bg-zinc-900/50 p-4\">",
+                      "target": [".p-4"]
+                    },
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.04 (foreground color: #ff3b5c, background color: #4c1b25, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button class=\"flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-live/15 px-3 text-sm font-semibold text-live transition-colors hover:bg-live/25 active:scale-[0.98]\">",
+              "target": [".bg-live\\/15"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.04 (foreground color: #ff3b5c, background color: #4c1b25, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#101013",
+                    "contrastRatio": 3.93,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<div class=\"flex h-full min-h-0 flex-col rounded-lg border border-zinc-800 bg-zinc-900/50\">",
+                      "target": [".h-full.min-h-0.flex-col"]
+                    },
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<p class=\"text-xs text-zinc-500\">채팅 작성자 이름을 눌러 채팅 금지·해제를 관리하세요.</p>",
+              "target": [".space-y-2.border-b.py-3 > .text-zinc-500"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#7c5cff",
+                    "bgColor": "#101013",
+                    "contrastRatio": 4.37,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<div class=\"flex h-full min-h-0 flex-col rounded-lg border border-zinc-800 bg-zinc-900/50\">",
+                      "target": [".h-full.min-h-0.flex-col"]
+                    },
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.37 (foreground color: #7c5cff, background color: #101013, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" aria-label=\"시청자 채팅 관리\" class=\"rounded font-semibold text-accent underline decoration-dotted underline-offset-4 focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50\">시청자</button>",
+              "target": [".underline"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.37 (foreground color: #7c5cff, background color: #101013, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "incomplete": [
+        {
+          "id": "video-caption",
+          "impact": "critical",
+          "nodes": [["video"]]
+        }
+      ]
+    },
+    {
+      "name": "studio-settings",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scrollWidth": 1920,
+      "scrollHeight": 1100,
+      "version": "4.14.0",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#09090b",
+                    "contrastRatio": 4.12,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<h2 class=\"px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500\">라이브 채널</h2>",
+              "target": [".pb-2"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.12 (foreground color: #71717b, background color: #09090b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<button type=\"button\" class=\"mt-4 h-11 w-full rounded-md bg-accent font-semibold text-white transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent\">방송시작</button>",
+                      "target": [".mt-4"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" class=\"mt-4 h-11 w-full rounded-md bg-accent font-semibold text-white transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent\">방송시작</button>",
+              "target": [".mt-4"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#101013",
+                    "contrastRatio": 3.93,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<div id=\"rtmp\" class=\"rounded-lg border border-zinc-800 bg-zinc-900/50 p-4\">",
+                      "target": ["#rtmp"]
+                    },
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<p class=\"mt-0.5 text-xs text-zinc-500\">아래 키는 OBS·GoPro·화면 송출 앱 등 외부 RTMP 인코더 전용입니다. 브라우저 방송은 위 방송시작 버튼으로 전용 방송실에 입장하세요. 장비로 방송 중에는 브라우저 방송 시작이 거부됩니다.</p>",
+              "target": ["#rtmp > .mt-0\\.5"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#101013",
+                    "contrastRatio": 3.93,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<div id=\"rtmp\" class=\"rounded-lg border border-zinc-800 bg-zinc-900/50 p-4\">",
+                      "target": ["#rtmp"]
+                    },
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<dt class=\"text-xs uppercase text-zinc-500\">서버</dt>",
+              "target": ["div:nth-child(1) > dt"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#101013",
+                    "contrastRatio": 3.93,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<div id=\"rtmp\" class=\"rounded-lg border border-zinc-800 bg-zinc-900/50 p-4\">",
+                      "target": ["#rtmp"]
+                    },
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<dt class=\"text-xs uppercase text-zinc-500\">스트림 키</dt>",
+              "target": ["div:nth-child(2) > dt"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#101013",
+                    "contrastRatio": 3.93,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<div id=\"rtmp\" class=\"rounded-lg border border-zinc-800 bg-zinc-900/50 p-4\">",
+                      "target": ["#rtmp"]
+                    },
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<dd class=\"text-zinc-500\">보안을 위해 저장된 키는 다시 보여드릴 수 없습니다. 잃어버렸다면 재발급하세요.</dd>",
+              "target": ["div:nth-child(2) > dd"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<button type=\"submit\" class=\"h-9 rounded-md bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50\">비밀번호 변경</button>",
+                      "target": ["button[type=\"submit\"]"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"submit\" class=\"h-9 rounded-md bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50\">비밀번호 변경</button>",
+              "target": ["button[type=\"submit\"]"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "incomplete": []
+    },
+    {
+      "name": "studio-ready-375",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "scrollWidth": 375,
+      "scrollHeight": 1145,
+      "version": "4.14.0",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#101013",
+                    "contrastRatio": 3.93,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<div class=\"rounded-lg border border-zinc-800 bg-zinc-900/50 p-4\">",
+                      "target": [".p-4"]
+                    },
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<p class=\"mt-0.5 text-xs text-zinc-500\">카메라나 화면을 OBS 없이 바로 송출합니다. 시청자에게는 몇 초 뒤에 보입니다.</p>",
+              "target": [".mt-0\\.5"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#ffffff",
+                    "bgColor": "#7c5cff",
+                    "contrastRatio": 4.34,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<button class=\"flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98] disabled:opacity-50\">",
+                      "target": [".active\\:scale-\\[0\\.98\\]"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button class=\"flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98] disabled:opacity-50\">",
+              "target": [".active\\:scale-\\[0\\.98\\]"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #ffffff, background color: #7c5cff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#71717b",
+                    "bgColor": "#101013",
+                    "contrastRatio": 3.93,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<div class=\"flex h-full min-h-0 flex-col rounded-lg border border-zinc-800 bg-zinc-900/50\">",
+                      "target": [".h-full.min-h-0.flex-col"]
+                    },
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<p class=\"text-xs text-zinc-500\">채팅 작성자 이름을 눌러 채팅 금지·해제를 관리하세요.</p>",
+              "target": [".space-y-2.border-b.py-3 > .text-zinc-500"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #71717b, background color: #101013, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "fgColor": "#7c5cff",
+                    "bgColor": "#101013",
+                    "contrastRatio": 4.37,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": null,
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "html": "<div class=\"flex h-full min-h-0 flex-col rounded-lg border border-zinc-800 bg-zinc-900/50\">",
+                      "target": [".h-full.min-h-0.flex-col"]
+                    },
+                    {
+                      "html": "<body class=\"min-h-[100dvh] bg-zinc-950 font-sans text-zinc-100 antialiased\">",
+                      "target": ["body"]
+                    }
+                  ],
+                  "impact": "serious",
+                  "message": "Element has insufficient color contrast of 4.37 (foreground color: #7c5cff, background color: #101013, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<button type=\"button\" aria-label=\"시청자 채팅 관리\" class=\"rounded font-semibold text-accent underline decoration-dotted underline-offset-4 focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50\">시청자</button>",
+              "target": [".underline"],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.37 (foreground color: #7c5cff, background color: #101013, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "incomplete": []
+    }
+  ],
+  "checks": [
+    {
+      "name": "signup horizontal reflow 1920",
+      "pass": true
+    },
+    {
+      "name": "signup horizontal reflow 768",
+      "pass": true
+    },
+    {
+      "name": "signup horizontal reflow 375",
+      "pass": true
+    },
+    {
+      "name": "signup horizontal reflow 390",
+      "pass": true
+    },
+    {
+      "name": "signup horizontal reflow 1023",
+      "pass": true
+    },
+    {
+      "name": "signup horizontal reflow 1024",
+      "pass": true
+    },
+    {
+      "name": "signup horizontal reflow 320",
+      "pass": true
+    },
+    {
+      "name": "landing browse geometry before focus scroll",
+      "box": {
+        "x": 49,
+        "y": 567.890625,
+        "width": 279,
+        "height": 44
+      }
+    },
+    {
+      "name": "landing narrow error reflow",
+      "title": {
+        "x": 49,
+        "y": 73.796875,
+        "width": 228.390625,
+        "height": 40
+      },
+      "browse": {
+        "x": 49,
+        "y": 609.796875,
+        "width": 228.390625,
+        "height": 44
+      },
+      "viewportHeight": 568
+    },
+    {
+      "name": "landing Escape closes dialog",
+      "pass": true
+    },
+    {
+      "name": "login 503 feedback",
+      "text": "이메일 또는 비밀번호가 올바르지 않습니다."
+    },
+    {
+      "name": "slowmode value after successful setting",
+      "value": ""
+    },
+    {
+      "name": "reading old messages interrupted",
+      "before": 0,
+      "after": 3364
+    },
+    {
+      "name": "header studio navigation stops stream",
+      "closed": true,
+      "confirmationShown": false
+    }
+  ],
+  "console": [
+    {
+      "role": "guest",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "role": "guest",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "role": "guest",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "role": "guest",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "role": "guest",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "role": "guest",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "role": "guest",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "role": "guest",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "role": "guest",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "role": "guest",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "role": "guest",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "role": "guest",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "role": "guest",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    }
+  ],
+  "network5xx": [
+    {
+      "role": "guest",
+      "status": 503,
+      "url": "http://localhost:8080/auth/login"
+    }
+  ],
+  "browser": "149.0.7827.55"
+}

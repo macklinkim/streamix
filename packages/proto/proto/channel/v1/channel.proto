@@ -17,6 +17,9 @@ message Channel {
   int32 viewer_count = 7;
   // Periodic snapshot for list cards (§ ADR-3 thumbnails); empty if never captured.
   string thumbnail_url = 8;
+  // Unix seconds of the most recent stream start; 0 if never live. Filled by
+  // GetChannel only (offline channel page), not by list RPCs.
+  int64 last_live_at = 9;
 }
 
 message CreateChannelRequest {
@@ -55,6 +58,8 @@ message StartStreamRequest {
 
 message StartStreamResponse {
   string channel_id = 1;
+  // The broadcast row just opened; svc-media keys its VOD recording by it.
+  string stream_id = 2;
 }
 
 message StopStreamRequest {
@@ -128,6 +133,156 @@ message HeartbeatRequest {
 
 message HeartbeatResponse {}
 
+// Public channel search over slug/title/category; live channels first.
+message SearchChannelsRequest {
+  string query = 1;
+}
+
+message SearchChannelsResponse {
+  repeated Channel channels = 1;
+}
+
+// Authed. Idempotent: following twice (or unfollowing a channel you do not
+// follow) succeeds.
+message FollowChannelRequest {
+  string channel_id = 1;
+}
+
+message FollowChannelResponse {}
+
+message UnfollowChannelRequest {
+  string channel_id = 1;
+}
+
+message UnfollowChannelResponse {}
+
+// Authed. Channels the caller follows, live first.
+message ListFollowingRequest {}
+
+message ListFollowingResponse {
+  repeated Channel channels = 1;
+}
+
+// Owner-only: moderators of the caller-owned channel.
+message AddModeratorRequest {
+  string user_id = 1;
+}
+
+message AddModeratorResponse {}
+
+message RemoveModeratorRequest {
+  string user_id = 1;
+}
+
+message RemoveModeratorResponse {}
+
+message Moderator {
+  string user_id = 1;
+  string display_name = 2;
+}
+
+message ListModeratorsRequest {}
+
+message ListModeratorsResponse {
+  repeated Moderator moderators = 1;
+}
+
+enum ChatRole {
+  CHAT_ROLE_UNSPECIFIED = 0;
+  CHAT_ROLE_VIEWER = 1;
+  CHAT_ROLE_MODERATOR = 2;
+  CHAT_ROLE_BROADCASTER = 3;
+}
+
+// Internal-only (BFF chat): role of a user in a channel plus follow status.
+message GetChatRoleRequest {
+  string channel_id = 1;
+  string user_id = 2;
+}
+
+message GetChatRoleResponse {
+  ChatRole role = 1;
+  bool following = 2;
+}
+
+// Public. Sent by a playing viewer every ~30s; a viewer counts for 60s after
+// the last beat (benchmark G-21: viewers = playback, not chat sockets).
+message WatchHeartbeatRequest {
+  string channel_id = 1;
+  // Random per-tab id (UUID) so one viewer is counted once.
+  string viewer_id = 2;
+}
+
+message WatchHeartbeatResponse {}
+
+// One broadcast of the caller-owned channel (benchmark G-13).
+message StreamSummary {
+  string id = 1;
+  int64 started_at = 2;
+  // 0 while live.
+  int64 ended_at = 3;
+  int32 peak_viewers = 4;
+  int32 chat_messages = 5;
+  bool live = 6;
+}
+
+message ListMyStreamsRequest {}
+
+message ListMyStreamsResponse {
+  // Newest first, at most 10.
+  repeated StreamSummary streams = 1;
+}
+
+message Follower {
+  string display_name = 1;
+  int64 followed_at = 2;
+}
+
+message ListRecentFollowersRequest {}
+
+message ListRecentFollowersResponse {
+  // Newest first, at most 20 (studio activity feed, benchmark G-14).
+  repeated Follower followers = 1;
+}
+
+// Internal-only (svc-media): the broadcast's recording finished and is playable.
+message MarkVodReadyRequest {
+  string stream_id = 1;
+}
+
+message MarkVodReadyResponse {}
+
+// A past broadcast with a playable recording (benchmark G-15).
+message Video {
+  string stream_id = 1;
+  int64 started_at = 2;
+  int32 duration_seconds = 3;
+  int32 peak_viewers = 4;
+}
+
+// Public. Recordings of a channel within the retention window, newest first.
+message ListVideosRequest {
+  string slug = 1;
+}
+
+message ListVideosResponse {
+  repeated Video videos = 1;
+}
+
+// Public. Signed VOD playlist URL plus what the replay page shows.
+message GetVodUrlRequest {
+  string stream_id = 1;
+}
+
+message GetVodUrlResponse {
+  string url = 1;
+  int64 expires_at = 2;
+  string channel_slug = 3;
+  string channel_title = 4;
+  int64 started_at = 5;
+  int32 duration_seconds = 6;
+}
+
 message ChannelExistsRequest {
   string channel_id = 1;
 }
@@ -149,6 +304,22 @@ service ChannelService {
   rpc IssueIngestToken(IssueIngestTokenRequest) returns (IssueIngestTokenResponse);
   rpc UpdateChannel(UpdateChannelRequest) returns (UpdateChannelResponse);
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+  rpc SearchChannels(SearchChannelsRequest) returns (SearchChannelsResponse);
+  rpc FollowChannel(FollowChannelRequest) returns (FollowChannelResponse);
+  rpc UnfollowChannel(UnfollowChannelRequest) returns (UnfollowChannelResponse);
+  rpc ListFollowing(ListFollowingRequest) returns (ListFollowingResponse);
+  rpc AddModerator(AddModeratorRequest) returns (AddModeratorResponse);
+  rpc RemoveModerator(RemoveModeratorRequest) returns (RemoveModeratorResponse);
+  rpc ListModerators(ListModeratorsRequest) returns (ListModeratorsResponse);
+  rpc WatchHeartbeat(WatchHeartbeatRequest) returns (WatchHeartbeatResponse);
+  rpc ListMyStreams(ListMyStreamsRequest) returns (ListMyStreamsResponse);
+  rpc ListRecentFollowers(ListRecentFollowersRequest) returns (ListRecentFollowersResponse);
+  rpc ListVideos(ListVideosRequest) returns (ListVideosResponse);
+  rpc GetVodUrl(GetVodUrlRequest) returns (GetVodUrlResponse);
+  // Internal-only (svc-media recorder).
+  rpc MarkVodReady(MarkVodReadyRequest) returns (MarkVodReadyResponse);
+  // Internal-only (BFF chat role, badges, followers-only).
+  rpc GetChatRole(GetChatRoleRequest) returns (GetChatRoleResponse);
   // Internal-only (BFF chat room gate): channel existence by id, so arbitrary
   // valid-format UUIDs can't allocate rooms/Redis subscriptions (V4-1).
   rpc ChannelExists(ChannelExistsRequest) returns (ChannelExistsResponse);

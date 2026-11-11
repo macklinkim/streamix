@@ -62,7 +62,13 @@ function errorMessage(e: unknown): string {
 
 // A fresh short-lived ingest token is issued at go-live (ADR-13), so browsing
 // broadcasting works after a reload without rotating the durable OBS key.
-export function BroadcastPanel({ token }: { token: string }) {
+export function BroadcastPanel({
+  token,
+  onLiveChange,
+}: {
+  token: string;
+  onLiveChange?: (live: boolean) => void;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const cleanupRef = useRef<() => void>(() => {});
   const [phase, setPhase] = useState<Phase>("idle");
@@ -81,6 +87,10 @@ export function BroadcastPanel({ token }: { token: string }) {
   const mobile = isMobile();
 
   useEffect(() => () => cleanupRef.current(), []);
+
+  useEffect(() => {
+    onLiveChange?.(phase === "live");
+  }, [phase, onLiveChange]);
 
   // (1) Existence detection. No mobile browser ships getDisplayMedia; when it is
   // missing the screen source is offered as an RTMP fallback instead of failing.
@@ -270,7 +280,7 @@ export function BroadcastPanel({ token }: { token: string }) {
       if (stopped) return;
       stop(
         e.code === 4403
-          ? "방송 세션이 만료되었습니다. 방송시작을 다시 눌러 주세요."
+          ? "방송 세션이 만료되었습니다. 송출 시작을 다시 눌러 주세요."
           : e.code === 4409
             ? "이미 다른 곳에서 이 채널을 방송 중입니다. 기존 방송을 종료한 뒤 다시 시도해 주세요."
             : `송출 연결이 끊어졌습니다. 다시 시도해 주세요. (코드 ${e.code})`,
@@ -300,7 +310,9 @@ export function BroadcastPanel({ token }: { token: string }) {
     <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-zinc-100">방송시작</h2>
+          <h2 className="text-sm font-semibold text-zinc-100">
+            {phase === "live" ? "송출 미리보기" : "송출 준비"}
+          </h2>
           <p className="mt-0.5 text-xs text-zinc-500">
             카메라나 화면을 OBS 없이 바로 송출합니다. 시청자에게는 몇 초 뒤에 보입니다.
           </p>
@@ -319,7 +331,7 @@ export function BroadcastPanel({ token }: { token: string }) {
             className="flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 text-sm font-semibold text-white transition-colors hover:bg-accent-hover active:scale-[0.98] disabled:opacity-50"
           >
             <BroadcastIcon size={16} weight="fill" />
-            {phase === "starting" ? "시작하는 중…" : "방송시작"}
+            {phase === "starting" ? "시작하는 중…" : "송출 시작"}
           </button>
         )}
       </div>
@@ -356,8 +368,13 @@ export function BroadcastPanel({ token }: { token: string }) {
           {screenBlocked && (
             <p className="rounded-md bg-zinc-800/50 px-2 py-1.5 text-xs text-zinc-400">
               이 브라우저는 화면 송출을 지원하지 않습니다. RTMP를 지원하는 화면 송출 앱에서{" "}
-              <a href="#rtmp" className="text-accent hover:underline">
-                아래 장비 방송(RTMP) 주소
+              <a
+                href="/studio#rtmp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent hover:underline"
+              >
+                장비 방송(RTMP) 설정
               </a>
               를 입력해 방송하세요. (권장 720p / 2.5Mbps)
             </p>

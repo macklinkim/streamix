@@ -1,18 +1,19 @@
 "use client";
-
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { loginPasswordSchema } from "@streamix/schemas";
 import { TwitchLogo, Lightning } from "@phosphor-icons/react";
 import { apiLogin, AuthError } from "@/lib/session";
 import { bffUrl } from "@/lib/api-base";
 import { useAuth } from "@/lib/auth-store";
-import { hideLandingForToday } from "@/lib/landing-visibility";
+import { LoginOptions, useLoginPreferences } from "@/components/login-options";
 
 const schema = z.object({
   email: z.string().email("올바른 아이디(이메일)를 입력하세요"),
-  password: z.string().min(8, "비밀번호는 8자 이상"),
+  password: loginPasswordSchema,
 });
 type Form = z.infer<typeof schema>;
 
@@ -23,29 +24,34 @@ const field =
 
 export function LandingLogin({ onDone }: { onDone: () => void }) {
   const setSession = useAuth((s) => s.setSession);
-  const [dismissToday, setDismissToday] = useState(false);
+  const preferences = useLoginPreferences();
   const {
     register,
     handleSubmit,
     setError,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<Form>({ resolver: zodResolver(schema) });
 
-  const toggleDismiss = (checked: boolean) => {
-    setDismissToday(checked);
-    if (checked) hideLandingForToday();
-    else window.localStorage.removeItem("streamix_landing_hidden_until");
-  };
+  useEffect(() => {
+    setValue("email", preferences.savedEmail);
+  }, [preferences.savedEmail, setValue]);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const res = await apiLogin(data);
+      const res = await apiLogin({ ...data, rememberMe: preferences.rememberMe });
+      preferences.saveEmail(data.email);
       setSession(res.accessToken, res.user);
       onDone();
     } catch (e) {
       const rate = e instanceof AuthError && e.status === 429;
+      const pending = e instanceof AuthError && e.status === 403 && e.code === "approval pending";
       setError("root", {
-        message: rate ? "잠시 후 다시 시도하세요." : "아이디 또는 비밀번호가 올바르지 않습니다.",
+        message: pending
+          ? "관리자 승인 대기 중입니다."
+          : rate
+            ? "잠시 후 다시 시도하세요."
+            : "아이디 또는 비밀번호가 올바르지 않습니다.",
       });
     }
   });
@@ -57,15 +63,21 @@ export function LandingLogin({ onDone }: { onDone: () => void }) {
           <Lightning weight="fill" className="size-3.5" />
           live streaming
         </p>
-        <h1 className="text-4xl font-black tracking-tight text-white">STREAMIX</h1>
+        <h1 id="landing-title" className="text-4xl font-black tracking-tight text-white">
+          STREAMIX
+        </h1>
         <p className="mt-2 text-sm tracking-wide text-zinc-400">천을 찢고 들어오세요.</p>
       </div>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <label className="text-xs font-medium uppercase tracking-widest text-zinc-500">
+        <label
+          htmlFor="landing-email"
+          className="text-xs font-medium uppercase tracking-widest text-zinc-500"
+        >
           아이디
         </label>
         <input
+          id="landing-email"
           type="email"
           autoComplete="email"
           placeholder="you@streamix.tv"
@@ -74,10 +86,14 @@ export function LandingLogin({ onDone }: { onDone: () => void }) {
         />
         {errors.email && <p className="-mt-1 text-xs text-red-400">{errors.email.message}</p>}
 
-        <label className="mt-2 text-xs font-medium uppercase tracking-widest text-zinc-500">
+        <label
+          htmlFor="landing-password"
+          className="mt-2 text-xs font-medium uppercase tracking-widest text-zinc-500"
+        >
           비밀번호
         </label>
         <input
+          id="landing-password"
           type="password"
           autoComplete="current-password"
           placeholder="••••••••"
@@ -86,7 +102,12 @@ export function LandingLogin({ onDone }: { onDone: () => void }) {
         />
         {errors.password && <p className="-mt-1 text-xs text-red-400">{errors.password.message}</p>}
 
-        {errors.root && <p className="text-xs text-red-400">{errors.root.message}</p>}
+        <LoginOptions {...preferences} />
+        {errors.root && (
+          <p role="alert" className="text-xs text-red-400">
+            {errors.root.message}
+          </p>
+        )}
 
         <button
           type="submit"
@@ -100,7 +121,7 @@ export function LandingLogin({ onDone }: { onDone: () => void }) {
       <button
         type="button"
         onClick={() => {
-          window.location.href = `${bffUrl}/auth/twitch`;
+          window.location.href = `${bffUrl}/auth/twitch?rememberMe=${preferences.rememberMe ? "1" : "0"}`;
         }}
         className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#9146FF]/40 bg-[#9146FF]/10 text-sm font-semibold tracking-wide text-[#c9b3ff] transition-colors hover:bg-[#9146FF]/20"
       >
@@ -108,22 +129,20 @@ export function LandingLogin({ onDone }: { onDone: () => void }) {
         트위치 계정으로 연동하기
       </button>
 
-      <label className="mt-5 flex cursor-pointer items-center gap-2 text-xs text-zinc-400 select-none">
-        <input
-          type="checkbox"
-          checked={dismissToday}
-          onChange={(e) => toggleDismiss(e.target.checked)}
-          className="size-4 rounded border-white/20 bg-white/5 accent-[#9146FF]"
-        />
-        오늘은 보지 않기 (자정에 초기화)
-      </label>
+      <Link
+        href="/signup"
+        onClick={onDone}
+        className="mt-3 flex h-11 w-full items-center justify-center rounded-lg border border-[#9146FF]/40 text-sm font-semibold tracking-wide text-[#c9b3ff] transition-colors hover:bg-[#9146FF]/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c9b3ff]"
+      >
+        회원가입
+      </Link>
 
       <button
         type="button"
         onClick={onDone}
-        className="mt-2 w-full text-center text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+        className="mt-3 h-11 w-full rounded-lg bg-[#9146FF] font-semibold tracking-wide text-white transition-all hover:bg-[#a970ff] hover:shadow-[0_0_24px_-4px_#9146FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c9b3ff] active:scale-[0.99]"
       >
-        그냥 둘러보기 →
+        그냥 둘러보기
       </button>
     </div>
   );

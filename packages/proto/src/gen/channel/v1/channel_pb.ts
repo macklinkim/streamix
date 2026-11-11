@@ -2,8 +2,8 @@
 // @generated from file channel/v1/channel.proto (package channel.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { PageInfo, Pagination } from "../../common/v1/common_pb.js";
 import { file_common_v1_common } from "../../common/v1/common_pb.js";
 import type { Message } from "@bufbuild/protobuf";
@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
 export const file_channel_v1_channel: GenFile =
   /*@__PURE__*/
   fileDesc(
-    "ChhjaGFubmVsL3YxL2NoYW5uZWwucHJvdG8SCmNoYW5uZWwudjEimQEKB0NoYW5uZWwSCgoCaWQYASABKAkSFQoNb3duZXJfdXNlcl9pZBgCIAEoCRIMCgRzbHVnGAMgASgJEg0KBXRpdGxlGAQgASgJEhAKCGNhdGVnb3J5GAUgASgJEg8KB2lzX2xpdmUYBiABKAgSFAoMdmlld2VyX2NvdW50GAcgASgFEhUKDXRodW1ibmFpbF91cmwYCCABKAkiRQoUQ3JlYXRlQ2hhbm5lbFJlcXVlc3QSDQoFdGl0bGUYASABKAkSDAoEc2x1ZxgCIAEoCRIQCghjYXRlZ29yeRgDIAEoCSJRChVDcmVhdGVDaGFubmVsUmVzcG9uc2USJAoHY2hhbm5lbBgBIAEoCzITLmNoYW5uZWwudjEuQ2hhbm5lbBISCgpzdHJlYW1fa2V5GAIgASgJIiEKEUdldENoYW5uZWxSZXF1ZXN0EgwKBHNsdWcYASABKAkiOgoSR2V0Q2hhbm5lbFJlc3BvbnNlEiQKB2NoYW5uZWwYASABKAsyEy5jaGFubmVsLnYxLkNoYW5uZWwiSAoPTGlzdExpdmVSZXF1ZXN0EiMKBHBhZ2UYASABKAsyFS5jb21tb24udjEuUGFnaW5hdGlvbhIQCghjYXRlZ29yeRgCIAEoCSJhChBMaXN0TGl2ZVJlc3BvbnNlEiUKCGNoYW5uZWxzGAEgAygLMhMuY2hhbm5lbC52MS5DaGFubmVsEiYKCXBhZ2VfaW5mbxgCIAEoCzITLmNvbW1vbi52MS5QYWdlSW5mbyIoChJTdGFydFN0cmVhbVJlcXVlc3QSEgoKc3RyZWFtX2tleRgBIAEoCSIpChNTdGFydFN0cmVhbVJlc3BvbnNlEhIKCmNoYW5uZWxfaWQYASABKAkiJwoRU3RvcFN0cmVhbVJlcXVlc3QSEgoKY2hhbm5lbF9pZBgBIAEoCSIUChJTdG9wU3RyZWFtUmVzcG9uc2UiLgoYVmFsaWRhdGVTdHJlYW1LZXlSZXF1ZXN0EhIKCnN0cmVhbV9rZXkYASABKAkiPgoZVmFsaWRhdGVTdHJlYW1LZXlSZXNwb25zZRINCgV2YWxpZBgBIAEoCBISCgpjaGFubmVsX2lkGAIgASgJIiUKFUdldFBsYXliYWNrVXJsUmVxdWVzdBIMCgRzbHVnGAEgASgJIjkKFkdldFBsYXliYWNrVXJsUmVzcG9uc2USCwoDdXJsGAEgASgJEhIKCmV4cGlyZXNfYXQYAiABKAMiNwoUVXBkYXRlQ2hhbm5lbFJlcXVlc3QSDQoFdGl0bGUYASABKAkSEAoIY2F0ZWdvcnkYAiABKAkiPQoVVXBkYXRlQ2hhbm5lbFJlc3BvbnNlEiQKB2NoYW5uZWwYASABKAsyEy5jaGFubmVsLnYxLkNoYW5uZWwiFQoTR2V0TXlDaGFubmVsUmVxdWVzdCJ1ChRHZXRNeUNoYW5uZWxSZXNwb25zZRIkCgdjaGFubmVsGAEgASgLMhMuY2hhbm5lbC52MS5DaGFubmVsEhkKEXN0cmVhbV9rZXlfcHJlZml4GAIgASgJEhwKFHN0cmVhbV9rZXlfaXNzdWVkX2F0GAMgASgDIhgKFlJvdGF0ZVN0cmVhbUtleVJlcXVlc3QiLQoXUm90YXRlU3RyZWFtS2V5UmVzcG9uc2USEgoKc3RyZWFtX2tleRgBIAEoCSIZChdJc3N1ZUluZ2VzdFRva2VuUmVxdWVzdCI9ChhJc3N1ZUluZ2VzdFRva2VuUmVzcG9uc2USDQoFdG9rZW4YASABKAkSEgoKZXhwaXJlc19hdBgCIAEoAyImChBIZWFydGJlYXRSZXF1ZXN0EhIKCmNoYW5uZWxfaWQYASABKAkiEwoRSGVhcnRiZWF0UmVzcG9uc2UiKgoUQ2hhbm5lbEV4aXN0c1JlcXVlc3QSEgoKY2hhbm5lbF9pZBgBIAEoCSInChVDaGFubmVsRXhpc3RzUmVzcG9uc2USDgoGZXhpc3RzGAEgASgIMtYICg5DaGFubmVsU2VydmljZRJUCg1DcmVhdGVDaGFubmVsEiAuY2hhbm5lbC52MS5DcmVhdGVDaGFubmVsUmVxdWVzdBohLmNoYW5uZWwudjEuQ3JlYXRlQ2hhbm5lbFJlc3BvbnNlEksKCkdldENoYW5uZWwSHS5jaGFubmVsLnYxLkdldENoYW5uZWxSZXF1ZXN0Gh4uY2hhbm5lbC52MS5HZXRDaGFubmVsUmVzcG9uc2USRQoITGlzdExpdmUSGy5jaGFubmVsLnYxLkxpc3RMaXZlUmVxdWVzdBocLmNoYW5uZWwudjEuTGlzdExpdmVSZXNwb25zZRJOCgtTdGFydFN0cmVhbRIeLmNoYW5uZWwudjEuU3RhcnRTdHJlYW1SZXF1ZXN0Gh8uY2hhbm5lbC52MS5TdGFydFN0cmVhbVJlc3BvbnNlEksKClN0b3BTdHJlYW0SHS5jaGFubmVsLnYxLlN0b3BTdHJlYW1SZXF1ZXN0Gh4uY2hhbm5lbC52MS5TdG9wU3RyZWFtUmVzcG9uc2USYAoRVmFsaWRhdGVTdHJlYW1LZXkSJC5jaGFubmVsLnYxLlZhbGlkYXRlU3RyZWFtS2V5UmVxdWVzdBolLmNoYW5uZWwudjEuVmFsaWRhdGVTdHJlYW1LZXlSZXNwb25zZRJXCg5HZXRQbGF5YmFja1VybBIhLmNoYW5uZWwudjEuR2V0UGxheWJhY2tVcmxSZXF1ZXN0GiIuY2hhbm5lbC52MS5HZXRQbGF5YmFja1VybFJlc3BvbnNlElEKDEdldE15Q2hhbm5lbBIfLmNoYW5uZWwudjEuR2V0TXlDaGFubmVsUmVxdWVzdBogLmNoYW5uZWwudjEuR2V0TXlDaGFubmVsUmVzcG9uc2USWgoPUm90YXRlU3RyZWFtS2V5EiIuY2hhbm5lbC52MS5Sb3RhdGVTdHJlYW1LZXlSZXF1ZXN0GiMuY2hhbm5lbC52MS5Sb3RhdGVTdHJlYW1LZXlSZXNwb25zZRJdChBJc3N1ZUluZ2VzdFRva2VuEiMuY2hhbm5lbC52MS5Jc3N1ZUluZ2VzdFRva2VuUmVxdWVzdBokLmNoYW5uZWwudjEuSXNzdWVJbmdlc3RUb2tlblJlc3BvbnNlElQKDVVwZGF0ZUNoYW5uZWwSIC5jaGFubmVsLnYxLlVwZGF0ZUNoYW5uZWxSZXF1ZXN0GiEuY2hhbm5lbC52MS5VcGRhdGVDaGFubmVsUmVzcG9uc2USSAoJSGVhcnRiZWF0EhwuY2hhbm5lbC52MS5IZWFydGJlYXRSZXF1ZXN0Gh0uY2hhbm5lbC52MS5IZWFydGJlYXRSZXNwb25zZRJUCg1DaGFubmVsRXhpc3RzEiAuY2hhbm5lbC52MS5DaGFubmVsRXhpc3RzUmVxdWVzdBohLmNoYW5uZWwudjEuQ2hhbm5lbEV4aXN0c1Jlc3BvbnNlYgZwcm90bzM",
+    "ChhjaGFubmVsL3YxL2NoYW5uZWwucHJvdG8SCmNoYW5uZWwudjEirwEKB0NoYW5uZWwSCgoCaWQYASABKAkSFQoNb3duZXJfdXNlcl9pZBgCIAEoCRIMCgRzbHVnGAMgASgJEg0KBXRpdGxlGAQgASgJEhAKCGNhdGVnb3J5GAUgASgJEg8KB2lzX2xpdmUYBiABKAgSFAoMdmlld2VyX2NvdW50GAcgASgFEhUKDXRodW1ibmFpbF91cmwYCCABKAkSFAoMbGFzdF9saXZlX2F0GAkgASgDIkUKFENyZWF0ZUNoYW5uZWxSZXF1ZXN0Eg0KBXRpdGxlGAEgASgJEgwKBHNsdWcYAiABKAkSEAoIY2F0ZWdvcnkYAyABKAkiUQoVQ3JlYXRlQ2hhbm5lbFJlc3BvbnNlEiQKB2NoYW5uZWwYASABKAsyEy5jaGFubmVsLnYxLkNoYW5uZWwSEgoKc3RyZWFtX2tleRgCIAEoCSIhChFHZXRDaGFubmVsUmVxdWVzdBIMCgRzbHVnGAEgASgJIjoKEkdldENoYW5uZWxSZXNwb25zZRIkCgdjaGFubmVsGAEgASgLMhMuY2hhbm5lbC52MS5DaGFubmVsIkgKD0xpc3RMaXZlUmVxdWVzdBIjCgRwYWdlGAEgASgLMhUuY29tbW9uLnYxLlBhZ2luYXRpb24SEAoIY2F0ZWdvcnkYAiABKAkiYQoQTGlzdExpdmVSZXNwb25zZRIlCghjaGFubmVscxgBIAMoCzITLmNoYW5uZWwudjEuQ2hhbm5lbBImCglwYWdlX2luZm8YAiABKAsyEy5jb21tb24udjEuUGFnZUluZm8iKAoSU3RhcnRTdHJlYW1SZXF1ZXN0EhIKCnN0cmVhbV9rZXkYASABKAkiPAoTU3RhcnRTdHJlYW1SZXNwb25zZRISCgpjaGFubmVsX2lkGAEgASgJEhEKCXN0cmVhbV9pZBgCIAEoCSInChFTdG9wU3RyZWFtUmVxdWVzdBISCgpjaGFubmVsX2lkGAEgASgJIhQKElN0b3BTdHJlYW1SZXNwb25zZSIuChhWYWxpZGF0ZVN0cmVhbUtleVJlcXVlc3QSEgoKc3RyZWFtX2tleRgBIAEoCSI+ChlWYWxpZGF0ZVN0cmVhbUtleVJlc3BvbnNlEg0KBXZhbGlkGAEgASgIEhIKCmNoYW5uZWxfaWQYAiABKAkiJQoVR2V0UGxheWJhY2tVcmxSZXF1ZXN0EgwKBHNsdWcYASABKAkiOQoWR2V0UGxheWJhY2tVcmxSZXNwb25zZRILCgN1cmwYASABKAkSEgoKZXhwaXJlc19hdBgCIAEoAyI3ChRVcGRhdGVDaGFubmVsUmVxdWVzdBINCgV0aXRsZRgBIAEoCRIQCghjYXRlZ29yeRgCIAEoCSI9ChVVcGRhdGVDaGFubmVsUmVzcG9uc2USJAoHY2hhbm5lbBgBIAEoCzITLmNoYW5uZWwudjEuQ2hhbm5lbCIVChNHZXRNeUNoYW5uZWxSZXF1ZXN0InUKFEdldE15Q2hhbm5lbFJlc3BvbnNlEiQKB2NoYW5uZWwYASABKAsyEy5jaGFubmVsLnYxLkNoYW5uZWwSGQoRc3RyZWFtX2tleV9wcmVmaXgYAiABKAkSHAoUc3RyZWFtX2tleV9pc3N1ZWRfYXQYAyABKAMiGAoWUm90YXRlU3RyZWFtS2V5UmVxdWVzdCItChdSb3RhdGVTdHJlYW1LZXlSZXNwb25zZRISCgpzdHJlYW1fa2V5GAEgASgJIhkKF0lzc3VlSW5nZXN0VG9rZW5SZXF1ZXN0Ij0KGElzc3VlSW5nZXN0VG9rZW5SZXNwb25zZRINCgV0b2tlbhgBIAEoCRISCgpleHBpcmVzX2F0GAIgASgDIiYKEEhlYXJ0YmVhdFJlcXVlc3QSEgoKY2hhbm5lbF9pZBgBIAEoCSITChFIZWFydGJlYXRSZXNwb25zZSImChVTZWFyY2hDaGFubmVsc1JlcXVlc3QSDQoFcXVlcnkYASABKAkiPwoWU2VhcmNoQ2hhbm5lbHNSZXNwb25zZRIlCghjaGFubmVscxgBIAMoCzITLmNoYW5uZWwudjEuQ2hhbm5lbCIqChRGb2xsb3dDaGFubmVsUmVxdWVzdBISCgpjaGFubmVsX2lkGAEgASgJIhcKFUZvbGxvd0NoYW5uZWxSZXNwb25zZSIsChZVbmZvbGxvd0NoYW5uZWxSZXF1ZXN0EhIKCmNoYW5uZWxfaWQYASABKAkiGQoXVW5mb2xsb3dDaGFubmVsUmVzcG9uc2UiFgoUTGlzdEZvbGxvd2luZ1JlcXVlc3QiPgoVTGlzdEZvbGxvd2luZ1Jlc3BvbnNlEiUKCGNoYW5uZWxzGAEgAygLMhMuY2hhbm5lbC52MS5DaGFubmVsIiYKE0FkZE1vZGVyYXRvclJlcXVlc3QSDwoHdXNlcl9pZBgBIAEoCSIWChRBZGRNb2RlcmF0b3JSZXNwb25zZSIpChZSZW1vdmVNb2RlcmF0b3JSZXF1ZXN0Eg8KB3VzZXJfaWQYASABKAkiGQoXUmVtb3ZlTW9kZXJhdG9yUmVzcG9uc2UiMgoJTW9kZXJhdG9yEg8KB3VzZXJfaWQYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJIhcKFUxpc3RNb2RlcmF0b3JzUmVxdWVzdCJDChZMaXN0TW9kZXJhdG9yc1Jlc3BvbnNlEikKCm1vZGVyYXRvcnMYASADKAsyFS5jaGFubmVsLnYxLk1vZGVyYXRvciI5ChJHZXRDaGF0Um9sZVJlcXVlc3QSEgoKY2hhbm5lbF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJIkwKE0dldENoYXRSb2xlUmVzcG9uc2USIgoEcm9sZRgBIAEoDjIULmNoYW5uZWwudjEuQ2hhdFJvbGUSEQoJZm9sbG93aW5nGAIgASgIIj4KFVdhdGNoSGVhcnRiZWF0UmVxdWVzdBISCgpjaGFubmVsX2lkGAEgASgJEhEKCXZpZXdlcl9pZBgCIAEoCSIYChZXYXRjaEhlYXJ0YmVhdFJlc3BvbnNlInwKDVN0cmVhbVN1bW1hcnkSCgoCaWQYASABKAkSEgoKc3RhcnRlZF9hdBgCIAEoAxIQCghlbmRlZF9hdBgDIAEoAxIUCgxwZWFrX3ZpZXdlcnMYBCABKAUSFQoNY2hhdF9tZXNzYWdlcxgFIAEoBRIMCgRsaXZlGAYgASgIIhYKFExpc3RNeVN0cmVhbXNSZXF1ZXN0IkMKFUxpc3RNeVN0cmVhbXNSZXNwb25zZRIqCgdzdHJlYW1zGAEgAygLMhkuY2hhbm5lbC52MS5TdHJlYW1TdW1tYXJ5IjUKCEZvbGxvd2VyEhQKDGRpc3BsYXlfbmFtZRgBIAEoCRITCgtmb2xsb3dlZF9hdBgCIAEoAyIcChpMaXN0UmVjZW50Rm9sbG93ZXJzUmVxdWVzdCJGChtMaXN0UmVjZW50Rm9sbG93ZXJzUmVzcG9uc2USJwoJZm9sbG93ZXJzGAEgAygLMhQuY2hhbm5lbC52MS5Gb2xsb3dlciIoChNNYXJrVm9kUmVhZHlSZXF1ZXN0EhEKCXN0cmVhbV9pZBgBIAEoCSIWChRNYXJrVm9kUmVhZHlSZXNwb25zZSJeCgVWaWRlbxIRCglzdHJlYW1faWQYASABKAkSEgoKc3RhcnRlZF9hdBgCIAEoAxIYChBkdXJhdGlvbl9zZWNvbmRzGAMgASgFEhQKDHBlYWtfdmlld2VycxgEIAEoBSIhChFMaXN0VmlkZW9zUmVxdWVzdBIMCgRzbHVnGAEgASgJIjcKEkxpc3RWaWRlb3NSZXNwb25zZRIhCgZ2aWRlb3MYASADKAsyES5jaGFubmVsLnYxLlZpZGVvIiUKEEdldFZvZFVybFJlcXVlc3QSEQoJc3RyZWFtX2lkGAEgASgJIo8BChFHZXRWb2RVcmxSZXNwb25zZRILCgN1cmwYASABKAkSEgoKZXhwaXJlc19hdBgCIAEoAxIUCgxjaGFubmVsX3NsdWcYAyABKAkSFQoNY2hhbm5lbF90aXRsZRgEIAEoCRISCgpzdGFydGVkX2F0GAUgASgDEhgKEGR1cmF0aW9uX3NlY29uZHMYBiABKAUiKgoUQ2hhbm5lbEV4aXN0c1JlcXVlc3QSEgoKY2hhbm5lbF9pZBgBIAEoCSInChVDaGFubmVsRXhpc3RzUmVzcG9uc2USDgoGZXhpc3RzGAEgASgIKm8KCENoYXRSb2xlEhkKFUNIQVRfUk9MRV9VTlNQRUNJRklFRBAAEhQKEENIQVRfUk9MRV9WSUVXRVIQARIXChNDSEFUX1JPTEVfTU9ERVJBVE9SEAISGQoVQ0hBVF9ST0xFX0JST0FEQ0FTVEVSEAMykBIKDkNoYW5uZWxTZXJ2aWNlElQKDUNyZWF0ZUNoYW5uZWwSIC5jaGFubmVsLnYxLkNyZWF0ZUNoYW5uZWxSZXF1ZXN0GiEuY2hhbm5lbC52MS5DcmVhdGVDaGFubmVsUmVzcG9uc2USSwoKR2V0Q2hhbm5lbBIdLmNoYW5uZWwudjEuR2V0Q2hhbm5lbFJlcXVlc3QaHi5jaGFubmVsLnYxLkdldENoYW5uZWxSZXNwb25zZRJFCghMaXN0TGl2ZRIbLmNoYW5uZWwudjEuTGlzdExpdmVSZXF1ZXN0GhwuY2hhbm5lbC52MS5MaXN0TGl2ZVJlc3BvbnNlEk4KC1N0YXJ0U3RyZWFtEh4uY2hhbm5lbC52MS5TdGFydFN0cmVhbVJlcXVlc3QaHy5jaGFubmVsLnYxLlN0YXJ0U3RyZWFtUmVzcG9uc2USSwoKU3RvcFN0cmVhbRIdLmNoYW5uZWwudjEuU3RvcFN0cmVhbVJlcXVlc3QaHi5jaGFubmVsLnYxLlN0b3BTdHJlYW1SZXNwb25zZRJgChFWYWxpZGF0ZVN0cmVhbUtleRIkLmNoYW5uZWwudjEuVmFsaWRhdGVTdHJlYW1LZXlSZXF1ZXN0GiUuY2hhbm5lbC52MS5WYWxpZGF0ZVN0cmVhbUtleVJlc3BvbnNlElcKDkdldFBsYXliYWNrVXJsEiEuY2hhbm5lbC52MS5HZXRQbGF5YmFja1VybFJlcXVlc3QaIi5jaGFubmVsLnYxLkdldFBsYXliYWNrVXJsUmVzcG9uc2USUQoMR2V0TXlDaGFubmVsEh8uY2hhbm5lbC52MS5HZXRNeUNoYW5uZWxSZXF1ZXN0GiAuY2hhbm5lbC52MS5HZXRNeUNoYW5uZWxSZXNwb25zZRJaCg9Sb3RhdGVTdHJlYW1LZXkSIi5jaGFubmVsLnYxLlJvdGF0ZVN0cmVhbUtleVJlcXVlc3QaIy5jaGFubmVsLnYxLlJvdGF0ZVN0cmVhbUtleVJlc3BvbnNlEl0KEElzc3VlSW5nZXN0VG9rZW4SIy5jaGFubmVsLnYxLklzc3VlSW5nZXN0VG9rZW5SZXF1ZXN0GiQuY2hhbm5lbC52MS5Jc3N1ZUluZ2VzdFRva2VuUmVzcG9uc2USVAoNVXBkYXRlQ2hhbm5lbBIgLmNoYW5uZWwudjEuVXBkYXRlQ2hhbm5lbFJlcXVlc3QaIS5jaGFubmVsLnYxLlVwZGF0ZUNoYW5uZWxSZXNwb25zZRJICglIZWFydGJlYXQSHC5jaGFubmVsLnYxLkhlYXJ0YmVhdFJlcXVlc3QaHS5jaGFubmVsLnYxLkhlYXJ0YmVhdFJlc3BvbnNlElcKDlNlYXJjaENoYW5uZWxzEiEuY2hhbm5lbC52MS5TZWFyY2hDaGFubmVsc1JlcXVlc3QaIi5jaGFubmVsLnYxLlNlYXJjaENoYW5uZWxzUmVzcG9uc2USVAoNRm9sbG93Q2hhbm5lbBIgLmNoYW5uZWwudjEuRm9sbG93Q2hhbm5lbFJlcXVlc3QaIS5jaGFubmVsLnYxLkZvbGxvd0NoYW5uZWxSZXNwb25zZRJaCg9VbmZvbGxvd0NoYW5uZWwSIi5jaGFubmVsLnYxLlVuZm9sbG93Q2hhbm5lbFJlcXVlc3QaIy5jaGFubmVsLnYxLlVuZm9sbG93Q2hhbm5lbFJlc3BvbnNlElQKDUxpc3RGb2xsb3dpbmcSIC5jaGFubmVsLnYxLkxpc3RGb2xsb3dpbmdSZXF1ZXN0GiEuY2hhbm5lbC52MS5MaXN0Rm9sbG93aW5nUmVzcG9uc2USUQoMQWRkTW9kZXJhdG9yEh8uY2hhbm5lbC52MS5BZGRNb2RlcmF0b3JSZXF1ZXN0GiAuY2hhbm5lbC52MS5BZGRNb2RlcmF0b3JSZXNwb25zZRJaCg9SZW1vdmVNb2RlcmF0b3ISIi5jaGFubmVsLnYxLlJlbW92ZU1vZGVyYXRvclJlcXVlc3QaIy5jaGFubmVsLnYxLlJlbW92ZU1vZGVyYXRvclJlc3BvbnNlElcKDkxpc3RNb2RlcmF0b3JzEiEuY2hhbm5lbC52MS5MaXN0TW9kZXJhdG9yc1JlcXVlc3QaIi5jaGFubmVsLnYxLkxpc3RNb2RlcmF0b3JzUmVzcG9uc2USVwoOV2F0Y2hIZWFydGJlYXQSIS5jaGFubmVsLnYxLldhdGNoSGVhcnRiZWF0UmVxdWVzdBoiLmNoYW5uZWwudjEuV2F0Y2hIZWFydGJlYXRSZXNwb25zZRJUCg1MaXN0TXlTdHJlYW1zEiAuY2hhbm5lbC52MS5MaXN0TXlTdHJlYW1zUmVxdWVzdBohLmNoYW5uZWwudjEuTGlzdE15U3RyZWFtc1Jlc3BvbnNlEmYKE0xpc3RSZWNlbnRGb2xsb3dlcnMSJi5jaGFubmVsLnYxLkxpc3RSZWNlbnRGb2xsb3dlcnNSZXF1ZXN0GicuY2hhbm5lbC52MS5MaXN0UmVjZW50Rm9sbG93ZXJzUmVzcG9uc2USSwoKTGlzdFZpZGVvcxIdLmNoYW5uZWwudjEuTGlzdFZpZGVvc1JlcXVlc3QaHi5jaGFubmVsLnYxLkxpc3RWaWRlb3NSZXNwb25zZRJICglHZXRWb2RVcmwSHC5jaGFubmVsLnYxLkdldFZvZFVybFJlcXVlc3QaHS5jaGFubmVsLnYxLkdldFZvZFVybFJlc3BvbnNlElEKDE1hcmtWb2RSZWFkeRIfLmNoYW5uZWwudjEuTWFya1ZvZFJlYWR5UmVxdWVzdBogLmNoYW5uZWwudjEuTWFya1ZvZFJlYWR5UmVzcG9uc2USTgoLR2V0Q2hhdFJvbGUSHi5jaGFubmVsLnYxLkdldENoYXRSb2xlUmVxdWVzdBofLmNoYW5uZWwudjEuR2V0Q2hhdFJvbGVSZXNwb25zZRJUCg1DaGFubmVsRXhpc3RzEiAuY2hhbm5lbC52MS5DaGFubmVsRXhpc3RzUmVxdWVzdBohLmNoYW5uZWwudjEuQ2hhbm5lbEV4aXN0c1Jlc3BvbnNlYgZwcm90bzM",
     [file_common_v1_common],
   );
 
@@ -63,6 +63,14 @@ export type Channel = Message<"channel.v1.Channel"> & {
    * @generated from field: string thumbnail_url = 8;
    */
   thumbnailUrl: string;
+
+  /**
+   * Unix seconds of the most recent stream start; 0 if never live. Filled by
+   * GetChannel only (offline channel page), not by list RPCs.
+   *
+   * @generated from field: int64 last_live_at = 9;
+   */
+  lastLiveAt: bigint;
 };
 
 /**
@@ -234,6 +242,13 @@ export type StartStreamResponse = Message<"channel.v1.StartStreamResponse"> & {
    * @generated from field: string channel_id = 1;
    */
   channelId: string;
+
+  /**
+   * The broadcast row just opened; svc-media keys its VOD recording by it.
+   *
+   * @generated from field: string stream_id = 2;
+   */
+  streamId: string;
 };
 
 /**
@@ -555,6 +570,654 @@ export const HeartbeatResponseSchema: GenMessage<HeartbeatResponse> =
   messageDesc(file_channel_v1_channel, 24);
 
 /**
+ * Public channel search over slug/title/category; live channels first.
+ *
+ * @generated from message channel.v1.SearchChannelsRequest
+ */
+export type SearchChannelsRequest = Message<"channel.v1.SearchChannelsRequest"> & {
+  /**
+   * @generated from field: string query = 1;
+   */
+  query: string;
+};
+
+/**
+ * Describes the message channel.v1.SearchChannelsRequest.
+ * Use `create(SearchChannelsRequestSchema)` to create a new message.
+ */
+export const SearchChannelsRequestSchema: GenMessage<SearchChannelsRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 25);
+
+/**
+ * @generated from message channel.v1.SearchChannelsResponse
+ */
+export type SearchChannelsResponse = Message<"channel.v1.SearchChannelsResponse"> & {
+  /**
+   * @generated from field: repeated channel.v1.Channel channels = 1;
+   */
+  channels: Channel[];
+};
+
+/**
+ * Describes the message channel.v1.SearchChannelsResponse.
+ * Use `create(SearchChannelsResponseSchema)` to create a new message.
+ */
+export const SearchChannelsResponseSchema: GenMessage<SearchChannelsResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 26);
+
+/**
+ * Authed. Idempotent: following twice (or unfollowing a channel you do not
+ * follow) succeeds.
+ *
+ * @generated from message channel.v1.FollowChannelRequest
+ */
+export type FollowChannelRequest = Message<"channel.v1.FollowChannelRequest"> & {
+  /**
+   * @generated from field: string channel_id = 1;
+   */
+  channelId: string;
+};
+
+/**
+ * Describes the message channel.v1.FollowChannelRequest.
+ * Use `create(FollowChannelRequestSchema)` to create a new message.
+ */
+export const FollowChannelRequestSchema: GenMessage<FollowChannelRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 27);
+
+/**
+ * @generated from message channel.v1.FollowChannelResponse
+ */
+export type FollowChannelResponse = Message<"channel.v1.FollowChannelResponse"> & {};
+
+/**
+ * Describes the message channel.v1.FollowChannelResponse.
+ * Use `create(FollowChannelResponseSchema)` to create a new message.
+ */
+export const FollowChannelResponseSchema: GenMessage<FollowChannelResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 28);
+
+/**
+ * @generated from message channel.v1.UnfollowChannelRequest
+ */
+export type UnfollowChannelRequest = Message<"channel.v1.UnfollowChannelRequest"> & {
+  /**
+   * @generated from field: string channel_id = 1;
+   */
+  channelId: string;
+};
+
+/**
+ * Describes the message channel.v1.UnfollowChannelRequest.
+ * Use `create(UnfollowChannelRequestSchema)` to create a new message.
+ */
+export const UnfollowChannelRequestSchema: GenMessage<UnfollowChannelRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 29);
+
+/**
+ * @generated from message channel.v1.UnfollowChannelResponse
+ */
+export type UnfollowChannelResponse = Message<"channel.v1.UnfollowChannelResponse"> & {};
+
+/**
+ * Describes the message channel.v1.UnfollowChannelResponse.
+ * Use `create(UnfollowChannelResponseSchema)` to create a new message.
+ */
+export const UnfollowChannelResponseSchema: GenMessage<UnfollowChannelResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 30);
+
+/**
+ * Authed. Channels the caller follows, live first.
+ *
+ * @generated from message channel.v1.ListFollowingRequest
+ */
+export type ListFollowingRequest = Message<"channel.v1.ListFollowingRequest"> & {};
+
+/**
+ * Describes the message channel.v1.ListFollowingRequest.
+ * Use `create(ListFollowingRequestSchema)` to create a new message.
+ */
+export const ListFollowingRequestSchema: GenMessage<ListFollowingRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 31);
+
+/**
+ * @generated from message channel.v1.ListFollowingResponse
+ */
+export type ListFollowingResponse = Message<"channel.v1.ListFollowingResponse"> & {
+  /**
+   * @generated from field: repeated channel.v1.Channel channels = 1;
+   */
+  channels: Channel[];
+};
+
+/**
+ * Describes the message channel.v1.ListFollowingResponse.
+ * Use `create(ListFollowingResponseSchema)` to create a new message.
+ */
+export const ListFollowingResponseSchema: GenMessage<ListFollowingResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 32);
+
+/**
+ * Owner-only: moderators of the caller-owned channel.
+ *
+ * @generated from message channel.v1.AddModeratorRequest
+ */
+export type AddModeratorRequest = Message<"channel.v1.AddModeratorRequest"> & {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message channel.v1.AddModeratorRequest.
+ * Use `create(AddModeratorRequestSchema)` to create a new message.
+ */
+export const AddModeratorRequestSchema: GenMessage<AddModeratorRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 33);
+
+/**
+ * @generated from message channel.v1.AddModeratorResponse
+ */
+export type AddModeratorResponse = Message<"channel.v1.AddModeratorResponse"> & {};
+
+/**
+ * Describes the message channel.v1.AddModeratorResponse.
+ * Use `create(AddModeratorResponseSchema)` to create a new message.
+ */
+export const AddModeratorResponseSchema: GenMessage<AddModeratorResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 34);
+
+/**
+ * @generated from message channel.v1.RemoveModeratorRequest
+ */
+export type RemoveModeratorRequest = Message<"channel.v1.RemoveModeratorRequest"> & {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message channel.v1.RemoveModeratorRequest.
+ * Use `create(RemoveModeratorRequestSchema)` to create a new message.
+ */
+export const RemoveModeratorRequestSchema: GenMessage<RemoveModeratorRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 35);
+
+/**
+ * @generated from message channel.v1.RemoveModeratorResponse
+ */
+export type RemoveModeratorResponse = Message<"channel.v1.RemoveModeratorResponse"> & {};
+
+/**
+ * Describes the message channel.v1.RemoveModeratorResponse.
+ * Use `create(RemoveModeratorResponseSchema)` to create a new message.
+ */
+export const RemoveModeratorResponseSchema: GenMessage<RemoveModeratorResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 36);
+
+/**
+ * @generated from message channel.v1.Moderator
+ */
+export type Moderator = Message<"channel.v1.Moderator"> & {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+
+  /**
+   * @generated from field: string display_name = 2;
+   */
+  displayName: string;
+};
+
+/**
+ * Describes the message channel.v1.Moderator.
+ * Use `create(ModeratorSchema)` to create a new message.
+ */
+export const ModeratorSchema: GenMessage<Moderator> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 37);
+
+/**
+ * @generated from message channel.v1.ListModeratorsRequest
+ */
+export type ListModeratorsRequest = Message<"channel.v1.ListModeratorsRequest"> & {};
+
+/**
+ * Describes the message channel.v1.ListModeratorsRequest.
+ * Use `create(ListModeratorsRequestSchema)` to create a new message.
+ */
+export const ListModeratorsRequestSchema: GenMessage<ListModeratorsRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 38);
+
+/**
+ * @generated from message channel.v1.ListModeratorsResponse
+ */
+export type ListModeratorsResponse = Message<"channel.v1.ListModeratorsResponse"> & {
+  /**
+   * @generated from field: repeated channel.v1.Moderator moderators = 1;
+   */
+  moderators: Moderator[];
+};
+
+/**
+ * Describes the message channel.v1.ListModeratorsResponse.
+ * Use `create(ListModeratorsResponseSchema)` to create a new message.
+ */
+export const ListModeratorsResponseSchema: GenMessage<ListModeratorsResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 39);
+
+/**
+ * Internal-only (BFF chat): role of a user in a channel plus follow status.
+ *
+ * @generated from message channel.v1.GetChatRoleRequest
+ */
+export type GetChatRoleRequest = Message<"channel.v1.GetChatRoleRequest"> & {
+  /**
+   * @generated from field: string channel_id = 1;
+   */
+  channelId: string;
+
+  /**
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message channel.v1.GetChatRoleRequest.
+ * Use `create(GetChatRoleRequestSchema)` to create a new message.
+ */
+export const GetChatRoleRequestSchema: GenMessage<GetChatRoleRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 40);
+
+/**
+ * @generated from message channel.v1.GetChatRoleResponse
+ */
+export type GetChatRoleResponse = Message<"channel.v1.GetChatRoleResponse"> & {
+  /**
+   * @generated from field: channel.v1.ChatRole role = 1;
+   */
+  role: ChatRole;
+
+  /**
+   * @generated from field: bool following = 2;
+   */
+  following: boolean;
+};
+
+/**
+ * Describes the message channel.v1.GetChatRoleResponse.
+ * Use `create(GetChatRoleResponseSchema)` to create a new message.
+ */
+export const GetChatRoleResponseSchema: GenMessage<GetChatRoleResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 41);
+
+/**
+ * Public. Sent by a playing viewer every ~30s; a viewer counts for 60s after
+ * the last beat (benchmark G-21: viewers = playback, not chat sockets).
+ *
+ * @generated from message channel.v1.WatchHeartbeatRequest
+ */
+export type WatchHeartbeatRequest = Message<"channel.v1.WatchHeartbeatRequest"> & {
+  /**
+   * @generated from field: string channel_id = 1;
+   */
+  channelId: string;
+
+  /**
+   * Random per-tab id (UUID) so one viewer is counted once.
+   *
+   * @generated from field: string viewer_id = 2;
+   */
+  viewerId: string;
+};
+
+/**
+ * Describes the message channel.v1.WatchHeartbeatRequest.
+ * Use `create(WatchHeartbeatRequestSchema)` to create a new message.
+ */
+export const WatchHeartbeatRequestSchema: GenMessage<WatchHeartbeatRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 42);
+
+/**
+ * @generated from message channel.v1.WatchHeartbeatResponse
+ */
+export type WatchHeartbeatResponse = Message<"channel.v1.WatchHeartbeatResponse"> & {};
+
+/**
+ * Describes the message channel.v1.WatchHeartbeatResponse.
+ * Use `create(WatchHeartbeatResponseSchema)` to create a new message.
+ */
+export const WatchHeartbeatResponseSchema: GenMessage<WatchHeartbeatResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 43);
+
+/**
+ * One broadcast of the caller-owned channel (benchmark G-13).
+ *
+ * @generated from message channel.v1.StreamSummary
+ */
+export type StreamSummary = Message<"channel.v1.StreamSummary"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: int64 started_at = 2;
+   */
+  startedAt: bigint;
+
+  /**
+   * 0 while live.
+   *
+   * @generated from field: int64 ended_at = 3;
+   */
+  endedAt: bigint;
+
+  /**
+   * @generated from field: int32 peak_viewers = 4;
+   */
+  peakViewers: number;
+
+  /**
+   * @generated from field: int32 chat_messages = 5;
+   */
+  chatMessages: number;
+
+  /**
+   * @generated from field: bool live = 6;
+   */
+  live: boolean;
+};
+
+/**
+ * Describes the message channel.v1.StreamSummary.
+ * Use `create(StreamSummarySchema)` to create a new message.
+ */
+export const StreamSummarySchema: GenMessage<StreamSummary> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 44);
+
+/**
+ * @generated from message channel.v1.ListMyStreamsRequest
+ */
+export type ListMyStreamsRequest = Message<"channel.v1.ListMyStreamsRequest"> & {};
+
+/**
+ * Describes the message channel.v1.ListMyStreamsRequest.
+ * Use `create(ListMyStreamsRequestSchema)` to create a new message.
+ */
+export const ListMyStreamsRequestSchema: GenMessage<ListMyStreamsRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 45);
+
+/**
+ * @generated from message channel.v1.ListMyStreamsResponse
+ */
+export type ListMyStreamsResponse = Message<"channel.v1.ListMyStreamsResponse"> & {
+  /**
+   * Newest first, at most 10.
+   *
+   * @generated from field: repeated channel.v1.StreamSummary streams = 1;
+   */
+  streams: StreamSummary[];
+};
+
+/**
+ * Describes the message channel.v1.ListMyStreamsResponse.
+ * Use `create(ListMyStreamsResponseSchema)` to create a new message.
+ */
+export const ListMyStreamsResponseSchema: GenMessage<ListMyStreamsResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 46);
+
+/**
+ * @generated from message channel.v1.Follower
+ */
+export type Follower = Message<"channel.v1.Follower"> & {
+  /**
+   * @generated from field: string display_name = 1;
+   */
+  displayName: string;
+
+  /**
+   * @generated from field: int64 followed_at = 2;
+   */
+  followedAt: bigint;
+};
+
+/**
+ * Describes the message channel.v1.Follower.
+ * Use `create(FollowerSchema)` to create a new message.
+ */
+export const FollowerSchema: GenMessage<Follower> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 47);
+
+/**
+ * @generated from message channel.v1.ListRecentFollowersRequest
+ */
+export type ListRecentFollowersRequest = Message<"channel.v1.ListRecentFollowersRequest"> & {};
+
+/**
+ * Describes the message channel.v1.ListRecentFollowersRequest.
+ * Use `create(ListRecentFollowersRequestSchema)` to create a new message.
+ */
+export const ListRecentFollowersRequestSchema: GenMessage<ListRecentFollowersRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 48);
+
+/**
+ * @generated from message channel.v1.ListRecentFollowersResponse
+ */
+export type ListRecentFollowersResponse = Message<"channel.v1.ListRecentFollowersResponse"> & {
+  /**
+   * Newest first, at most 20 (studio activity feed, benchmark G-14).
+   *
+   * @generated from field: repeated channel.v1.Follower followers = 1;
+   */
+  followers: Follower[];
+};
+
+/**
+ * Describes the message channel.v1.ListRecentFollowersResponse.
+ * Use `create(ListRecentFollowersResponseSchema)` to create a new message.
+ */
+export const ListRecentFollowersResponseSchema: GenMessage<ListRecentFollowersResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 49);
+
+/**
+ * Internal-only (svc-media): the broadcast's recording finished and is playable.
+ *
+ * @generated from message channel.v1.MarkVodReadyRequest
+ */
+export type MarkVodReadyRequest = Message<"channel.v1.MarkVodReadyRequest"> & {
+  /**
+   * @generated from field: string stream_id = 1;
+   */
+  streamId: string;
+};
+
+/**
+ * Describes the message channel.v1.MarkVodReadyRequest.
+ * Use `create(MarkVodReadyRequestSchema)` to create a new message.
+ */
+export const MarkVodReadyRequestSchema: GenMessage<MarkVodReadyRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 50);
+
+/**
+ * @generated from message channel.v1.MarkVodReadyResponse
+ */
+export type MarkVodReadyResponse = Message<"channel.v1.MarkVodReadyResponse"> & {};
+
+/**
+ * Describes the message channel.v1.MarkVodReadyResponse.
+ * Use `create(MarkVodReadyResponseSchema)` to create a new message.
+ */
+export const MarkVodReadyResponseSchema: GenMessage<MarkVodReadyResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 51);
+
+/**
+ * A past broadcast with a playable recording (benchmark G-15).
+ *
+ * @generated from message channel.v1.Video
+ */
+export type Video = Message<"channel.v1.Video"> & {
+  /**
+   * @generated from field: string stream_id = 1;
+   */
+  streamId: string;
+
+  /**
+   * @generated from field: int64 started_at = 2;
+   */
+  startedAt: bigint;
+
+  /**
+   * @generated from field: int32 duration_seconds = 3;
+   */
+  durationSeconds: number;
+
+  /**
+   * @generated from field: int32 peak_viewers = 4;
+   */
+  peakViewers: number;
+};
+
+/**
+ * Describes the message channel.v1.Video.
+ * Use `create(VideoSchema)` to create a new message.
+ */
+export const VideoSchema: GenMessage<Video> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 52);
+
+/**
+ * Public. Recordings of a channel within the retention window, newest first.
+ *
+ * @generated from message channel.v1.ListVideosRequest
+ */
+export type ListVideosRequest = Message<"channel.v1.ListVideosRequest"> & {
+  /**
+   * @generated from field: string slug = 1;
+   */
+  slug: string;
+};
+
+/**
+ * Describes the message channel.v1.ListVideosRequest.
+ * Use `create(ListVideosRequestSchema)` to create a new message.
+ */
+export const ListVideosRequestSchema: GenMessage<ListVideosRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 53);
+
+/**
+ * @generated from message channel.v1.ListVideosResponse
+ */
+export type ListVideosResponse = Message<"channel.v1.ListVideosResponse"> & {
+  /**
+   * @generated from field: repeated channel.v1.Video videos = 1;
+   */
+  videos: Video[];
+};
+
+/**
+ * Describes the message channel.v1.ListVideosResponse.
+ * Use `create(ListVideosResponseSchema)` to create a new message.
+ */
+export const ListVideosResponseSchema: GenMessage<ListVideosResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 54);
+
+/**
+ * Public. Signed VOD playlist URL plus what the replay page shows.
+ *
+ * @generated from message channel.v1.GetVodUrlRequest
+ */
+export type GetVodUrlRequest = Message<"channel.v1.GetVodUrlRequest"> & {
+  /**
+   * @generated from field: string stream_id = 1;
+   */
+  streamId: string;
+};
+
+/**
+ * Describes the message channel.v1.GetVodUrlRequest.
+ * Use `create(GetVodUrlRequestSchema)` to create a new message.
+ */
+export const GetVodUrlRequestSchema: GenMessage<GetVodUrlRequest> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 55);
+
+/**
+ * @generated from message channel.v1.GetVodUrlResponse
+ */
+export type GetVodUrlResponse = Message<"channel.v1.GetVodUrlResponse"> & {
+  /**
+   * @generated from field: string url = 1;
+   */
+  url: string;
+
+  /**
+   * @generated from field: int64 expires_at = 2;
+   */
+  expiresAt: bigint;
+
+  /**
+   * @generated from field: string channel_slug = 3;
+   */
+  channelSlug: string;
+
+  /**
+   * @generated from field: string channel_title = 4;
+   */
+  channelTitle: string;
+
+  /**
+   * @generated from field: int64 started_at = 5;
+   */
+  startedAt: bigint;
+
+  /**
+   * @generated from field: int32 duration_seconds = 6;
+   */
+  durationSeconds: number;
+};
+
+/**
+ * Describes the message channel.v1.GetVodUrlResponse.
+ * Use `create(GetVodUrlResponseSchema)` to create a new message.
+ */
+export const GetVodUrlResponseSchema: GenMessage<GetVodUrlResponse> =
+  /*@__PURE__*/
+  messageDesc(file_channel_v1_channel, 56);
+
+/**
  * @generated from message channel.v1.ChannelExistsRequest
  */
 export type ChannelExistsRequest = Message<"channel.v1.ChannelExistsRequest"> & {
@@ -570,7 +1233,7 @@ export type ChannelExistsRequest = Message<"channel.v1.ChannelExistsRequest"> & 
  */
 export const ChannelExistsRequestSchema: GenMessage<ChannelExistsRequest> =
   /*@__PURE__*/
-  messageDesc(file_channel_v1_channel, 25);
+  messageDesc(file_channel_v1_channel, 57);
 
 /**
  * @generated from message channel.v1.ChannelExistsResponse
@@ -588,7 +1251,37 @@ export type ChannelExistsResponse = Message<"channel.v1.ChannelExistsResponse"> 
  */
 export const ChannelExistsResponseSchema: GenMessage<ChannelExistsResponse> =
   /*@__PURE__*/
-  messageDesc(file_channel_v1_channel, 26);
+  messageDesc(file_channel_v1_channel, 58);
+
+/**
+ * @generated from enum channel.v1.ChatRole
+ */
+export enum ChatRole {
+  /**
+   * @generated from enum value: CHAT_ROLE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: CHAT_ROLE_VIEWER = 1;
+   */
+  VIEWER = 1,
+
+  /**
+   * @generated from enum value: CHAT_ROLE_MODERATOR = 2;
+   */
+  MODERATOR = 2,
+
+  /**
+   * @generated from enum value: CHAT_ROLE_BROADCASTER = 3;
+   */
+  BROADCASTER = 3,
+}
+
+/**
+ * Describes the enum channel.v1.ChatRole.
+ */
+export const ChatRoleSchema: GenEnum<ChatRole> = /*@__PURE__*/ enumDesc(file_channel_v1_channel, 0);
 
 /**
  * @generated from service channel.v1.ChannelService
@@ -689,6 +1382,122 @@ export const ChannelService: GenService<{
     methodKind: "unary";
     input: typeof HeartbeatRequestSchema;
     output: typeof HeartbeatResponseSchema;
+  };
+  /**
+   * @generated from rpc channel.v1.ChannelService.SearchChannels
+   */
+  searchChannels: {
+    methodKind: "unary";
+    input: typeof SearchChannelsRequestSchema;
+    output: typeof SearchChannelsResponseSchema;
+  };
+  /**
+   * @generated from rpc channel.v1.ChannelService.FollowChannel
+   */
+  followChannel: {
+    methodKind: "unary";
+    input: typeof FollowChannelRequestSchema;
+    output: typeof FollowChannelResponseSchema;
+  };
+  /**
+   * @generated from rpc channel.v1.ChannelService.UnfollowChannel
+   */
+  unfollowChannel: {
+    methodKind: "unary";
+    input: typeof UnfollowChannelRequestSchema;
+    output: typeof UnfollowChannelResponseSchema;
+  };
+  /**
+   * @generated from rpc channel.v1.ChannelService.ListFollowing
+   */
+  listFollowing: {
+    methodKind: "unary";
+    input: typeof ListFollowingRequestSchema;
+    output: typeof ListFollowingResponseSchema;
+  };
+  /**
+   * @generated from rpc channel.v1.ChannelService.AddModerator
+   */
+  addModerator: {
+    methodKind: "unary";
+    input: typeof AddModeratorRequestSchema;
+    output: typeof AddModeratorResponseSchema;
+  };
+  /**
+   * @generated from rpc channel.v1.ChannelService.RemoveModerator
+   */
+  removeModerator: {
+    methodKind: "unary";
+    input: typeof RemoveModeratorRequestSchema;
+    output: typeof RemoveModeratorResponseSchema;
+  };
+  /**
+   * @generated from rpc channel.v1.ChannelService.ListModerators
+   */
+  listModerators: {
+    methodKind: "unary";
+    input: typeof ListModeratorsRequestSchema;
+    output: typeof ListModeratorsResponseSchema;
+  };
+  /**
+   * @generated from rpc channel.v1.ChannelService.WatchHeartbeat
+   */
+  watchHeartbeat: {
+    methodKind: "unary";
+    input: typeof WatchHeartbeatRequestSchema;
+    output: typeof WatchHeartbeatResponseSchema;
+  };
+  /**
+   * @generated from rpc channel.v1.ChannelService.ListMyStreams
+   */
+  listMyStreams: {
+    methodKind: "unary";
+    input: typeof ListMyStreamsRequestSchema;
+    output: typeof ListMyStreamsResponseSchema;
+  };
+  /**
+   * @generated from rpc channel.v1.ChannelService.ListRecentFollowers
+   */
+  listRecentFollowers: {
+    methodKind: "unary";
+    input: typeof ListRecentFollowersRequestSchema;
+    output: typeof ListRecentFollowersResponseSchema;
+  };
+  /**
+   * @generated from rpc channel.v1.ChannelService.ListVideos
+   */
+  listVideos: {
+    methodKind: "unary";
+    input: typeof ListVideosRequestSchema;
+    output: typeof ListVideosResponseSchema;
+  };
+  /**
+   * @generated from rpc channel.v1.ChannelService.GetVodUrl
+   */
+  getVodUrl: {
+    methodKind: "unary";
+    input: typeof GetVodUrlRequestSchema;
+    output: typeof GetVodUrlResponseSchema;
+  };
+  /**
+   * Internal-only (svc-media recorder).
+   *
+   * @generated from rpc channel.v1.ChannelService.MarkVodReady
+   */
+  markVodReady: {
+    methodKind: "unary";
+    input: typeof MarkVodReadyRequestSchema;
+    output: typeof MarkVodReadyResponseSchema;
+  };
+  /**
+   * Internal-only (BFF chat role, badges, followers-only).
+   *
+   * @generated from rpc channel.v1.ChannelService.GetChatRole
+   */
+  getChatRole: {
+    methodKind: "unary";
+    input: typeof GetChatRoleRequestSchema;
+    output: typeof GetChatRoleResponseSchema;
   };
   /**
    * Internal-only (BFF chat room gate): channel existence by id, so arbitrary

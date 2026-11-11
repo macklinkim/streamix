@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
 export const file_chat_v1_chat: GenFile =
   /*@__PURE__*/
   fileDesc(
-    "ChJjaGF0L3YxL2NoYXQucHJvdG8SB2NoYXQudjEiiQEKC0NoYXRNZXNzYWdlEgoKAmlkGAEgASgJEhIKCmNoYW5uZWxfaWQYAiABKAkSDwoHdXNlcl9pZBgDIAEoCRIUCgxkaXNwbGF5X25hbWUYBCABKAkSDAoEdGV4dBgFIAEoCRIlCgdzZW50X2F0GAYgASgLMhQuY29tbW9uLnYxLlRpbWVzdGFtcCIhCgtKb2luUmVxdWVzdBISCgpjaGFubmVsX2lkGAEgASgJIjUKDEpvaW5SZXNwb25zZRIlCgdtZXNzYWdlGAEgASgLMhQuY2hhdC52MS5DaGF0TWVzc2FnZSIvCgtTZW5kUmVxdWVzdBISCgpjaGFubmVsX2lkGAEgASgJEgwKBHRleHQYAiABKAkiNQoMU2VuZFJlc3BvbnNlEiUKB21lc3NhZ2UYASABKAsyFC5jaGF0LnYxLkNoYXRNZXNzYWdlIoIBCg9Nb2RlcmF0ZVJlcXVlc3QSEgoKY2hhbm5lbF9pZBgBIAEoCRIWCg50YXJnZXRfdXNlcl9pZBgCIAEoCRIpCgZhY3Rpb24YAyABKA4yGS5jaGF0LnYxLk1vZGVyYXRpb25BY3Rpb24SGAoQZHVyYXRpb25fc2Vjb25kcxgEIAEoBSISChBNb2RlcmF0ZVJlc3BvbnNlKo0BChBNb2RlcmF0aW9uQWN0aW9uEiEKHU1PREVSQVRJT05fQUNUSU9OX1VOU1BFQ0lGSUVEEAASGQoVTU9ERVJBVElPTl9BQ1RJT05fQkFOEAESGwoXTU9ERVJBVElPTl9BQ1RJT05fVU5CQU4QAhIeChpNT0RFUkFUSU9OX0FDVElPTl9TTE9XTU9ERRADMroBCgtDaGF0U2VydmljZRI1CgRKb2luEhQuY2hhdC52MS5Kb2luUmVxdWVzdBoVLmNoYXQudjEuSm9pblJlc3BvbnNlMAESMwoEU2VuZBIULmNoYXQudjEuU2VuZFJlcXVlc3QaFS5jaGF0LnYxLlNlbmRSZXNwb25zZRI/CghNb2RlcmF0ZRIYLmNoYXQudjEuTW9kZXJhdGVSZXF1ZXN0GhkuY2hhdC52MS5Nb2RlcmF0ZVJlc3BvbnNlYgZwcm90bzM",
+    "ChJjaGF0L3YxL2NoYXQucHJvdG8SB2NoYXQudjEi3AEKC0NoYXRNZXNzYWdlEgoKAmlkGAEgASgJEhIKCmNoYW5uZWxfaWQYAiABKAkSDwoHdXNlcl9pZBgDIAEoCRIUCgxkaXNwbGF5X25hbWUYBCABKAkSDAoEdGV4dBgFIAEoCRIlCgdzZW50X2F0GAYgASgLMhQuY29tbW9uLnYxLlRpbWVzdGFtcBIOCgZiYWRnZXMYByADKAkSEwoLcmVwbHlfdG9faWQYCCABKAkSFQoNcmVwbHlfdG9fbmFtZRgJIAEoCRIVCg1yZXBseV90b190ZXh0GAogASgJIiEKC0pvaW5SZXF1ZXN0EhIKCmNoYW5uZWxfaWQYASABKAkiNQoMSm9pblJlc3BvbnNlEiUKB21lc3NhZ2UYASABKAsyFC5jaGF0LnYxLkNoYXRNZXNzYWdlIkQKC1NlbmRSZXF1ZXN0EhIKCmNoYW5uZWxfaWQYASABKAkSDAoEdGV4dBgCIAEoCRITCgtyZXBseV90b19pZBgDIAEoCSI1CgxTZW5kUmVzcG9uc2USJQoHbWVzc2FnZRgBIAEoCzIULmNoYXQudjEuQ2hhdE1lc3NhZ2UilgEKD01vZGVyYXRlUmVxdWVzdBISCgpjaGFubmVsX2lkGAEgASgJEhYKDnRhcmdldF91c2VyX2lkGAIgASgJEikKBmFjdGlvbhgDIAEoDjIZLmNoYXQudjEuTW9kZXJhdGlvbkFjdGlvbhIYChBkdXJhdGlvbl9zZWNvbmRzGAQgASgFEhIKCm1lc3NhZ2VfaWQYBSABKAkiEgoQTW9kZXJhdGVSZXNwb25zZSIpChNHZXRSb29tU3RhdGVSZXF1ZXN0EhIKCmNoYW5uZWxfaWQYASABKAkidgoJUm9vbVN0YXRlEhQKDHNsb3dfc2Vjb25kcxgBIAEoBRIWCg5mb2xsb3dlcnNfb25seRgCIAEoCBIkCgZwaW5uZWQYAyABKAsyFC5jaGF0LnYxLkNoYXRNZXNzYWdlEhUKDWJsb2NrZWRfdGVybXMYBCADKAkiOQoUR2V0Um9vbVN0YXRlUmVzcG9uc2USIQoFc3RhdGUYASABKAsyEi5jaGF0LnYxLlJvb21TdGF0ZSI7ChZTZXRCbG9ja2VkVGVybXNSZXF1ZXN0EhIKCmNoYW5uZWxfaWQYASABKAkSDQoFdGVybXMYAiADKAkiGQoXU2V0QmxvY2tlZFRlcm1zUmVzcG9uc2UqkQIKEE1vZGVyYXRpb25BY3Rpb24SIQodTU9ERVJBVElPTl9BQ1RJT05fVU5TUEVDSUZJRUQQABIZChVNT0RFUkFUSU9OX0FDVElPTl9CQU4QARIbChdNT0RFUkFUSU9OX0FDVElPTl9VTkJBThACEh4KGk1PREVSQVRJT05fQUNUSU9OX1NMT1dNT0RFEAMSJAogTU9ERVJBVElPTl9BQ1RJT05fREVMRVRFX01FU1NBR0UQBBIZChVNT0RFUkFUSU9OX0FDVElPTl9QSU4QBRIbChdNT0RFUkFUSU9OX0FDVElPTl9VTlBJThAGEiQKIE1PREVSQVRJT05fQUNUSU9OX0ZPTExPV0VSU19PTkxZEAcy3QIKC0NoYXRTZXJ2aWNlEjUKBEpvaW4SFC5jaGF0LnYxLkpvaW5SZXF1ZXN0GhUuY2hhdC52MS5Kb2luUmVzcG9uc2UwARIzCgRTZW5kEhQuY2hhdC52MS5TZW5kUmVxdWVzdBoVLmNoYXQudjEuU2VuZFJlc3BvbnNlEj8KCE1vZGVyYXRlEhguY2hhdC52MS5Nb2RlcmF0ZVJlcXVlc3QaGS5jaGF0LnYxLk1vZGVyYXRlUmVzcG9uc2USSwoMR2V0Um9vbVN0YXRlEhwuY2hhdC52MS5HZXRSb29tU3RhdGVSZXF1ZXN0Gh0uY2hhdC52MS5HZXRSb29tU3RhdGVSZXNwb25zZRJUCg9TZXRCbG9ja2VkVGVybXMSHy5jaGF0LnYxLlNldEJsb2NrZWRUZXJtc1JlcXVlc3QaIC5jaGF0LnYxLlNldEJsb2NrZWRUZXJtc1Jlc3BvbnNlYgZwcm90bzM",
     [file_common_v1_common],
   );
 
@@ -51,6 +51,31 @@ export type ChatMessage = Message<"chat.v1.ChatMessage"> & {
    * @generated from field: common.v1.Timestamp sent_at = 6;
    */
   sentAt?: Timestamp | undefined;
+
+  /**
+   * Sender role badges at send time: "broadcaster" | "moderator".
+   *
+   * @generated from field: repeated string badges = 7;
+   */
+  badges: string[];
+
+  /**
+   * Reply context, resolved server-side from the parent message (never trusted
+   * from the client). Empty when the message is not a reply.
+   *
+   * @generated from field: string reply_to_id = 8;
+   */
+  replyToId: string;
+
+  /**
+   * @generated from field: string reply_to_name = 9;
+   */
+  replyToName: string;
+
+  /**
+   * @generated from field: string reply_to_text = 10;
+   */
+  replyToText: string;
 };
 
 /**
@@ -110,6 +135,13 @@ export type SendRequest = Message<"chat.v1.SendRequest"> & {
    * @generated from field: string text = 2;
    */
   text: string;
+
+  /**
+   * Optional parent message id; ignored if the parent expired from recent history.
+   *
+   * @generated from field: string reply_to_id = 3;
+   */
+  replyToId: string;
 };
 
 /**
@@ -161,6 +193,11 @@ export type ModerateRequest = Message<"chat.v1.ModerateRequest"> & {
    * @generated from field: int32 duration_seconds = 4;
    */
   durationSeconds: number;
+
+  /**
+   * @generated from field: string message_id = 5;
+   */
+  messageId: string;
 };
 
 /**
@@ -185,6 +222,119 @@ export const ModerateResponseSchema: GenMessage<ModerateResponse> =
   messageDesc(file_chat_v1_chat, 6);
 
 /**
+ * @generated from message chat.v1.GetRoomStateRequest
+ */
+export type GetRoomStateRequest = Message<"chat.v1.GetRoomStateRequest"> & {
+  /**
+   * @generated from field: string channel_id = 1;
+   */
+  channelId: string;
+};
+
+/**
+ * Describes the message chat.v1.GetRoomStateRequest.
+ * Use `create(GetRoomStateRequestSchema)` to create a new message.
+ */
+export const GetRoomStateRequestSchema: GenMessage<GetRoomStateRequest> =
+  /*@__PURE__*/
+  messageDesc(file_chat_v1_chat, 7);
+
+/**
+ * Current chat room policy, sent to each socket on join and re-broadcast on change.
+ *
+ * @generated from message chat.v1.RoomState
+ */
+export type RoomState = Message<"chat.v1.RoomState"> & {
+  /**
+   * @generated from field: int32 slow_seconds = 1;
+   */
+  slowSeconds: number;
+
+  /**
+   * @generated from field: bool followers_only = 2;
+   */
+  followersOnly: boolean;
+
+  /**
+   * Unset when nothing is pinned.
+   *
+   * @generated from field: chat.v1.ChatMessage pinned = 3;
+   */
+  pinned?: ChatMessage | undefined;
+
+  /**
+   * Lowercased blocked terms. The BFF forwards these to moderators only.
+   *
+   * @generated from field: repeated string blocked_terms = 4;
+   */
+  blockedTerms: string[];
+};
+
+/**
+ * Describes the message chat.v1.RoomState.
+ * Use `create(RoomStateSchema)` to create a new message.
+ */
+export const RoomStateSchema: GenMessage<RoomState> =
+  /*@__PURE__*/
+  messageDesc(file_chat_v1_chat, 8);
+
+/**
+ * @generated from message chat.v1.GetRoomStateResponse
+ */
+export type GetRoomStateResponse = Message<"chat.v1.GetRoomStateResponse"> & {
+  /**
+   * @generated from field: chat.v1.RoomState state = 1;
+   */
+  state?: RoomState | undefined;
+};
+
+/**
+ * Describes the message chat.v1.GetRoomStateResponse.
+ * Use `create(GetRoomStateResponseSchema)` to create a new message.
+ */
+export const GetRoomStateResponseSchema: GenMessage<GetRoomStateResponse> =
+  /*@__PURE__*/
+  messageDesc(file_chat_v1_chat, 9);
+
+/**
+ * Replaces the channel blocked-term list (case-insensitive substring match).
+ *
+ * @generated from message chat.v1.SetBlockedTermsRequest
+ */
+export type SetBlockedTermsRequest = Message<"chat.v1.SetBlockedTermsRequest"> & {
+  /**
+   * @generated from field: string channel_id = 1;
+   */
+  channelId: string;
+
+  /**
+   * @generated from field: repeated string terms = 2;
+   */
+  terms: string[];
+};
+
+/**
+ * Describes the message chat.v1.SetBlockedTermsRequest.
+ * Use `create(SetBlockedTermsRequestSchema)` to create a new message.
+ */
+export const SetBlockedTermsRequestSchema: GenMessage<SetBlockedTermsRequest> =
+  /*@__PURE__*/
+  messageDesc(file_chat_v1_chat, 10);
+
+/**
+ * @generated from message chat.v1.SetBlockedTermsResponse
+ */
+export type SetBlockedTermsResponse = Message<"chat.v1.SetBlockedTermsResponse"> & {};
+
+/**
+ * Describes the message chat.v1.SetBlockedTermsResponse.
+ * Use `create(SetBlockedTermsResponseSchema)` to create a new message.
+ */
+export const SetBlockedTermsResponseSchema: GenMessage<SetBlockedTermsResponse> =
+  /*@__PURE__*/
+  messageDesc(file_chat_v1_chat, 11);
+
+/**
  * @generated from enum chat.v1.ModerationAction
  */
 export enum ModerationAction {
@@ -207,6 +357,32 @@ export enum ModerationAction {
    * @generated from enum value: MODERATION_ACTION_SLOWMODE = 3;
    */
   SLOWMODE = 3,
+
+  /**
+   * message_id required.
+   *
+   * @generated from enum value: MODERATION_ACTION_DELETE_MESSAGE = 4;
+   */
+  DELETE_MESSAGE = 4,
+
+  /**
+   * message_id required.
+   *
+   * @generated from enum value: MODERATION_ACTION_PIN = 5;
+   */
+  PIN = 5,
+
+  /**
+   * @generated from enum value: MODERATION_ACTION_UNPIN = 6;
+   */
+  UNPIN = 6,
+
+  /**
+   * duration_seconds > 0 turns followers-only chat on, 0 turns it off.
+   *
+   * @generated from enum value: MODERATION_ACTION_FOLLOWERS_ONLY = 7;
+   */
+  FOLLOWERS_ONLY = 7,
 }
 
 /**
@@ -245,5 +421,21 @@ export const ChatService: GenService<{
     methodKind: "unary";
     input: typeof ModerateRequestSchema;
     output: typeof ModerateResponseSchema;
+  };
+  /**
+   * @generated from rpc chat.v1.ChatService.GetRoomState
+   */
+  getRoomState: {
+    methodKind: "unary";
+    input: typeof GetRoomStateRequestSchema;
+    output: typeof GetRoomStateResponseSchema;
+  };
+  /**
+   * @generated from rpc chat.v1.ChatService.SetBlockedTerms
+   */
+  setBlockedTerms: {
+    methodKind: "unary";
+    input: typeof SetBlockedTermsRequestSchema;
+    output: typeof SetBlockedTermsResponseSchema;
   };
 }> = /*@__PURE__*/ serviceDesc(file_chat_v1_chat, 0);

@@ -9,7 +9,8 @@
     "start": "node dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src",
-    "test": "vitest run"
+    "test": "vitest run",
+    "admin:bootstrap": "tsx src/auth/bootstrap-admin.ts"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.2.3",

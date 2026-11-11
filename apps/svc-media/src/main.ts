@@ -9,6 +9,8 @@ import { core } from "./core-client.js";
 import { startHlsServer, mtxFetch } from "./hls-server.js";
 import { attachIngest } from "./ingest.js";
 import { sweepRetention, reapChannel } from "./retention.js";
+import { startRecording } from "./recorder.js";
+import { ABR_PREFIX, abrCredentialValid, startRendition } from "./abr.js";
 
 // ADR-10: MediaMTX packages RTMP -> LL-HLS. svc-media no longer runs NMS or an
 // ffmpeg HLS packager; it (1) validates the stream key for MediaMTX's http auth
@@ -21,10 +23,17 @@ const ffmpeg = ffmpegStatic as unknown as string;
 mkdirSync(env.MEDIA_ROOT, { recursive: true });
 mkdirSync(thumbRoot, { recursive: true });
 
-type Session = { channelId: string; hb: NodeJS.Timeout; thumb: NodeJS.Timeout };
+type Session = {
+  channelId: string;
+  hb: NodeJS.Timeout;
+  thumb: NodeJS.Timeout;
+  stopRecording: () => void;
+  stopRendition: () => void;
+};
 const sessions = new Map<string, Session>(); // keyed by MediaMTX path "live/<key>"
 const channelToPath = new Map<string, string>(); // reverse lookup for the proxy
 const claiming = new Set<string>(); // paths with an in-flight StartStream
+const abrReady = new Set<string>(); // channel ids whose 480p rendition is publishing
 
 const keyOf = (mtxPath: string) => mtxPath.split("/").pop() ?? "";
 
@@ -111,19 +120,25 @@ async function onPublishReady(mtxPath: string): Promise<void> {
   if (sessions.has(mtxPath) || claiming.has(mtxPath)) return;
   claiming.add(mtxPath);
   try {
-    const { channelId } = await core.startStream({ streamKey: keyOf(mtxPath) });
+    const { channelId, streamId } = await core.startStream({ streamKey: keyOf(mtxPath) });
     const hb = setInterval(() => void core.heartbeat({ channelId }).catch(() => {}), 30_000);
     setTimeout(() => void captureThumbnail(channelId, mtxPath), 4000); // first frame once warm
     const thumb = setInterval(
       () => void captureThumbnail(channelId, mtxPath),
       env.THUMB_INTERVAL_SECONDS * 1000,
     );
-    sessions.set(mtxPath, { channelId, hb, thumb });
+    sessions.set(mtxPath, {
+      channelId,
+      hb,
+      thumb,
+      stopRecording: startRecording(streamId, mtxPath),
+      stopRendition: startRendition(channelId, mtxPath),
+    });
     channelToPath.set(channelId, mtxPath);
-    console.log(`live ${mtxPath} -> channel ${channelId}`);
+    console.log(`live channel ${channelId}`);
   } catch (e) {
     const code = e instanceof ConnectError ? e.code : "?";
-    console.warn(`startStream rejected ${mtxPath}: ${code} — kicking publisher`);
+    console.warn(`startStream rejected: ${code} — kicking publisher`);
     await kickPublisher(mtxPath);
   } finally {
     claiming.delete(mtxPath);
@@ -138,9 +153,12 @@ function onPublishGone(mtxPath: string): void {
   channelToPath.delete(s.channelId);
   clearInterval(s.hb);
   clearInterval(s.thumb);
+  s.stopRendition();
+  // The recorder normally ends on source EOF; give it time to flush first.
+  setTimeout(s.stopRecording, 5000);
   void core.stopStream({ channelId: s.channelId }).catch(() => {});
   setTimeout(() => reapChannel(s.channelId), 8000);
-  console.log(`offline ${mtxPath} -> channel ${s.channelId}`);
+  console.log(`offline channel ${s.channelId}`);
 }
 
 // Poll MediaMTX for publish start/stop transitions.
@@ -150,7 +168,13 @@ async function pollPaths(): Promise<void> {
     const r = await fetch(`${mtx.apiOrigin}/v3/paths/list`);
     if (!r.ok) return;
     const data = (await r.json()) as { items?: { name: string; ready: boolean }[] };
-    for (const it of data.items ?? []) if (it.ready) ready.add(it.name);
+    abrReady.clear();
+    for (const it of data.items ?? []) {
+      if (!it.ready) continue;
+      // Renditions are our own loopback publishes, not broadcasts.
+      if (it.name.startsWith(ABR_PREFIX)) abrReady.add(it.name.slice(ABR_PREFIX.length));
+      else ready.add(it.name);
+    }
   } catch {
     return; // MediaMTX not reachable yet
   }
@@ -172,13 +196,22 @@ const authServer = createServer((req, res) => {
     void (async () => {
       let action = "";
       let path = "";
+      let password = "";
       try {
-        ({ action, path } = JSON.parse(body || "{}"));
+        ({ action, path, password } = JSON.parse(body || "{}"));
       } catch {
         /* empty/garbage body -> treated as non-publish */
       }
       if (action !== "publish") {
         res.writeHead(200).end(); // reads/api excluded upstream; allow anything else
+        return;
+      }
+      if (path.startsWith(ABR_PREFIX)) {
+        // Rendition publish: only our own transcoder (it carries a per-channel
+        // HMAC credential — source IPs vary with container NAT), only while live.
+        const channelId = path.slice(ABR_PREFIX.length);
+        const ok = channelToPath.has(channelId) && abrCredentialValid(channelId, password);
+        res.writeHead(ok ? 200 : 401).end();
         return;
       }
       try {
@@ -197,7 +230,12 @@ authServer.listen(mtx.internalPort, "0.0.0.0", () =>
 setInterval(() => void pollPaths(), 2000);
 setInterval(sweepRetention, 60_000); // backstop for streams the poller missed
 
-attachIngest(startHlsServer((channelId) => channelToPath.get(channelId)));
+attachIngest(
+  startHlsServer({
+    sourcePath: (channelId) => channelToPath.get(channelId),
+    hasRendition: (channelId) => abrReady.has(channelId),
+  }),
+);
 console.log(
   `svc-media http :${env.HTTP_PORT} (mediamtx hls ${mtx.hlsOrigin}, rtmp :${env.RTMP_PORT})`,
 );

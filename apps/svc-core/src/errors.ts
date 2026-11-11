@@ -1,4 +1,5 @@
 import { Code, ConnectError } from "@connectrpc/connect";
+import { DrizzleQueryError } from "drizzle-orm";
 import { AppErrorCode, appErrorToConnectCode } from "@streamix/schemas";
 
 const connectCodeByName: Record<string, Code> = {
@@ -19,6 +20,7 @@ export function appError(app: AppErrorCode, message?: string): ConnectError {
 
 /** Postgres unique-violation code. */
 export function isUniqueViolation(e: unknown): boolean {
+  if (e instanceof DrizzleQueryError) e = e.cause;
   return (
     typeof e === "object" && e !== null && "code" in e && (e as { code: string }).code === "23505"
   );

@@ -4,7 +4,7 @@ import { create } from "zustand";
 // token dies with the tab, and the long-lived refresh credential is an HttpOnly
 // cookie the JS cannot read at all. On reload the session is restored by a
 // silent /auth/refresh (see auth-hydrator).
-export type SessionUser = { id: string; email: string; displayName: string };
+export type SessionUser = { id: string; email: string; displayName: string; isAdmin: boolean };
 
 type AuthState = {
   token: string | null; // in-memory access token
