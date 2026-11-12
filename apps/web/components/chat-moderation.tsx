@@ -78,6 +78,7 @@ export function ChatModeration({
     target.userId !== user?.id &&
     !targetIsBroadcaster &&
     (role === "broadcaster" || !targetIsModerator);
+  const canAppoint = !!target && role === "broadcaster" && target.userId !== user?.id;
   const terms = termsDraft ?? (state.blockedTerms ?? []).join(", ");
 
   return (
@@ -228,22 +229,6 @@ export function ChatModeration({
                 <button
                   type="button"
                   disabled={busy}
-                  className={dangerBtn}
-                  onClick={() => {
-                    if (!window.confirm(`${target.displayName}님을 영구적으로 채팅 금지할까요?`))
-                      return;
-                    void moderate(
-                      `${target.displayName}님을 영구 채팅 금지했습니다.`,
-                      ModerationAction.BAN,
-                      { targetUserId: target.userId, durationSeconds: 0 },
-                    );
-                  }}
-                >
-                  영구 금지
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
                   className={btn}
                   onClick={() =>
                     void moderate(
@@ -257,28 +242,6 @@ export function ChatModeration({
                 </button>
               </>
             )}
-            {role === "broadcaster" && target.userId !== user?.id && (
-              <button
-                type="button"
-                disabled={busy}
-                className={btn}
-                onClick={() =>
-                  void run(
-                    targetIsModerator
-                      ? `${target.displayName}님을 모더레이터에서 해제했습니다.`
-                      : `${target.displayName}님을 모더레이터로 지정했습니다.`,
-                    async () => {
-                      if (targetIsModerator)
-                        await channelClient.removeModerator({ userId: target.userId }, auth);
-                      else await channelClient.addModerator({ userId: target.userId }, auth);
-                      await queryClient.invalidateQueries({ queryKey: ["moderators"] });
-                    },
-                  )
-                }
-              >
-                {targetIsModerator ? "모더레이터 해제" : "모더레이터 지정"}
-              </button>
-            )}
             <button
               type="button"
               disabled={busy}
@@ -288,6 +251,54 @@ export function ChatModeration({
               닫기
             </button>
           </div>
+          {/* Rare, heavier actions stay folded (G-23). */}
+          {(canTargetUser || canAppoint) && (
+            <details key={target.id} className="text-xs text-zinc-400">
+              <summary className="cursor-pointer select-none">더 보기</summary>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {canTargetUser && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    className={dangerBtn}
+                    onClick={() => {
+                      if (!window.confirm(`${target.displayName}님을 영구적으로 채팅 금지할까요?`))
+                        return;
+                      void moderate(
+                        `${target.displayName}님을 영구 채팅 금지했습니다.`,
+                        ModerationAction.BAN,
+                        { targetUserId: target.userId, durationSeconds: 0 },
+                      );
+                    }}
+                  >
+                    영구 금지
+                  </button>
+                )}
+                {canAppoint && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    className={btn}
+                    onClick={() =>
+                      void run(
+                        targetIsModerator
+                          ? `${target.displayName}님을 모더레이터에서 해제했습니다.`
+                          : `${target.displayName}님을 모더레이터로 지정했습니다.`,
+                        async () => {
+                          if (targetIsModerator)
+                            await channelClient.removeModerator({ userId: target.userId }, auth);
+                          else await channelClient.addModerator({ userId: target.userId }, auth);
+                          await queryClient.invalidateQueries({ queryKey: ["moderators"] });
+                        },
+                      )
+                    }
+                  >
+                    {targetIsModerator ? "모더레이터 해제" : "모더레이터 지정"}
+                  </button>
+                )}
+              </div>
+            </details>
+          )}
         </div>
       ) : (
         <p className="text-xs text-zinc-400">채팅 작성자 이름을 눌러 메시지·사용자를 관리하세요.</p>

@@ -2,14 +2,25 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { channelClient } from "@/lib/connect";
 import { useAuth } from "@/lib/auth-store";
+import { clockLabel } from "@/lib/format";
 import { BroadcastPanel } from "@/components/broadcast";
 import { Chat } from "@/components/chat";
 import { ModeratorList } from "@/components/moderator-list";
-import { StreamHistory } from "@/components/stream-history";
+import { StreamHistory, useMyStreams } from "@/components/stream-history";
 import { ActivityFeed } from "@/components/activity-feed";
+
+// Ticks every second from the server-recorded stream start (unix seconds).
+function LiveClock({ since }: { since: number }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return <>{clockLabel(now / 1000 - since)}</>;
+}
 
 export default function LiveStudioPage() {
   const { token, ready } = useAuth();
@@ -68,6 +79,15 @@ export default function LiveStudioPage() {
     refetchInterval: 5000,
   });
 
+  // Status bar (benchmark G-22). The live row appears when the server registers
+  // the publish, so refresh streams as soon as the channel flips live/offline.
+  const serverLive = data?.channel?.isLive ?? false;
+  const queryClient = useQueryClient();
+  const { data: streams } = useMyStreams();
+  useEffect(() => {
+    void queryClient.invalidateQueries({ queryKey: ["my-streams"] });
+  }, [serverLive, queryClient]);
+
   if (!ready || (token && isLoading))
     return (
       <p role="status" className="py-12 text-zinc-400">
@@ -107,19 +127,38 @@ export default function LiveStudioPage() {
     );
 
   const live = broadcasting || channel.isLive;
+  const liveSince = channel.isLive ? streams?.find((s) => s.live)?.startedAt : undefined;
+  // "Is the server actually receiving?" — isLive comes from the media server's
+  // publish hook, so it also covers OBS/RTMP. Browser sending without it yet =
+  // the ingest hasn't reached the server (connecting, or stuck).
+  const [statusText, statusClass] = channel.isLive
+    ? ["● LIVE 수신 중", "text-live"]
+    : broadcasting
+      ? ["서버 수신 대기 중…", "text-amber-400"]
+      : ["오프라인", "text-zinc-400"];
   return (
     <div className="mx-auto max-w-6xl space-y-5 py-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">방송 관리</h1>
           <p className="mt-1 break-words text-sm text-zinc-300">{channel.title}</p>
-          <p className="mt-1 text-xs text-zinc-400">
-            /{channel.slug} ·{" "}
-            <span className={live ? "text-live" : "text-zinc-400"}>
-              {live ? "● LIVE" : "방송 준비"}
-            </span>{" "}
-            · 시청자 {channel.viewerCount}명
-          </p>
+          <p className="mt-1 text-xs text-zinc-400">/{channel.slug}</p>
+          <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+            <div>
+              <dt className="sr-only">송출 상태</dt>
+              <dd className={statusClass}>{statusText}</dd>
+            </div>
+            <div className="flex gap-1.5">
+              <dt className="text-zinc-400">경과</dt>
+              <dd className="font-mono tabular-nums">
+                {liveSince ? <LiveClock since={Number(liveSince)} /> : "-:--:--"}
+              </dd>
+            </div>
+            <div>
+              <dt className="sr-only">시청자 수</dt>
+              <dd>시청자 {channel.viewerCount}명</dd>
+            </div>
+          </dl>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link

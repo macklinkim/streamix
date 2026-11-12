@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-store";
 
 // Broadcaster-only list of chat moderators (benchmark G-09). Appointing happens
 // from a chat message; this is where moderators who are not chatting are removed.
+// Collapsed by default (G-23): rarely needed while live, so it stays out of the way.
 export function ModeratorList() {
   const token = useAuth((s) => s.token);
   const queryClient = useQueryClient();
@@ -21,10 +22,10 @@ export function ModeratorList() {
   });
 
   return (
-    <section aria-labelledby="moderators-heading" className="space-y-2">
-      <h2 id="moderators-heading" className="text-sm font-semibold">
-        모더레이터
-      </h2>
+    <details className="space-y-2">
+      <summary className="cursor-pointer select-none text-sm font-semibold">
+        모더레이터 관리{data ? ` (${data.length}명)` : ""}
+      </summary>
       {isError && (
         <p role="alert" className="text-xs text-live">
           모더레이터 목록을 불러오지 못했습니다.
@@ -58,6 +59,6 @@ export function ModeratorList() {
           해제하지 못했습니다. 다시 시도하세요.
         </p>
       )}
-    </section>
+    </details>
   );
 }

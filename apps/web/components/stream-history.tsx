@@ -11,11 +11,10 @@ const dateFmt = new Intl.DateTimeFormat("ko", { dateStyle: "medium", timeStyle: 
 const duration = (start: bigint, end: bigint) =>
   durationLabel(Number(end || BigInt(Math.floor(Date.now() / 1000))) - Number(start));
 
-// Post-broadcast summary (benchmark G-13). `latestOnly` = the live room's
-// "last broadcast" card; otherwise the studio's recent-broadcast table.
-export function StreamHistory({ latestOnly = false }: { latestOnly?: boolean }) {
+// Shared with the live room's status bar (G-22), which reads the live row's start.
+export function useMyStreams() {
   const token = useAuth((s) => s.token);
-  const { data, isError, refetch } = useQuery({
+  return useQuery({
     queryKey: ["my-streams"],
     queryFn: async () =>
       (await channelClient.listMyStreams({}, { headers: { authorization: `Bearer ${token}` } }))
@@ -23,6 +22,12 @@ export function StreamHistory({ latestOnly = false }: { latestOnly?: boolean }) 
     enabled: !!token,
     refetchInterval: 15_000,
   });
+}
+
+// Post-broadcast summary (benchmark G-13). `latestOnly` = the live room's
+// "last broadcast" card; otherwise the studio's recent-broadcast table.
+export function StreamHistory({ latestOnly = false }: { latestOnly?: boolean }) {
+  const { data, isError, refetch } = useMyStreams();
 
   if (isError)
     return (
