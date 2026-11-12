@@ -15,11 +15,38 @@ type AuthState = {
   clear: () => void;
 };
 
+// Non-secret "this browser was signed in" flag. Without it the header can show
+// 로그인/회원가입 at once instead of waiting on the /auth/refresh round-trip
+// (a cold BFF takes seconds). It only picks the first paint; the refresh still
+// runs and replaces it with the real session.
+const HINT_KEY = "streamix_session_hint";
+function setHint(on: boolean) {
+  try {
+    if (on) localStorage.setItem(HINT_KEY, "1");
+    else localStorage.removeItem(HINT_KEY);
+  } catch {
+    /* storage blocked: header just waits for the refresh as before */
+  }
+}
+export function hadSession(): boolean {
+  try {
+    return localStorage.getItem(HINT_KEY) === "1";
+  } catch {
+    return true; // unknown -> keep the old wait-for-refresh behaviour
+  }
+}
+
 export const useAuth = create<AuthState>((set) => ({
   token: null,
   user: null,
   ready: false,
-  setSession: (token, user) => set({ token, user, ready: true }),
+  setSession: (token, user) => {
+    setHint(!!user);
+    set({ token, user, ready: true });
+  },
   setToken: (token) => set({ token }),
-  clear: () => set({ token: null, user: null, ready: true }),
+  clear: () => {
+    setHint(false);
+    set({ token: null, user: null, ready: true });
+  },
 }));

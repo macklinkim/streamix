@@ -11,6 +11,22 @@ import { NextResponse, type NextRequest } from "next/server";
 // exact origins when enforcing.
 const BFF = process.env.NEXT_PUBLIC_BFF_URL ?? "";
 
+// Report sampling. Pages are statically prerendered, so the per-request nonce
+// never reaches Next's scripts and every load reports the same violations
+// (~15 POSTs). Same build => same reports, so new information only comes from a
+// new deploy or an injected script. Sample once per browser per day, on the
+// regularly visited entry pages only: a regression still surfaces within a day
+// at a small fraction of the volume.
+// ponytail: fixed 24h cookie per browser; upgrade = server-side dedup by
+// directive+URL if reports ever need to be complete.
+const REPORT_COOKIE = "streamix_csp_sampled";
+const REPORT_PATHS = ["/", "/login", "/studio"];
+const shouldReport = (req: NextRequest) =>
+  !!BFF &&
+  req.headers.get("sec-fetch-dest") === "document" && // not RSC/prefetch fetches
+  !req.cookies.has(REPORT_COOKIE) &&
+  (REPORT_PATHS.includes(req.nextUrl.pathname) || req.nextUrl.pathname.startsWith("/studio/"));
+
 export function middleware(req: NextRequest) {
   const nonce = btoa(crypto.randomUUID());
   const directives = [
@@ -27,13 +43,22 @@ export function middleware(req: NextRequest) {
   ];
   // Collect violations at the BFF so the policy can be tuned before enforcing
   // (V4-4). report-uri isn't subject to connect-src (it's a browser beacon).
-  if (BFF) directives.push(`report-uri ${BFF}/csp-report`);
+  const report = shouldReport(req);
+  if (report) directives.push(`report-uri ${BFF}/csp-report`);
   const csp = directives.join("; ");
 
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-nonce", nonce);
   const res = NextResponse.next({ request: { headers: requestHeaders } });
   res.headers.set("Content-Security-Policy-Report-Only", csp);
+  if (report)
+    res.cookies.set(REPORT_COOKIE, "1", {
+      maxAge: 60 * 60 * 24,
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      secure: req.nextUrl.protocol === "https:",
+    });
   return res;
 }
 
