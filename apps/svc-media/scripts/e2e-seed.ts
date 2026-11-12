@@ -13,7 +13,7 @@ const auth = createClient(AuthService, t);
 const channel = createClient(ChannelService, t);
 
 const EMAIL = "e2e@streamix.test";
-const PASSWORD = "e2epassword123";
+const PASSWORD = "e2ePassword!123";
 const SLUG = "e2e-live";
 
 await auth

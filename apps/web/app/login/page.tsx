@@ -1,37 +1,53 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { loginPasswordSchema } from "@streamix/schemas";
 import { useRouter } from "next/navigation";
-import { apiLogin } from "@/lib/session";
+import { apiLogin, AuthError } from "@/lib/session";
 import { useAuth } from "@/lib/auth-store";
 import { Field, inputCls } from "@/components/field";
+import { LoginOptions, useLoginPreferences } from "@/components/login-options";
 
 const schema = z.object({
   email: z.string().email("올바른 이메일을 입력하세요"),
-  password: z.string().min(8, "비밀번호는 8자 이상이어야 합니다"),
+  password: loginPasswordSchema,
 });
 type Form = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const router = useRouter();
   const setSession = useAuth((s) => s.setSession);
+  const preferences = useLoginPreferences();
   const {
     register,
     handleSubmit,
     setError,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<Form>({ resolver: zodResolver(schema) });
 
+  useEffect(() => {
+    setValue("email", preferences.savedEmail);
+  }, [preferences.savedEmail, setValue]);
+
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const res = await apiLogin(data);
+      const res = await apiLogin({ ...data, rememberMe: preferences.rememberMe });
+      preferences.saveEmail(data.email);
       setSession(res.accessToken, res.user);
       router.push("/");
-    } catch {
-      setError("root", { message: "이메일 또는 비밀번호가 올바르지 않습니다." });
+    } catch (error) {
+      const pending =
+        error instanceof AuthError && error.status === 403 && error.code === "approval pending";
+      setError("root", {
+        message: pending
+          ? "관리자 승인 대기 중입니다. 승인 후 로그인할 수 있습니다."
+          : "이메일 또는 비밀번호가 올바르지 않습니다.",
+      });
     }
   });
 
@@ -50,7 +66,12 @@ export default function LoginPage() {
             {...register("password")}
           />
         </Field>
-        {errors.root && <p className="text-sm text-live">{errors.root.message}</p>}
+        <LoginOptions {...preferences} />
+        {errors.root && (
+          <p role="alert" className="text-sm text-live">
+            {errors.root.message}
+          </p>
+        )}
         <button
           type="submit"
           disabled={isSubmitting}

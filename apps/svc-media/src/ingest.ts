@@ -8,6 +8,13 @@ import { core } from "./core-client.js";
 
 const ffmpeg = ffmpegStatic as unknown as string;
 
+export function encoderFailure(output: string): string {
+  if (output.includes("Connection refused")) return "RTMP connection refused";
+  if (output.includes("Invalid data found")) return "invalid media input";
+  if (output.includes("Broken pipe")) return "ingest disconnected";
+  return "encoder error";
+}
+
 // ADR-9 codec negotiation: the studio page picks a MediaRecorder format the
 // server can remux cheaply and passes its label as ?codec=. Copy paths skip
 // re-encoding entirely (max CPU saving); everything else falls back to the
@@ -214,11 +221,17 @@ export function attachIngest(server: Server): void {
           "flv",
           `rtmp://127.0.0.1:${env.RTMP_PORT}/live/${streamKey}`,
         ],
-        { stdio: ["pipe", "ignore", "inherit"] },
+        { stdio: ["pipe", "ignore", "pipe"] },
       );
+      let failure = "encoder error";
+      ff.stderr.on("data", (chunk: Buffer) => {
+        const kind = encoderFailure(chunk.toString());
+        if (kind !== "encoder error") failure = kind;
+      });
       ff.stdin.on("error", () => {}); // EPIPE when ffmpeg dies mid-write
 
       ff.on("close", (code) => {
+        if (code !== 0) console.warn(`ingest encoder exited (${code}): ${failure}`);
         // NMS rejecting the publish (key race / already live) also lands here.
         if (ws.readyState === ws.OPEN) ws.close(1011, `encoder exited (${code})`);
       });

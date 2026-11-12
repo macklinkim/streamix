@@ -87,7 +87,7 @@ async function main() {
     await loginViaUi(page, WEB, EMAIL, PASSWORD);
     check("login", true);
 
-    await page.goto(`${WEB}/studio`);
+    await page.goto(`${WEB}/studio/live`);
 
     // Pick source (camera is default; click the screen tab only when testing it).
     if (SOURCE === "screen") await page.getByRole("button", { name: "화면" }).click();
@@ -103,7 +103,7 @@ async function main() {
       check("detailed camera selected", !!pickedDeviceId, pickedDeviceId.slice(0, 8));
     }
 
-    await page.getByRole("button", { name: "방송시작" }).click();
+    await page.getByRole("button", { name: "송출 시작" }).click();
     try {
       await page.getByText("송출 중").waitFor({ timeout: 20000 });
       check(`broadcasting state (source=${SOURCE}, mobile=${MOBILE})`, true);

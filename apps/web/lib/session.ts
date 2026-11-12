@@ -43,6 +43,7 @@ export async function apiRegister(input: {
 export async function apiLogin(input: {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }): Promise<{ accessToken: string; user: SessionUser }> {
   const res = await fetch(`${bffUrl}/auth/login`, {
     method: "POST",

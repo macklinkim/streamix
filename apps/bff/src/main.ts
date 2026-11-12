@@ -3,9 +3,10 @@ import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
 import { collectDefaultMetrics, register } from "prom-client";
 import { fastifyConnectPlugin } from "@connectrpc/connect-fastify";
-import { AuthService, ChannelService } from "@streamix/proto";
+import { AuthService, ChannelService, ChatService } from "@streamix/proto";
 import { authProxy } from "./services/auth.proxy.js";
 import { channelProxy } from "./services/channel.proxy.js";
+import { chatProxy } from "./services/chat.proxy.js";
 import { authRoutes } from "./routes/auth.js";
 import { twitchRoutes } from "./routes/twitch.js";
 import { cspRoutes } from "./routes/csp.js";
@@ -41,6 +42,7 @@ await app.register(fastifyConnectPlugin, {
   routes(router) {
     router.service(AuthService, authProxy);
     router.service(ChannelService, channelProxy);
+    router.service(ChatService, chatProxy);
   },
 });
 

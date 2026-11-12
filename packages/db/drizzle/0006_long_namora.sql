@@ -1,0 +1,1 @@
+ALTER TABLE "streams" ADD COLUMN "chat_messages" integer DEFAULT 0 NOT NULL;

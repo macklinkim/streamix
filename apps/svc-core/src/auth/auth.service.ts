@@ -1,5 +1,7 @@
 import type { ServiceImpl, HandlerContext } from "@connectrpc/connect";
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
+import { Code, ConnectError } from "@connectrpc/connect";
+import { z } from "zod";
 import { AuthService } from "@streamix/proto";
 import {
   AppErrorCode,
@@ -20,6 +22,16 @@ function requireUserId(ctx: HandlerContext): string {
   const id = ctx.requestHeader.get("x-user-id");
   if (!id) throw appError(AppErrorCode.INVALID_CREDENTIALS, "missing authenticated user");
   return id;
+}
+
+async function requireAdmin(ctx: HandlerContext): Promise<void> {
+  const userId = requireUserId(ctx);
+  const [user] = await db
+    .select({ isAdmin: users.isAdmin })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!user?.isAdmin) throw new ConnectError("admin required", Code.PermissionDenied);
 }
 
 // Timing-equalizer hash (inbox/review.md V5-1): logins for unknown or
@@ -44,7 +56,7 @@ export const authService: ServiceImpl<typeof AuthService> = {
     if (!emailP.success) throw appError(AppErrorCode.VALIDATION, "invalid email");
     const email = emailP.data;
     if (!passwordSchema.safeParse(req.password).success)
-      throw appError(AppErrorCode.VALIDATION, "password must be 12-200 characters");
+      throw appError(AppErrorCode.VALIDATION, "password does not meet the password policy");
     const nameP = displayNameSchema.safeParse(req.displayName);
     if (!nameP.success) throw appError(AppErrorCode.VALIDATION, "invalid display name");
     const displayName = nameP.data;
@@ -59,10 +71,7 @@ export const authService: ServiceImpl<typeof AuthService> = {
   },
 
   async login(req) {
-    // Boundary validation (V6-4): reject malformed email / out-of-range
-    // password (1-200 chars — pre-12+-policy accounts must still log in)
-    // before any Argon2 cost. Invalid shapes are invalid_argument, not a
-    // credentials probe result.
+    // Validate the email and password format before any Argon2 work.
     const parsed = emailSchema.safeParse(req.email);
     if (!parsed.success) throw appError(AppErrorCode.VALIDATION, "invalid email");
     if (!loginPasswordSchema.safeParse(req.password).success)
@@ -84,6 +93,7 @@ export const authService: ServiceImpl<typeof AuthService> = {
     if (!(await verifyPassword(u.passwordHash, req.password))) {
       throw appError(AppErrorCode.INVALID_CREDENTIALS);
     }
+    if (!u.approvedAt) throw new ConnectError("approval pending", Code.PermissionDenied);
     return {
       accessToken: await signAccess(u.id),
       refreshToken: await signRefresh(u.id),
@@ -98,6 +108,12 @@ export const authService: ServiceImpl<typeof AuthService> = {
     } catch {
       throw appError(AppErrorCode.INVALID_CREDENTIALS, "invalid refresh token");
     }
+    const [user] = await db
+      .select({ approvedAt: users.approvedAt })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (!user?.approvedAt) throw new ConnectError("approval pending", Code.PermissionDenied);
     return { accessToken: await signAccess(userId), refreshToken: await signRefresh(userId) };
   },
 
@@ -119,7 +135,7 @@ export const authService: ServiceImpl<typeof AuthService> = {
     if (!(await verifyPassword(u.passwordHash, req.currentPassword)))
       throw appError(AppErrorCode.INVALID_CREDENTIALS, "current password incorrect");
     if (!passwordSchema.safeParse(req.newPassword).success)
-      throw appError(AppErrorCode.VALIDATION, "new password must be 12-200 characters");
+      throw appError(AppErrorCode.VALIDATION, "new password does not meet the password policy");
     const passwordHash = await hashPassword(req.newPassword);
     await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
     return {};
@@ -156,5 +172,29 @@ export const authService: ServiceImpl<typeof AuthService> = {
       }
       throw e;
     }
+  },
+
+  async listPendingUsers(_req, ctx) {
+    await requireAdmin(ctx);
+    const pending = await db
+      .select()
+      .from(users)
+      .where(isNull(users.approvedAt))
+      .orderBy(users.createdAt)
+      .limit(100);
+    return { users: pending.map(toUserMsg) };
+  },
+
+  async approveUser(req, ctx) {
+    await requireAdmin(ctx);
+    if (!z.string().uuid().safeParse(req.userId).success)
+      throw appError(AppErrorCode.VALIDATION, "invalid user id");
+    const [user] = await db
+      .update(users)
+      .set({ approvedAt: new Date() })
+      .where(eq(users.id, req.userId))
+      .returning({ id: users.id });
+    if (!user) throw appError(AppErrorCode.NOT_FOUND, "user not found");
+    return {};
   },
 };

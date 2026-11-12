@@ -8,10 +8,12 @@ import type { ClothParams } from "@/lib/tearable";
 // form behind. `params` lets the lab page tune the physics live.
 export function TearableCurtain({
   onReveal,
+  onSkip,
   params,
   showChrome = true,
 }: {
   onReveal: () => void;
+  onSkip?: () => void;
   params?: ClothParams;
   showChrome?: boolean;
 }) {
@@ -28,10 +30,11 @@ export function TearableCurtain({
           </p>
           <button
             type="button"
-            onClick={skip}
+            onClick={onSkip ?? skip}
+            autoFocus
             className="absolute bottom-6 right-6 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-xs font-medium tracking-wide text-white/80 backdrop-blur-sm transition-colors hover:border-[#9146FF]/60 hover:text-white"
           >
-            [ Skip Animation ]
+            {onSkip ? "로그인으로 바로 가기" : "[ Skip Animation ]"}
           </button>
         </>
       )}

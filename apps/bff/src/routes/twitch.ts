@@ -38,9 +38,10 @@ function readState(cookieHeader: string | undefined): string | null {
 export async function twitchRoutes(app: FastifyInstance): Promise<void> {
   const configured = Boolean(env.TWITCH_CLIENT_ID && env.TWITCH_CLIENT_SECRET);
 
-  app.get("/auth/twitch", async (_req, reply) => {
+  app.get("/auth/twitch", async (req, reply) => {
     if (!configured) return reply.code(503).send({ error: "twitch login not configured" });
-    const state = crypto.randomUUID();
+    const { rememberMe } = req.query as { rememberMe?: string };
+    const state = `${crypto.randomUUID()}.${rememberMe === "1" ? "1" : "0"}`;
     reply.header("set-cookie", stateCookie(state, 600));
     const url =
       `${AUTHORIZE}?client_id=${encodeURIComponent(env.TWITCH_CLIENT_ID)}` +
@@ -94,10 +95,12 @@ export async function twitchRoutes(app: FastifyInstance): Promise<void> {
         email: tw.email ?? "",
         displayName: tw.display_name || tw.login,
       });
+      if (!user?.approved) return reply.redirect(`${env.WEB_URL}/?oauth=pending`);
       // The refresh session is the credential; the browser mints an access token
       // via the silent /auth/refresh right after it lands back on the web app.
-      const session = await createSession(user!.id);
-      if (session) reply.header("set-cookie", refreshCookie(session.sid));
+      const rememberMe = expected.endsWith(".1");
+      const session = await createSession(user!.id, rememberMe);
+      if (session) reply.header("set-cookie", refreshCookie(session.sid, rememberMe));
       return reply.redirect(env.WEB_URL);
     } catch {
       return reply.redirect(`${env.WEB_URL}/?oauth=failed`);

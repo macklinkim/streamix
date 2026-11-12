@@ -15,7 +15,7 @@ export function AuthHydrator() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const token = await apiRefresh();
+      const token = await apiRefresh().catch(() => null);
       if (cancelled) return;
       if (!token) {
         clear();
@@ -25,7 +25,10 @@ export function AuthHydrator() {
         const res = await authClient.me({}, { headers: { authorization: `Bearer ${token}` } });
         const u = res.user;
         if (!cancelled) {
-          setSession(token, u ? { id: u.id, email: u.email, displayName: u.displayName } : null);
+          setSession(
+            token,
+            u ? { id: u.id, email: u.email, displayName: u.displayName, isAdmin: u.isAdmin } : null,
+          );
         }
       } catch {
         if (!cancelled) clear();

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { isWeakPassword } from "./weak-password.js";
-import { passwordSchema } from "./index.js";
+import { loginPasswordSchema, passwordSchema } from "./index.js";
 
 describe("isWeakPassword", () => {
   it("flags repeated single characters", () => {
@@ -33,6 +33,14 @@ describe("passwordSchema", () => {
     expect(passwordSchema.safeParse("123456789012").success).toBe(false);
   });
   it("accepts a strong password", () => {
-    expect(passwordSchema.safeParse("correct horse battery").success).toBe(true);
+    expect(passwordSchema.safeParse("Examp!42").success).toBe(true);
+    expect(passwordSchema.safeParse("!42Examp").success).toBe(true);
   });
+});
+
+describe.each([loginPasswordSchema, passwordSchema])("password composition", (schema) => {
+  it.each(["Examp!4", "Example!", "Example4", "1234567!", "Example4 "])(
+    "rejects %s when a requirement is missing",
+    (password) => expect(schema.safeParse(password).success).toBe(false),
+  );
 });

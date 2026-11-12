@@ -27,7 +27,11 @@
   },
   "pnpm": {
     "overrides": {
-      "postcss@<8.5.10": "8.5.16"
+      "postcss@<8.5.18": "8.5.18",
+      "fast-uri@<3.1.6": "3.1.8",
+      "find-my-way@<9.7.0": "9.9.0",
+      "nanoid@<3.3.18": "3.3.19",
+      "sharp@<0.35.4": "0.35.4"
     }
   },
   "devDependencies": {
@@ -45,7 +49,7 @@
     "turbo": "^2.3.3",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.19.0",
-    "next": "^15.1.3",
+    "next": "^15.5.24",
     "vercel": "55.0.0"
   }
 }

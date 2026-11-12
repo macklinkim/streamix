@@ -14,6 +14,49 @@ const cspViolations = new Counter({
 const LOG_PER_MIN = 50;
 let logWindowStart = 0;
 let loggedThisWindow = 0;
+const DIRECTIVES = new Set([
+  "base-uri",
+  "child-src",
+  "connect-src",
+  "default-src",
+  "font-src",
+  "form-action",
+  "frame-ancestors",
+  "frame-src",
+  "img-src",
+  "manifest-src",
+  "media-src",
+  "navigate-to",
+  "object-src",
+  "report-to",
+  "report-uri",
+  "require-trusted-types-for",
+  "sandbox",
+  "script-src",
+  "script-src-attr",
+  "script-src-elem",
+  "style-src",
+  "style-src-attr",
+  "style-src-elem",
+  "trusted-types",
+  "upgrade-insecure-requests",
+  "worker-src",
+]);
+
+function safeUri(value: unknown): string {
+  if (typeof value !== "string") return "[invalid]";
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return "[invalid]";
+    url.username = "";
+    url.password = "";
+    url.search = "";
+    url.hash = "";
+    return url.toString().slice(0, 256);
+  } catch {
+    return "[invalid]";
+  }
+}
 
 type CspReportBody = {
   "csp-report"?: Record<string, unknown>;
@@ -37,10 +80,12 @@ export async function cspRoutes(app: FastifyInstance): Promise<void> {
 
   app.post("/csp-report", async (req, reply) => {
     const b = (req.body ?? {}) as CspReportBody;
-    const r = b["csp-report"] ?? b.body ?? {};
-    const directive =
-      (r["effective-directive"] as string) || (r["violated-directive"] as string) || "unknown";
-    cspViolations.inc({ directive: directive.split(" ")[0] ?? "unknown" });
+    const report = b["csp-report"] ?? b.body;
+    const r = report && typeof report === "object" && !Array.isArray(report) ? report : {};
+    const raw = r["effective-directive"] ?? r["violated-directive"];
+    const name = typeof raw === "string" ? (raw.split(" ")[0] ?? "") : "";
+    const directive = DIRECTIVES.has(name) ? name : "other";
+    cspViolations.inc({ directive });
 
     const now = Date.now();
     if (now - logWindowStart > 60_000) {
@@ -52,8 +97,8 @@ export async function cspRoutes(app: FastifyInstance): Promise<void> {
       req.log.warn({
         cspViolation: {
           directive,
-          blockedUri: r["blocked-uri"],
-          documentUri: r["document-uri"],
+          blockedUri: safeUri(r["blocked-uri"]),
+          documentUri: safeUri(r["document-uri"]),
         },
       });
     }

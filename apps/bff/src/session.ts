@@ -33,20 +33,26 @@ const uk = (userId: string) => `usess:${userId}`;
 export type Session = { sid: string; family: string };
 
 export type RotateResult =
-  | { status: "ok"; userId: string; sid: string; family: string }
+  | { status: "ok"; userId: string; sid: string; family: string; rememberMe: boolean }
   | { status: "invalid" }
   | { status: "reuse" }
   | { status: "expired" };
 
 /** Create a fresh session family. Returns the cookie sid + family id, or null on outage. */
-export async function createSession(userId: string): Promise<Session | null> {
+export async function createSession(userId: string, rememberMe = true): Promise<Session | null> {
   const family = crypto.randomUUID();
   const sid = crypto.randomUUID();
   const ttl = slidingSec();
   try {
     await redis
       .multi()
-      .hset(rk(sid), { userId, family, born: Date.now().toString(), used: "0" })
+      .hset(rk(sid), {
+        userId,
+        family,
+        born: Date.now().toString(),
+        used: "0",
+        rememberMe: rememberMe ? "1" : "0",
+      })
       .expire(rk(sid), ttl)
       .sadd(fk(family), sid)
       .expire(fk(family), ttl)
@@ -111,6 +117,8 @@ if #cur == 0 then return {'invalid'} end
 local h = {}
 for i = 1, #cur, 2 do h[cur[i]] = cur[i + 1] end
 local userId, family, born = h['userId'], h['family'], tonumber(h['born'] or '0')
+-- Sessions issued before this preference existed used persistent cookies.
+local rememberMe = h['rememberMe'] or '1'
 
 -- Revoked family must never mint again (V2-1): without this check a rotation
 -- racing a logout could re-create the family set and a live sid.
@@ -137,7 +145,7 @@ if h['used'] == '1' then
   local next = h['next']
   if next and (now - tonumber(h['usedAt'] or '0')) <= graceMs
      and redis.call('EXISTS', 'refresh:' .. next) == 1 then
-    return {'ok', userId, next, family}
+    return {'ok', userId, next, family, rememberMe}
   end
   revokeFamily()
   return {'reuse'}
@@ -150,13 +158,13 @@ end
 redis.call('HSET', sidKey, 'used', '1', 'usedAt', tostring(now), 'next', newSid)
 redis.call('EXPIRE', sidKey, ttl)
 redis.call('HSET', 'refresh:' .. newSid,
-  'userId', userId, 'family', family, 'born', tostring(born), 'used', '0')
+  'userId', userId, 'family', family, 'born', tostring(born), 'used', '0', 'rememberMe', rememberMe)
 redis.call('EXPIRE', 'refresh:' .. newSid, ttl)
 local famKey = 'fam:' .. family
 redis.call('SADD', famKey, newSid)
 redis.call('EXPIRE', famKey, ttl)
 redis.call('EXPIRE', 'usess:' .. userId, ttl)
-return {'ok', userId, newSid, family}
+return {'ok', userId, newSid, family, rememberMe}
 `;
 
 /** Validate + rotate a refresh sid. Detects replay of an already-rotated token. */
@@ -177,7 +185,14 @@ export async function rotateSession(sid: string): Promise<RotateResult> {
   } catch {
     return { status: "invalid" }; // outage: cannot validate, force re-login.
   }
-  if (res[0] === "ok") return { status: "ok", userId: res[1]!, sid: res[2]!, family: res[3]! };
+  if (res[0] === "ok")
+    return {
+      status: "ok",
+      userId: res[1]!,
+      sid: res[2]!,
+      family: res[3]!,
+      rememberMe: res[4] !== "0",
+    };
   if (res[0] === "reuse") return { status: "reuse" };
   if (res[0] === "expired") return { status: "expired" };
   return { status: "invalid" };

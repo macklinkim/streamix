@@ -11,17 +11,22 @@ export * from "./weak-password.js";
 // Canonicalized email (inbox/review.md P2-4): trimmed + lowercased so rate-limit
 // keys, uniqueness, and lookups all agree on one form.
 export const emailSchema = z.string().trim().toLowerCase().email().max(254);
-// Registration password policy (P2-4): length-first, no composition rules
-// (password managers welcome). 200 cap bounds Argon2 input. Trivially weak
-// 12+ char passwords (repeats, digit sequences, common phrases) are rejected.
-export const passwordSchema = z
+export const passwordPolicyMessage =
+  "비밀번호는 8자 이상이며 영문, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다";
+
+export const loginPasswordSchema = z
   .string()
-  .min(12)
-  .max(200)
-  .refine((p) => !isWeakPassword(p), { message: "password is too common or predictable" });
-// Login accepts any non-empty password: accounts created before the 12+ minimum
-// must still be able to sign in.
-export const loginPasswordSchema = z.string().min(1).max(200);
+  .min(8, passwordPolicyMessage)
+  .max(200, "비밀번호는 200자 이하여야 합니다")
+  .regex(/[A-Za-z]/, passwordPolicyMessage)
+  .regex(/[0-9]/, passwordPolicyMessage)
+  .regex(/[\p{P}\p{S}]/u, passwordPolicyMessage);
+
+// Reject predictable passwords when creating or changing a password.
+export const passwordSchema = loginPasswordSchema.refine(
+  (password) => !isWeakPassword(password),
+  "너무 흔하거나 예측하기 쉬운 비밀번호입니다",
+);
 // Server-side display-name guard (P2-4): trimmed, bounded, no control characters
 // or line/paragraph separators.
 export const displayNameSchema = z
@@ -31,6 +36,20 @@ export const displayNameSchema = z
   .max(50)
   // eslint-disable-next-line no-control-regex
   .refine((s) => !/[\u0000-\u001f\u007f\u2028\u2029]/.test(s), "invalid characters");
+
+// Fixed channel categories (benchmark G-03): a closed list so channels group on
+// the home filter. Legacy free-text values stay readable but can't be newly set.
+export const CHANNEL_CATEGORIES = [
+  "저스트 채팅",
+  "게임",
+  "음악",
+  "아트",
+  "IRL",
+  "교육",
+  "기술",
+  "스포츠",
+] as const;
+export const categorySchema = z.enum(CHANNEL_CATEGORIES);
 
 export const loginSchema = z.object({
   email: emailSchema,

@@ -20,6 +20,9 @@ const Env = z.object({
   // network (streamix-svc-core.internal) — never exposed via a public
   // http_service. Distinct from the gRPC PORT.
   METRICS_PORT: z.coerce.number().default(9091),
+  // Replay window (benchmark G-15). MUST match svc-media's VOD_RETENTION_DAYS,
+  // which deletes the files; core only lists recordings inside the window.
+  VOD_RETENTION_DAYS: z.coerce.number().int().min(1).default(7),
 });
 
 export const env = Env.parse(process.env);

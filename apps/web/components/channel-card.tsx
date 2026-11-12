@@ -22,13 +22,22 @@ export function ChannelCard({ channel }: { channel: Channel }) {
           alt={channel.title}
           className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
         />
-        <span className="absolute left-2 top-2 flex items-center gap-1.5 rounded bg-live px-1.5 py-0.5 text-[11px] font-bold uppercase text-white">
-          <span className="live-dot size-1.5 rounded-full bg-white" />
-          Live
-        </span>
-        <span className="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 font-mono text-[11px] text-zinc-100">
-          시청자 {formatViewers(channel.viewerCount)}
-        </span>
+        {channel.isLive ? (
+          <>
+            <span className="absolute left-2 top-2 flex items-center gap-1.5 rounded bg-live px-1.5 py-0.5 text-[11px] font-bold uppercase text-white">
+              <span className="live-dot size-1.5 rounded-full bg-white" />
+              Live
+            </span>
+            <span className="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 font-mono text-[11px] text-zinc-100">
+              시청자 {formatViewers(channel.viewerCount)}
+            </span>
+          </>
+        ) : (
+          // Search results include offline channels (benchmark G-01).
+          <span className="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-200">
+            오프라인
+          </span>
+        )}
       </div>
 
       <div className="mt-2.5 flex gap-2.5">

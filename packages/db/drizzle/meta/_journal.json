@@ -29,6 +29,34 @@
       "when": 1783849534961,
       "tag": "0003_email_canonical",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791546389594,
+      "tag": "0004_useful_shotgun",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794398457449,
+      "tag": "0005_needy_electro",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794398936181,
+      "tag": "0006_long_namora",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794399416407,
+      "tag": "0007_romantic_gideon",
+      "breakpoints": true
     }
   ]
 }
