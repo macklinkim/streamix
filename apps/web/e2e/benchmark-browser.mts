@@ -153,10 +153,6 @@ async function main() {
     await replyLine.waitFor({ timeout: 10_000 });
     check("G-07 reply shows the quoted parent", (await replyLine.innerText()).includes(`@${owner.name}`));
 
-    await olog.getByRole("button", { name: `${viewer.name} 채팅 관리` }).first().click();
-    await op.getByRole("button", { name: "고정", exact: true }).click();
-    const pinned = await vp.getByText("고정된 메시지:").waitFor({ timeout: 10_000 }).then(() => true, () => false);
-    check("G-19 pinned message bar appears for the viewer", pinned);
     await op.getByRole("button", { name: "팔로워 전용 꺼짐" }).click();
     const mode = await vp.getByText(/채팅 모드: .*팔로워 전용/).waitFor({ timeout: 10_000 }).then(() => true, () => false);
     check("G-10 chat mode is shown to viewers", mode);

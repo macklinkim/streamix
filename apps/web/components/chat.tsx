@@ -5,13 +5,11 @@ import { motion, useReducedMotion } from "motion/react";
 import {
   ArrowBendUpLeft,
   PaperPlaneRight,
-  PushPin,
   ShieldCheck,
   VideoCamera,
   X,
 } from "@phosphor-icons/react";
-import { ModerationAction } from "@streamix/proto";
-import { chatClient, wsUrl } from "@/lib/connect";
+import { wsUrl } from "@/lib/connect";
 import { useAuth } from "@/lib/auth-store";
 import { ChatModeration } from "./chat-moderation";
 
@@ -225,20 +223,6 @@ export function Chat({ channelId }: { channelId: string }) {
     }, 10_000);
   };
 
-  const unpin = () =>
-    void chatClient
-      .moderate(
-        {
-          channelId,
-          action: ModerationAction.UNPIN,
-          targetUserId: "",
-          durationSeconds: 0,
-          messageId: "",
-        },
-        { headers: { authorization: `Bearer ${token}` } },
-      )
-      .catch(() => setError("고정을 해제하지 못했습니다. 다시 시도하세요."));
-
   const hasToken = Boolean(token);
   const reduce = useReducedMotion();
   const modes = [
@@ -263,30 +247,6 @@ export function Chat({ channelId }: { channelId: string }) {
         <p className="border-b border-zinc-800 px-4 py-1.5 text-xs text-zinc-300">
           채팅 모드: {modes.join(" · ")}
         </p>
-      )}
-
-      {room.pinned && (
-        <div className="flex items-start gap-2 border-b border-zinc-800 bg-zinc-950/60 px-4 py-2 text-sm">
-          <PushPin
-            weight="fill"
-            className="mt-0.5 size-4 shrink-0 text-accent"
-            aria-hidden="true"
-          />
-          <p className="min-w-0 flex-1 break-words">
-            <span className="sr-only">고정된 메시지: </span>
-            <span className="font-semibold text-accent">{room.pinned.displayName}</span>{" "}
-            <span className="text-zinc-200">{room.pinned.text}</span>
-          </p>
-          {privileged && (
-            <button
-              type="button"
-              onClick={unpin}
-              className="shrink-0 text-xs text-zinc-400 hover:text-zinc-100"
-            >
-              고정 해제
-            </button>
-          )}
-        </div>
       )}
 
       {privileged && (

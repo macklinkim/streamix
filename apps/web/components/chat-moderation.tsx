@@ -187,29 +187,6 @@ export function ChatModeration({
             >
               메시지 삭제
             </button>
-            {state.pinned?.id === target.id ? (
-              <button
-                type="button"
-                disabled={busy}
-                className={btn}
-                onClick={() => void moderate("고정을 해제했습니다.", ModerationAction.UNPIN)}
-              >
-                고정 해제
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled={busy}
-                className={btn}
-                onClick={() =>
-                  void moderate("메시지를 고정했습니다.", ModerationAction.PIN, {
-                    messageId: target.id,
-                  })
-                }
-              >
-                고정
-              </button>
-            )}
             {canTargetUser && (
               <>
                 <button
