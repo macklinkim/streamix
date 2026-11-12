@@ -51,7 +51,10 @@ export function middleware(req: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
   const res = NextResponse.next({ request: { headers: requestHeaders } });
   res.headers.set("Content-Security-Policy-Report-Only", csp);
-  if (report)
+  if (report) {
+    // The sampled response must not be cached: a later revalidation (304)
+    // would reuse its stored headers, report-uri included, and report again.
+    res.headers.set("Cache-Control", "no-store");
     res.cookies.set(REPORT_COOKIE, "1", {
       maxAge: 60 * 60 * 24,
       path: "/",
@@ -59,6 +62,7 @@ export function middleware(req: NextRequest) {
       sameSite: "lax",
       secure: req.nextUrl.protocol === "https:",
     });
+  }
   return res;
 }
 
