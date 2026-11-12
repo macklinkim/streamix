@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAuth } from "@/lib/auth-store";
+import { hadSession, useAuth } from "@/lib/auth-store";
 import { authClient } from "@/lib/connect";
 import { apiRefresh } from "@/lib/session";
 
@@ -14,6 +14,9 @@ export function AuthHydrator() {
 
   useEffect(() => {
     let cancelled = false;
+    // Never signed in here: show the signed-out header now; a valid refresh
+    // cookie below still upgrades it to the real session.
+    if (!hadSession()) useAuth.setState({ ready: true });
     (async () => {
       const token = await apiRefresh().catch(() => null);
       if (cancelled) return;
